@@ -1,0 +1,35 @@
+
+# 启动模式 debug/prod
+mode: debug
+
+db:
+mysql:
+  dsn: root:password@tcp(127.0.0.1:3306)/scriptweb?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=True&loc=Local&multiStatements=true
+  prefix: cm_
+
+redis:
+  addr: localhost:6379
+  password:
+  db: 0
+
+# 缓存redis
+cache:
+  addr: localhost:6379
+  password:
+  db: 1
+
+# 暴露的端口
+webPort: 8080
+
+# 论坛的oauth2登录
+oauth:
+  clientId: xxx
+  clientSecret: xxx
+
+# jwt token
+jwt:
+  token: xxx
+
+# 执行的定时任务
+crontab:
+  - scripts
