@@ -1,4 +1,4 @@
-package scriptcat
+package executor
 
 import "rogchap.com/v8go"
 
@@ -7,19 +7,19 @@ type Context struct {
 	opts *Options
 }
 
-func NewContext(iso *Isolate, opt ...Option) (*Context, error) {
-	global, err := v8go.NewObjectTemplate(iso.iso)
+func NewContext(executor *Executor, opt ...Option) (*Context, error) {
+	global, err := v8go.NewObjectTemplate(executor.iso)
 	if err != nil {
 		return nil, err
 	}
 	options := &Options{
-		iso:    iso.iso,
+		iso:    executor.iso,
 		global: global,
 	}
 	for _, o := range opt {
 		o(options)
 	}
-	ctx, err := v8go.NewContext(iso.iso, options.global)
+	ctx, err := v8go.NewContext(executor.iso, options.global)
 	if err != nil {
 		return nil, err
 	}

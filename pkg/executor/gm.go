@@ -1,6 +1,8 @@
-package scriptcat
+package executor
 
 import (
+	"net/http"
+
 	"rogchap.com/v8go"
 )
 
@@ -15,7 +17,7 @@ func globalFunc(opts *Options, name string, callback v8go.FunctionCallback) {
 	}
 }
 
-func GmXmlHttpRequest() Option {
+func GmXmlHttpRequest(jar http.CookieJar) Option {
 	return func(opts *Options) {
 		globalFunc(opts, "GM_xmlhttpRequest", func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 
