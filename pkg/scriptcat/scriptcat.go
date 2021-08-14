@@ -52,7 +52,7 @@ func (s *ScriptCat) buildContext(exec *executor.Executor, meta map[string][]stri
 
 	optMap := map[string]func() executor.Option{
 		"GM_xmlhttpRequest": func() executor.Option {
-			return executor.GmXmlHttpRequest(nil)
+			return executor.GmXmlHttpRequest(opts.cookieJar)
 		},
 	}
 

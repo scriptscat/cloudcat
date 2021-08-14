@@ -1,25 +1,44 @@
 package executor
 
 import (
-	"net/http"
-
+	"github.com/sirupsen/logrus"
 	"rogchap.com/v8go"
 )
 
-func globalFunc(opts *Options, name string, callback v8go.FunctionCallback) {
-	f, err := v8go.NewFunctionTemplate(opts.iso, callback)
-	if err != nil {
-		opts.err = err
-		return
-	}
-	if err := opts.global.Set(name, f); err != nil {
-		opts.err = err
-	}
-}
-
-func GmXmlHttpRequest(jar http.CookieJar) Option {
+func GmNotification() Option {
 	return func(opts *Options) {
-		globalFunc(opts, "GM_xmlhttpRequest", func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		globalFunc(opts, "GM_notification", func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if len(info.Args()) == 0 {
+				return nil
+			}
+			var title, text string
+			if info.Args()[0].IsObject() {
+				arg1, err := info.Args()[0].AsObject()
+				if err != nil {
+					return nil
+				}
+				title = getObjString(arg1, "title")
+				text = getObjString(arg1, "text")
+				if fn := getFunction(arg1, "ondone"); fn != nil {
+					fn.Call()
+				}
+				if len(info.Args()) == 2 && info.Args()[1].IsFunction() {
+					fn, err := info.Args()[0].AsFunction()
+					if err != nil {
+						return nil
+					}
+					fn.Call()
+				}
+			} else {
+				switch len(info.Args()) {
+				case 2:
+					text = getString(info.Args()[1])
+					fallthrough
+				case 1:
+					title = getString(info.Args()[0])
+				}
+			}
+			opts.log(logrus.InfoLevel, "Notification: %v %v", title, text)
 
 			return nil
 		})

@@ -1,12 +1,15 @@
 package main
 
 import (
-	"github.com/scriptscat/cloudcat/pkg/scriptcat"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+
+	"github.com/scriptscat/cloudcat/pkg/scriptcat"
+	"github.com/scriptscat/cloudcat/pkg/utils"
+	"github.com/spf13/cobra"
 )
 
 type execCmd struct {
+	cookiefile string
 }
 
 func newExecCmd() *execCmd {
@@ -19,6 +22,7 @@ func (e *execCmd) Commands() []*cobra.Command {
 		Short: "执行一个脚本猫脚本",
 		RunE:  e.exec,
 	}
+	ret.Flags().StringVarP(&e.cookiefile, "cookiefile", "c", "", "设置cookie文件")
 
 	return []*cobra.Command{ret}
 }
@@ -33,6 +37,15 @@ func (e *execCmd) exec(cmd *cobra.Command, args []string) error {
 	script, err := ioutil.ReadFile(args[0])
 	if err != nil {
 		return err
+	}
+
+	opts := make([]scriptcat.Option, 0)
+	if e.cookiefile != "" {
+		jar, err := utils.ReadCookie(e.cookiefile)
+		if err != nil {
+			return err
+		}
+		opts = append(opts, scriptcat.WithCookie(jar))
 	}
 
 	return sc.Run(string(script))

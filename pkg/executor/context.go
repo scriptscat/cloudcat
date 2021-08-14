@@ -16,12 +16,16 @@ func NewContext(executor *Executor, opt ...Option) (*Context, error) {
 		iso:    executor.iso,
 		global: global,
 	}
-	for _, o := range opt {
-		o(options)
-	}
 	ctx, err := v8go.NewContext(executor.iso, options.global)
 	if err != nil {
 		return nil, err
+	}
+	options.ctx = ctx
+	for _, o := range opt {
+		o(options)
+		if options.err != nil {
+			return nil, err
+		}
 	}
 	return &Context{
 		ctx: ctx,
