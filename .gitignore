@@ -3,3 +3,7 @@
 .vscode
 
 config.yaml
+
+*.zip
+*.exe
+

@@ -10,7 +10,7 @@ func ParseMeta(script string) string {
 }
 
 func ParseMetaToJson(meta string) map[string][]string {
-	reg := regexp.MustCompile("(?im)^//\\s*@(.+?)($|\\s+(.+?)$)")
+	reg := regexp.MustCompile("(?im)^//\\s*@(.+?)([\r\n]+|$|\\s+(.+?)$)")
 	list := reg.FindAllStringSubmatch(meta, -1)
 	ret := make(map[string][]string)
 	for _, v := range list {

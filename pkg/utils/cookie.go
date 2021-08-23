@@ -2,33 +2,37 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+
+	"github.com/sirupsen/logrus"
 )
 
 type CookieFile struct {
 	*cookiejar.Jar
 }
 
-func ReadCookie(filename string) (http.CookieJar, error) {
+func ReadCookie(cookie string) (http.CookieJar, error) {
 	jar, _ := cookiejar.New(nil)
-	f, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
 	m := make(map[string][]*http.Cookie)
-	if err := json.Unmarshal(f, &m); err != nil {
+	if err := json.Unmarshal([]byte(cookie), &m); err != nil && len(m) == 0 {
 		return nil, err
+	} else if err != nil {
+		logrus.Errorf("cookie format error: %v", err)
 	}
 	for k, v := range m {
-		u, err := url.Parse(k)
-		if err != nil {
-			return nil, fmt.Errorf("parse %s: %w", k, err)
+		for _, v := range v {
+			urlStr := ""
+			if v.Secure {
+				urlStr = "https://"
+			} else {
+				urlStr = "http://"
+			}
+			urlStr += v.Domain
+			u, _ := url.Parse("https://" + k)
+			jar.SetCookies(u, []*http.Cookie{v})
 		}
-		jar.SetCookies(u, v)
 	}
 	return jar, nil
 }

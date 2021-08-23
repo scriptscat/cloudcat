@@ -1,7 +1,11 @@
 package main
 
 import (
-	"io/ioutil"
+	"archive/zip"
+	"io"
+	"io/fs"
+	"os"
+	"path"
 
 	"github.com/scriptscat/cloudcat/pkg/scriptcat"
 	"github.com/scriptscat/cloudcat/pkg/utils"
@@ -10,6 +14,7 @@ import (
 
 type execCmd struct {
 	cookiefile string
+	runOnce    bool
 }
 
 func newExecCmd() *execCmd {
@@ -21,32 +26,72 @@ func (e *execCmd) Commands() []*cobra.Command {
 		Use:   "exec [file] [flags]",
 		Short: "执行一个脚本猫脚本",
 		RunE:  e.exec,
+		Args:  cobra.ExactArgs(1),
 	}
 	ret.Flags().StringVarP(&e.cookiefile, "cookiefile", "c", "", "设置cookie文件")
+	ret.Flags().BoolVarP(&e.runOnce, "run-once", "", false, "运行一次(如果是定时脚本的话,不会进入定时逻辑)")
 
 	return []*cobra.Command{ret}
 }
 
 func (e *execCmd) exec(cmd *cobra.Command, args []string) error {
 
-	sc, err := scriptcat.NewScriptCat()
-	if err != nil {
-		return err
-	}
-
-	script, err := ioutil.ReadFile(args[0])
-	if err != nil {
-		return err
+	var err error
+	var script, cookie, value fs.File
+	if path.Ext(args[0]) == ".zip" {
+		// 软件包
+		pkg, err := zip.OpenReader(args[0])
+		if err != nil {
+			return err
+		}
+		script, err = pkg.Open("userScript.js")
+		if err != nil {
+			return err
+		}
+		defer script.Close()
+		cookie, _ = pkg.Open("cookie.json")
+		value, _ = pkg.Open("value.json")
+	} else {
+		script, err = os.Open(args[0])
+		if err != nil {
+			return err
+		}
+		defer script.Close()
+		cookie, err = os.Open(e.cookiefile)
+		if err != nil {
+			return err
+		}
+		defer cookie.Close()
 	}
 
 	opts := make([]scriptcat.Option, 0)
-	if e.cookiefile != "" {
-		jar, err := utils.ReadCookie(e.cookiefile)
+	if cookie != nil {
+		jar, err := utils.ReadCookie(readString(cookie))
 		if err != nil {
 			return err
 		}
 		opts = append(opts, scriptcat.WithCookie(jar))
 	}
 
-	return sc.Run(string(script))
+	if value != nil {
+		opts = append(opts, scriptcat.WithValue(value))
+	}
+
+	sc, err := scriptcat.NewScriptCat()
+	if err != nil {
+		return err
+	}
+
+	if e.runOnce {
+		return sc.RunOnce(readString(script), opts...)
+	}
+	return sc.Run(readString(script), opts...)
+}
+
+func readString(r io.Reader) string {
+	if r == nil {
+		return ""
+	}
+	byte, _ := io.ReadAll(r)
+	return string(byte)
 }

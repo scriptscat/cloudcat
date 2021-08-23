@@ -1,6 +1,13 @@
 package scriptcat
 
-import "github.com/scriptscat/cloudcat/pkg/executor"
+import (
+	"errors"
+	"sync"
+
+	"github.com/scriptscat/cloudcat/pkg/executor"
+	"github.com/sirupsen/logrus"
+	"rogchap.com/v8go"
+)
 
 type ScriptCat struct {
 	script string
@@ -24,7 +31,32 @@ func (s *ScriptCat) Run(script string, opt ...Option) error {
 }
 
 func (s *ScriptCat) RunOnce(script string, opt ...Option) error {
-
+	ctx, code, err := s.compile(script, opt...)
+	if err != nil {
+		return err
+	}
+	ret, err := ctx.RunScript(code, "main.js")
+	if err != nil {
+		return err
+	}
+	if !ret.IsPromise() {
+		return errors.New("return is not a promise object")
+	}
+	l := sync.WaitGroup{}
+	p, err := ret.AsPromise()
+	if err != nil {
+		return err
+	}
+	l.Add(1)
+	p.Then(func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		l.Done()
+		return nil
+	})
+	p.Catch(func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		l.Done()
+		return nil
+	})
+	l.Wait()
 	return nil
 }
 
@@ -44,15 +76,22 @@ func (s *ScriptCat) compile(script string, opt ...Option) (*executor.Context, st
 		return nil, "", err
 	}
 	// TODO: 编译code(require resource等内容)
-	return ctx, "", nil
+
+	return ctx, "function main() {\n" + script + "\n}\nmain();", nil
 }
 
 func (s *ScriptCat) buildContext(exec *executor.Executor, meta map[string][]string, opts *Options) (*executor.Context, error) {
-	contextOpts := make([]executor.Option, 0)
+	contextOpts := []executor.Option{
+		executor.WithLogger(logrus.StandardLogger().Logf),
+		executor.Console(),
+	}
 
 	optMap := map[string]func() executor.Option{
 		"GM_xmlhttpRequest": func() executor.Option {
 			return executor.GmXmlHttpRequest(opts.cookieJar)
+		},
+		"GM_notification": func() executor.Option {
+			return executor.GmNotification()
 		},
 	}
 
