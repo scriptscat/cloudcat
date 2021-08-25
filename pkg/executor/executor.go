@@ -15,5 +15,5 @@ func NewExecutor() (*Executor, error) {
 }
 
 func (c *Executor) Run(ctx *Context, source string) (*v8go.Value, error) {
-	return ctx.RunScript(source, "main.js")
+	return ctx.RunScript(source, "app.js")
 }

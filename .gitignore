@@ -7,3 +7,5 @@ config.yaml
 *.zip
 *.exe
 
+scriptcat
+cloudcat

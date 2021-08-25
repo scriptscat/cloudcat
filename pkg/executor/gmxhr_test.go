@@ -16,7 +16,7 @@ func TestGmXmlHttpRequest(t *testing.T) {
 	ctx, _ := NewContext(iso, WithLogger(logrus.StandardLogger().Logf), GmNotification(), GmXmlHttpRequest(nil), Console())
 
 	ret, err := iso.Run(ctx, `
-function main() {
+function app() {
     return new Promise(resolve => {
         GM_xmlhttpRequest({
             method: 'GET',
@@ -46,7 +46,7 @@ function main() {
         })
     })
 }
-main();
+app();
 `)
 	assert.Nil(t, err)
 	p, err := ret.AsPromise()
