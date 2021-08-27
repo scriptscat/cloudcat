@@ -1,0 +1,43 @@
+basePath: /api/v1
+definitions:
+  errs.JsonRespondError:
+    properties:
+      code:
+        type: integer
+      msg:
+        type: string
+    type: object
+  repository.ScriptCatInfo:
+    properties:
+      message:
+        type: string
+      version:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: 云猫api文档
+  version: "1.0"
+paths:
+  /system/version:
+    get:
+      consumes:
+      - application/json
+      description: 查询脚本猫版本信息
+      operationId: system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repository.ScriptCatInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 系统
+      tags:
+      - system
+swagger: "2.0"

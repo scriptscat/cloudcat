@@ -2,7 +2,7 @@ VERSION=0.1.0
 DOCKER_REPO=codfrm
 REMOTE_REPO=$(DOCKER_REPO)/cloudcat:$(VERSION)
 
-build: scriptcat cloudcat
+build: swagger scriptcat cloudcat
 
 scriptcat:
 	go build .\cmd\scriptcat
@@ -19,3 +19,6 @@ docker-test:
 docker-push: docker
 	docker tag cloudcat $(REMOTE_REPO)
 	docker push $(REMOTE_REPO)
+
+swagger:
+	swag init -g internal/interface/http/apiv1/router.go
