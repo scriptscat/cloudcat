@@ -39,5 +39,5 @@ func (s *System) version(ctx *gin.Context) {
 
 func (s *System) Register(r *gin.RouterGroup) {
 	v1 := r.Group("/system")
-	v1.GET("/version")
+	v1.GET("/version", s.version)
 }

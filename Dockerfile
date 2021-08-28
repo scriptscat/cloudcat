@@ -10,8 +10,7 @@ COPY . .
 
 # TODO: 交叉编译
 
-RUN CGO_LDFLAGS="-static" go build -o scriptcat ./cmd/scriptcat && \
-    go build -o cloudcat ./cmd/cloudcat
+RUN make build
 
 ARG ARCH
 

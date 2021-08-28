@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 )
@@ -22,13 +21,17 @@ func NewRepo(kv kvdb.KvDb) Repo {
 }
 
 func (r *repo) GetScriptCatInfo() (*ScriptCatInfo, error) {
-	s, err := r.kv.Get(context.Background(), "cloudcat:scriptcat:info")
+	v, err := r.kv.Get(context.Background(), "cloudcat:scriptcat:info:version")
 	if err != nil {
 		return nil, err
 	}
-	ret := &ScriptCatInfo{}
-	if err := json.Unmarshal([]byte(s), ret); err != nil {
+	n, err := r.kv.Get(context.Background(), "cloudcat:scriptcat:info:notice")
+	if err != nil {
 		return nil, err
+	}
+	ret := &ScriptCatInfo{
+		Version: v,
+		Notice:  n,
 	}
 	return ret, nil
 }

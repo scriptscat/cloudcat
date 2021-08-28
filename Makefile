@@ -4,11 +4,13 @@ REMOTE_REPO=$(DOCKER_REPO)/cloudcat:$(VERSION)
 
 build: swagger scriptcat cloudcat
 
+.PHONY: scriptcat
 scriptcat:
-	go build .\cmd\scriptcat
+	CGO_LDFLAGS="-static" go build -o scriptcat ./cmd/scriptcat
 
+.PHONY: cloudcat
 cloudcat:
-	go build .\cmd\cloudcat
+	CGO_LDFLAGS="-static" go build -o cloudcat ./cmd/app
 
 docker:
 	docker build -t cloudcat .

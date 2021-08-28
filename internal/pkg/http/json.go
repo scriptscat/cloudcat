@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/scriptscat/cloudcat/internal/interface/http/dto/respond"
+	"github.com/scriptscat/cloudcat/internal/interface/http/apiv1/dto/respond"
 	"github.com/scriptscat/cloudcat/internal/pkg/errs"
 	pkgValidator "github.com/scriptscat/cloudcat/pkg/utils/validator"
 	"github.com/sirupsen/logrus"

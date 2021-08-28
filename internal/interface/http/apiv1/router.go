@@ -19,7 +19,6 @@ func register(r *gin.RouterGroup, register ...Register) {
 // Swagger spec:
 // @title       云猫api文档
 // @version     1.0
-// @host        localhost:8080
 // @BasePath    /api/v1
 
 func NewRouter(r *gin.Engine, db *database.Database, kv kvdb.KvDb) error {

@@ -1,4 +1,4 @@
-# 启动模式 debug/prod
+# 启动模式 debug/release
 mode: debug
 
 database:

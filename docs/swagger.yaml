@@ -14,7 +14,6 @@ definitions:
       version:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   title: 云猫api文档
