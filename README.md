@@ -26,7 +26,7 @@ make build
 
 
 ```
-scriptcat bilibili.zip
+cloudcat exec bilibili.zip
 ```
 
 
@@ -38,8 +38,8 @@ scriptcat bilibili.zip
 
 
 ```shell
-docker pull codfrm/cloudcat:0.1.0
-docker run -it -v $(PWD)/bilibili.zip:/cloudcat/bilibili.zip -v /etc/localtime:/etc/localtime -v /etc/timezone:/etc/timezone codfrm/cloudcat:0.1.0 exec bilibili.zip
+docker pull codfrm/cloudcat:v0.1.0
+docker run -it -v $(PWD)/bilibili.zip:/cloudcat/bilibili.zip -v /etc/localtime:/etc/localtime -v /etc/timezone:/etc/timezone codfrm/cloudcat:v0.1.0 exec bilibili.zip
 ```
 
 
