@@ -7,7 +7,7 @@ import (
 
 func Console() Option {
 	return func(opts *Options) {
-		if opts.log == nil {
+		if opts._log == nil {
 			return
 		}
 		console, _ := v8go.NewObjectTemplate(opts.iso)

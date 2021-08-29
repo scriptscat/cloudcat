@@ -18,10 +18,8 @@ FROM ${ARCH}busybox:1.33.1-musl
 
 WORKDIR /cloudcat
 
-COPY --from=build /cloudcat/scriptcat .
-
 COPY --from=build /cloudcat/cloudcat .
 
-RUN ls -l && chmod +x scriptcat cloudcat
+RUN ls -l && chmod +x cloudcat
 
-ENTRYPOINT ["./scriptcat"]
+ENTRYPOINT ["./cloudcat"]

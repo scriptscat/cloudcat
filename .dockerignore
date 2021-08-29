@@ -6,7 +6,6 @@ config.yaml
 *.zip
 *.exe
 
-scriptcat
-cloudcat
+/cloudcat
 
 cloudcat.db

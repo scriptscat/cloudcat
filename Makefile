@@ -1,16 +1,17 @@
-VERSION=0.1.0
+GOOS=linux
+GOARCH=amd64
+VERSION=v0.1.0
 DOCKER_REPO=codfrm
 REMOTE_REPO=$(DOCKER_REPO)/cloudcat:$(VERSION)
 
-build: swagger scriptcat cloudcat
+test:
+	go test -v ./...
 
-.PHONY: scriptcat
-scriptcat:
-	CGO_LDFLAGS="-static" go build -o scriptcat ./cmd/scriptcat
-
-.PHONY: cloudcat
-cloudcat:
+build:
 	CGO_LDFLAGS="-static" go build -o cloudcat ./cmd/app
+
+target:
+	CGO_LDFLAGS="-static" go build -o cloudcat-$(VERSION)-$(GOOS)-$(GOARCH)/cloudcat ./cmd/app
 
 docker:
 	docker build -t cloudcat .
