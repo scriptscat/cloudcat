@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	rootCmd := &cobra.Command{
 		Use: "scriptcat",
 	}

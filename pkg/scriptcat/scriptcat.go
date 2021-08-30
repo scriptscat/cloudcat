@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/robfig/cron/v3"
 	"github.com/scriptscat/cloudcat/pkg/executor"
@@ -23,7 +24,9 @@ func NewScriptCat() (*ScriptCat, error) {
 }
 
 func (s *ScriptCat) options(opt ...Option) *Options {
-	options := &Options{}
+	options := &Options{
+		location: time.Local,
+	}
 	for _, o := range opt {
 		o(options)
 	}
@@ -42,7 +45,7 @@ func (s *ScriptCat) Run(ctx context.Context, script string, opt ...Option) (stri
 		opts.log(logrus.InfoLevel, "start run script")
 		return s.runOnce(ctx, exec, code)
 	}
-	cron := cron.New(cron.WithSeconds())
+	cron := cron.New(cron.WithSeconds(), cron.WithLocation(opts.location))
 	unit := strings.Split(c[0], " ")
 	if len(unit) == 5 {
 		unit = append([]string{"0"}, unit...)

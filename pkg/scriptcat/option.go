@@ -3,6 +3,7 @@ package scriptcat
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -10,6 +11,7 @@ import (
 type Options struct {
 	context.Context
 	cookieJar http.CookieJar
+	location  *time.Location
 	_log      func(level logrus.Level, format string, args ...interface{})
 }
 
@@ -36,5 +38,11 @@ func WithLogger(log func(level logrus.Level, format string, args ...interface{})
 func (o *Options) log(level logrus.Level, format string, args ...interface{}) {
 	if o._log != nil {
 		o._log(level, format, args)
+	}
+}
+
+func WithLocation(loc *time.Location) Option {
+	return func(opts *Options) {
+		opts.location = loc
 	}
 }

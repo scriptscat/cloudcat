@@ -14,7 +14,7 @@ docker:
 	docker build -t cloudcat .
 
 docker-test:
-	docker run -it -v $(PWD)/bilibili.zip:/cloudcat/bilibili.zip $(REMOTE_REPO) exec bilibili.zip
+	docker run -it -v $(PWD)/bilibili.zip:/cloudcat/bilibili.zip -v /etc/localtime:/etc/localtime -v /etc/timezone:/etc/timezone $(REMOTE_REPO) exec bilibili.zip
 
 docker-push: docker
 	docker tag cloudcat $(REMOTE_REPO)
