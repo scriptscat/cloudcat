@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/scriptscat/cloudcat/cmd/app/cmd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -10,8 +11,8 @@ func main() {
 		Use: "cloudcat",
 	}
 
-	execCmd := newExecCmd()
-	serveCmd := newServeCmd()
+	execCmd := cmd.NewExecCmd()
+	serveCmd := cmd.NewServeCmd()
 
 	rootCmd.AddCommand(execCmd.Commands()...)
 	rootCmd.AddCommand(serveCmd.Commands()...)

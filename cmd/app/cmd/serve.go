@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ type serveCmd struct {
 	config string
 }
 
-func newServeCmd() *serveCmd {
+func NewServeCmd() *serveCmd {
 	return &serveCmd{}
 }
 

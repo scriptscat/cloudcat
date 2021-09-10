@@ -2,8 +2,9 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/scriptscat/cloudcat/internal/interface/http/apiv1"
+	"github.com/scriptscat/cloudcat/internal/controller/http/v1"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
+	"github.com/scriptscat/cloudcat/migrations"
 	"github.com/scriptscat/cloudcat/pkg/database"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 
@@ -18,7 +19,12 @@ func Run(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+
 	kv, err := kvdb.NewKvDb(cfg.KvDB)
+
+	if err := migrations.RunMigrations(db); err != nil {
+		return err
+	}
 
 	r := gin.Default()
 
@@ -27,7 +33,7 @@ func Run(cfg *config.Config) error {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 	}
 
-	if err := apiv1.NewRouter(r, db, kv); err != nil {
+	if err := v1.NewRouter(r, cfg, db, kv); err != nil {
 		return err
 	}
 

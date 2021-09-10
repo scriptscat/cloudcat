@@ -1,20 +1,20 @@
-package apiv1
+package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/scriptscat/cloudcat/internal/pkg/http"
-	"github.com/scriptscat/cloudcat/internal/service/system"
-	"github.com/scriptscat/cloudcat/internal/service/system/repository"
+	"github.com/scriptscat/cloudcat/internal/domain/system/repository"
+	"github.com/scriptscat/cloudcat/internal/domain/system/service"
+	"github.com/scriptscat/cloudcat/internal/pkg/httputils"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 )
 
 type System struct {
-	*system.System
+	service.System
 }
 
 func NewSystem(kv kvdb.KvDb) *System {
 	return &System{
-		System: system.NewSystem(repository.NewRepo(kv)),
+		System: service.NewSystem(repository.NewRepo(kv)),
 	}
 }
 
@@ -28,7 +28,7 @@ func NewSystem(kv kvdb.KvDb) *System {
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /system/version [get]
 func (s *System) version(ctx *gin.Context) {
-	http.Handle(ctx, func() interface{} {
+	httputils.Handle(ctx, func() interface{} {
 		ret, err := s.ScriptCatInfo()
 		if err != nil {
 			return err

@@ -3,14 +3,15 @@ module github.com/scriptscat/cloudcat
 go 1.15
 
 require (
-	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/gin-gonic/gin v1.7.4
+	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v8 v8.11.3
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1

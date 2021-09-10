@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"archive/zip"
@@ -20,7 +20,7 @@ type execCmd struct {
 	runOnce    bool
 }
 
-func newExecCmd() *execCmd {
+func NewExecCmd() *execCmd {
 	return &execCmd{}
 }
 

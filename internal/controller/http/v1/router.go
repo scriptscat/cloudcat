@@ -1,7 +1,9 @@
-package apiv1
+package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/scriptscat/cloudcat/internal/domain/user/service"
+	"github.com/scriptscat/cloudcat/internal/pkg/config"
 	"github.com/scriptscat/cloudcat/pkg/database"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 )
@@ -21,13 +23,17 @@ func register(r *gin.RouterGroup, register ...Register) {
 // @version     1.0
 // @BasePath    /api/v1
 
-func NewRouter(r *gin.Engine, db *database.Database, kv kvdb.KvDb) error {
+func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb.KvDb) error {
 
 	v1 := r.Group("/api/v1")
 
+	userSvc := service.NewUser(config.NewSystemConfig(kv))
+
 	system := NewSystem(kv)
 
-	register(v1, system)
+	user := NewUser(cfg.Jwt.Token, userSvc)
+
+	register(v1, system, user)
 
 	return nil
 }

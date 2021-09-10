@@ -15,12 +15,19 @@ func newRedis(cli *goRedis.Client) KvDb {
 	return &redis{cli: cli}
 }
 
-func (r *redis) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+func (r *redis) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
 	return r.cli.Set(ctx, key, value, expiration).Err()
 }
 
 func (r *redis) Get(ctx context.Context, key string) (string, error) {
-	return r.cli.Get(ctx, key).Result()
+	ret, err := r.cli.Get(ctx, key).Result()
+	if err != nil {
+		if err == goRedis.Nil {
+			return "", nil
+		}
+		return "", err
+	}
+	return ret, nil
 }
 
 func (r *redis) Has(ctx context.Context, key string) (bool, error) {
