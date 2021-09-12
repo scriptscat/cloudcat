@@ -10,7 +10,7 @@ import (
 )
 
 type VerifyCode interface {
-	Create(vcode *entity.VerifyCode) error
+	Save(vcode *entity.VerifyCode) error
 	FindById(id string) (*entity.VerifyCode, error)
 }
 
@@ -22,7 +22,7 @@ func NewVerifyCode(kv kvdb.KvDb) VerifyCode {
 	return &verifyCode{kv: kv}
 }
 
-func (v *verifyCode) Create(vcode *entity.VerifyCode) error {
+func (v *verifyCode) Save(vcode *entity.VerifyCode) error {
 	j, err := json.Marshal(vcode)
 	if err != nil {
 		return err

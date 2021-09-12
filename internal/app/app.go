@@ -15,15 +15,15 @@ import (
 
 func Run(cfg *config.Config) error {
 
-	db, err := database.NewDatabase(cfg.Database)
+	db, err := database.NewDatabase(cfg.Database, cfg.Mode == "debug")
 	if err != nil {
 		return err
 	}
-	if cfg.Mode == "debug" {
-		db.DB = db.DB.Debug()
-	}
 
 	kv, err := kvdb.NewKvDb(cfg.KvDB)
+	if err != nil {
+		return err
+	}
 
 	if err := migrations.RunMigrations(db); err != nil {
 		return err

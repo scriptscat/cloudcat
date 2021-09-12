@@ -12,7 +12,7 @@ type Database struct {
 	cfg *Config
 }
 
-func NewDatabase(cfg *Config) (*Database, error) {
+func NewDatabase(cfg *Config, debug bool) (*Database, error) {
 	var err error
 	db := &Database{cfg: cfg}
 	switch cfg.Type {
@@ -27,10 +27,18 @@ func NewDatabase(cfg *Config) (*Database, error) {
 			},
 		})
 	case "sqlite":
-		db.DB, err = gorm.Open(sqlite.Open(cfg.Sqlite.File), &gorm.Config{})
+		db.DB, err = gorm.Open(sqlite.Open(cfg.Sqlite.File), &gorm.Config{
+			DisableForeignKeyConstraintWhenMigrating: true,
+			NamingStrategy: schema.NamingStrategy{
+				SingularTable: true,
+			},
+		})
 	}
 	if err != nil {
 		return nil, err
+	}
+	if debug {
+		db.DB = db.DB.Debug()
 	}
 	return db, nil
 }

@@ -19,4 +19,5 @@ var (
 	ErrRegisterNeedInvCode = errs.NewBadRequestError(1007, "注册需要邀请码")
 
 	ErrWrongPassword = errs.NewBadRequestError(1008, "登录密码错误")
+	ErrEmailExist    = errs.NewBadRequestError(1009, "邮箱已经注册过了")
 )

@@ -70,14 +70,45 @@ paths:
   /user/login:
     post:
       consumes:
+      - application/x-www-form-urlencoded
+      description: 用户登录
+      operationId: login
+      parameters:
+      - description: 用户名
+        in: formData
+        name: username
+        type: string
+      - description: 邮箱
+        in: formData
+        name: email
+        type: string
+      - description: 登录密码
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
       - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
+  /user/register:
+    post:
+      consumes:
       - application/x-www-form-urlencoded
       description: 用户注册
       operationId: register
       parameters:
       - description: 用户名
         in: formData
-        name: name
+        name: username
         required: true
         type: string
       - description: 邮箱
@@ -92,16 +123,46 @@ paths:
         type: string
       - description: 再输入一次登录密码
         in: formData
-        name: rePassword
+        name: repassword
+        required: true
+        type: string
+      - description: 邮箱验证码
+        in: formData
+        name: email_verify_code
+        type: string
+      - description: 邀请码
+        in: formData
+        name: inv_code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
+  /user/request-email-code:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 请求邮箱验证码
+      operationId: request-email-code
+      parameters:
+      - description: 邮箱
+        in: formData
+        name: email
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/repository.ScriptCatInfo'
+          description: ""
         "400":
           description: Bad Request
           schema:

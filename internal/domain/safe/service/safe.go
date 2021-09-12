@@ -13,57 +13,57 @@ type Safe interface {
 	Limit(userinfo *dto.SafeUserinfo, rule *dto.SafeRule, f func() error) error
 }
 
-type rate struct {
+type safe struct {
 	repo repository.Safe
 }
 
-func NewRate(repo repository.Safe) Safe {
-	return &rate{repo: repo}
+func NewSafe(repo repository.Safe) Safe {
+	return &safe{repo: repo}
 }
 
 // Rate 不管成功与否都计算一次
-func (r *rate) Rate(userinfo *dto.SafeUserinfo, rule *dto.SafeRule, f func() error) error {
-	t, err := r.repo.GetLastOpTime(userinfo.Userinfo(), rule.Name)
+func (s *safe) Rate(userinfo *dto.SafeUserinfo, rule *dto.SafeRule, f func() error) error {
+	t, err := s.repo.GetLastOpTime(userinfo.Userinfo(), rule.Name)
 	if err != nil {
 		return err
 	}
 	if t > time.Now().Unix()-rule.Interval {
 		return errs.NewOperationTimeToShort(rule)
 	}
-	c, err := r.repo.GetPeriodOpCnt(userinfo.Userinfo(), rule.Name)
+	c, err := s.repo.GetPeriodOpCnt(userinfo.Userinfo(), rule.Name)
 	if err != nil {
 		return err
 	}
 	if rule.PeriodCnt > 0 && c > rule.PeriodCnt {
 		return errs.NewOperationMax(rule)
 	}
-	if err := r.repo.SetLastOpTime(userinfo.Userinfo(), rule.Name, time.Now().Unix(), rule.Period); err != nil {
+	if err := s.repo.SetLastOpTime(userinfo.Userinfo(), rule.Name, time.Now().Unix(), rule.Period); err != nil {
 		return err
 	}
 	return f()
 }
 
 // Limit 成功才会计算一次
-func (r *rate) Limit(userinfo *dto.SafeUserinfo, rule *dto.SafeRule, f func() error) error {
-	t, err := r.repo.GetLastOpTime(userinfo.Userinfo(), rule.Name)
+func (s *safe) Limit(userinfo *dto.SafeUserinfo, rule *dto.SafeRule, f func() error) error {
+	t, err := s.repo.GetLastOpTime(userinfo.Userinfo(), rule.Name)
 	if err != nil {
 		return err
 	}
 	if t > time.Now().Unix()-rule.Interval {
 		return errs.NewOperationTimeToShort(rule)
 	}
-	c, err := r.repo.GetPeriodOpCnt(userinfo.Userinfo(), rule.Name)
+	c, err := s.repo.GetPeriodOpCnt(userinfo.Userinfo(), rule.Name)
 	if err != nil {
 		return err
 	}
 	if rule.PeriodCnt > 0 && c > rule.PeriodCnt {
 		return errs.NewOperationLimit(rule)
 	}
-	if err := r.repo.SetLastOpTime(userinfo.Userinfo(), rule.Name, time.Now().Unix(), rule.Period); err != nil {
+	if err := s.repo.SetLastOpTime(userinfo.Userinfo(), rule.Name, time.Now().Unix(), rule.Period); err != nil {
 		return err
 	}
 	if err := f(); err != nil {
-		_ = r.repo.DelLastOpTime(userinfo.Userinfo(), rule.Name)
+		_ = s.repo.DelLastOpTime(userinfo.Userinfo(), rule.Name)
 		return err
 	}
 	return nil

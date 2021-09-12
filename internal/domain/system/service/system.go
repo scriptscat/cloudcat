@@ -8,6 +8,10 @@ type System interface {
 	ScriptCatInfo() (*repository.ScriptCatInfo, error)
 }
 
+const (
+	SYSTEM_SITE_NAME = "system_site_name"
+)
+
 type system struct {
 	repo repository.Repo
 }

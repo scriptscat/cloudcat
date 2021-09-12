@@ -31,12 +31,6 @@ cache:
 # 监听地址
 addr: :8080
 
-# 论坛的oauth2登录
-oauth:
-  bbs:
-    clientId: xxx
-    clientSecret: xxx
-
 # jwt token
 jwt:
   token: xxx

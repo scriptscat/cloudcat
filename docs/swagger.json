@@ -81,9 +81,56 @@
         },
         "/user/login": {
             "post": {
+                "description": "用户登录",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "login",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "登录密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/register": {
+            "post": {
                 "description": "用户注册",
                 "consumes": [
-                    "application/json",
                     "application/x-www-form-urlencoded"
                 ],
                 "produces": [
@@ -98,7 +145,7 @@
                     {
                         "type": "string",
                         "description": "用户名",
-                        "name": "name",
+                        "name": "username",
                         "in": "formData",
                         "required": true
                     },
@@ -119,17 +166,62 @@
                     {
                         "type": "string",
                         "description": "再输入一次登录密码",
-                        "name": "rePassword",
+                        "name": "repassword",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮箱验证码",
+                        "name": "email_verify_code",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "邀请码",
+                        "name": "inv_code",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/request-email-code": {
+            "post": {
+                "description": "请求邮箱验证码",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "request-email-code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
                         "in": "formData",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/repository.ScriptCatInfo"
-                        }
+                        "description": ""
                     },
                     "400": {
                         "description": "Bad Request",

@@ -1,7 +1,7 @@
 package entity
 
 type BbsOauthUser struct {
-	ID         int64  `gorm:"primaryKey;column:id;type:bigint(20);not null" json:"-"`
+	ID         int64  `gorm:"primaryKey" json:"id"`
 	Openid     string `gorm:"unique;column:openid;type:varchar(255);not null" json:"openid"`
 	UserID     int64  `gorm:"index:bbs_user_id;column:user_id;type:bigint(20);not null" json:"user_id"`
 	Status     int8   `gorm:"column:status;type:tinyint(4);not null;default:1" json:"status"`
@@ -9,7 +9,7 @@ type BbsOauthUser struct {
 }
 
 type WechatOauthUser struct {
-	ID         int64  `gorm:"primaryKey;column:id;type:bigint(20);not null" json:"-"`
+	ID         int64  `gorm:"primaryKey" json:"id"`
 	Openid     string `gorm:"unique;column:openid;type:varchar(255);not null" json:"openid"`
 	Unionid    string `gorm:"unique;column:unionid;type:varchar(255)" json:"unionid"`
 	UserID     int64  `gorm:"index:wc_user_id;column:user_id;type:bigint(20);not null" json:"user_id"`

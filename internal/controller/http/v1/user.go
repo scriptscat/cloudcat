@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	goJwt "github.com/golang-jwt/jwt"
 	dto2 "github.com/scriptscat/cloudcat/internal/domain/safe/dto"
 	service2 "github.com/scriptscat/cloudcat/internal/domain/safe/service"
+	service3 "github.com/scriptscat/cloudcat/internal/domain/system/service"
 	"github.com/scriptscat/cloudcat/internal/domain/user/dto"
 	"github.com/scriptscat/cloudcat/internal/domain/user/service"
 	"github.com/scriptscat/cloudcat/internal/pkg/errs"
@@ -20,25 +22,25 @@ const JwtAutoRenew = 259200
 
 type User struct {
 	service.User
+	sender   service3.Sender
 	safe     service2.Safe
 	jwtToken string
 }
 
-func NewUser(jwtToken string, svc service.User) *User {
-	return &User{jwtToken: jwtToken, User: svc}
+func NewUser(jwtToken string, svc service.User, safe service2.Safe, sender service3.Sender) *User {
+	return &User{jwtToken: jwtToken, User: svc, safe: safe, sender: sender}
 }
 
 // @Summary     用户
 // @Description 用户登录
 // @ID          login
 // @Tags  	    user
-// @Accept      json
 // @Produce     json
 // @Accept      application/x-www-form-urlencoded
 // @Param       username formData string false "用户名"
 // @Param       email formData string false "邮箱"
 // @Param       password formData string true "登录密码"
-// @Success     200 {object}
+// @Success     200
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /user/login [post]
 func (s *User) login(ctx *gin.Context) {
@@ -76,7 +78,6 @@ func (s *User) login(ctx *gin.Context) {
 // @Description 用户注册
 // @ID          register
 // @Tags  	    user
-// @Accept      json
 // @Produce     json
 // @Accept      application/x-www-form-urlencoded
 // @Param       username formData string true "用户名"
@@ -85,9 +86,9 @@ func (s *User) login(ctx *gin.Context) {
 // @Param       repassword formData string true "再输入一次登录密码"
 // @Param       email_verify_code formData string false "邮箱验证码"
 // @Param       inv_code formData string false "邀请码"
-// @Success     200 {object}
+// @Success     200
 // @Failure     400 {object} errs.JsonRespondError
-// @Router      /user/login [post]
+// @Router      /user/register [post]
 func (s *User) register(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		register := &dto.Register{}
@@ -123,23 +124,17 @@ func (s *User) register(ctx *gin.Context) {
 // @Description 请求邮箱验证码
 // @ID          request-email-code
 // @Tags  	    user
-// @Accept      json
 // @Produce     json
 // @Accept      application/x-www-form-urlencoded
 // @Param       email formData string true "邮箱"
-// @Success     200 {object}
+// @Success     200
 // @Failure     400 {object} errs.JsonRespondError
-// @Router      /user/login [post]
+// @Router      /user/request-email-code [post]
 func (s *User) requestEmailCode(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		email := ctx.PostForm("email")
 		if email == "" {
 			return errs.NewBadRequestError(1001, "邮箱不能为空")
-		}
-		register := &dto.Register{}
-		err := ctx.ShouldBind(register)
-		if err != nil {
-			return err
 		}
 		return s.safe.Limit(&dto2.SafeUserinfo{
 			Identifier: email,
@@ -150,7 +145,11 @@ func (s *User) requestEmailCode(ctx *gin.Context) {
 			PeriodCnt:   5,
 			Period:      24 * time.Hour,
 		}, func() error {
-			return s.RequestRegisterEmailCode(email)
+			code, err := s.RequestRegisterEmailCode(email)
+			if err != nil {
+				return err
+			}
+			return s.sender.SendEmail(email, "注册验证码", "您的注册验证码为:"+code.Code+" 请于5分钟内输入", "text/html")
 		})
 	})
 }
@@ -164,7 +163,8 @@ func (s *User) requestEmailCode(ctx *gin.Context) {
 // @Router      /auth/bbs [post]
 func (s *User) bbsOAuth(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		url, err := s.RedirectOAuth(ctx.Request.URL.String(), "bbs")
+		redirect := fmt.Sprintf("%s://%s/v1/auth/bbs/callback?redirect=%s", ctx.Request.URL.Scheme, ctx.Request.URL.Host, ctx.Query("redirect"))
+		url, err := s.RedirectOAuth(redirect, "bbs")
 		if err != nil {
 			return err
 		}
@@ -182,7 +182,8 @@ func (s *User) bbsOAuth(ctx *gin.Context) {
 // @Router      /auth/wechat [post]
 func (s *User) wechatOAuth(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		url, err := s.RedirectOAuth(ctx.Request.URL.String(), "wechat")
+		redirect := fmt.Sprintf("%s://%s/v1/auth/bbs/callback?redirect=%s", ctx.Request.URL.Scheme, ctx.Request.URL.Host, ctx.Query("redirect"))
+		url, err := s.RedirectOAuth(redirect, "wechat")
 		if err != nil {
 			return err
 		}
@@ -245,6 +246,7 @@ func (s *User) Register(r *gin.RouterGroup) {
 	rg := r.Group("/user")
 	rg.POST("/login", s.login)
 	rg.POST("/register", s.register)
+	rg.POST("/request-email-code", s.requestEmailCode)
 
 	rg = r.Group("/auth")
 	rg.POST("/bbs", s.bbsOAuth)

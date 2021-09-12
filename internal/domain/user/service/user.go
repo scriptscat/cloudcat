@@ -22,7 +22,7 @@ import (
 type User interface {
 	Login(login *dto.Login) (*dto.UserInfo, error)
 	Register(register *dto.Register) (*dto.UserInfo, error)
-	RequestRegisterEmailCode(email string) error
+	RequestRegisterEmailCode(email string) (*entity.VerifyCode, error)
 
 	RedirectOAuth(redirectUrl, platform string) (string, error)
 	BBSOAuthLogin(code string) (*dto.OAuthRespond, error)
@@ -42,7 +42,7 @@ const (
 	OAUTH_CONFIG_WECHAT_TOKEN          = "oauth_config_wechat_token"
 	OAUTH_CONFIG_WECHAT_ENCODINGAESKEY = "oauth_config_wechat_encoding_aes_key"
 
-	REQUIRED_VERIFY_EMAIL = "REQUIRED_VERIFY_EMAIL"
+	REQUIRED_VERIFY_EMAIL = "required_verify_email"
 	ALLOW_EMAIL_SUFFIX    = "allow_email_suffix"
 )
 
@@ -273,6 +273,9 @@ func (u *user) Register(register *dto.Register) (*dto.UserInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := u.checkEmail(register.Email); err != nil {
+		return nil, err
+	}
 	if verifyEmail == "1" {
 		if register.EmailVerifyCode == "" {
 			return nil, errs.ErrRegisterVerifyEmail
@@ -288,7 +291,7 @@ func (u *user) Register(register *dto.Register) (*dto.UserInfo, error) {
 	user := &entity.User{
 		Username:   register.Username,
 		Email:      register.Email,
-		Mobile:     "",
+		Role:       "user",
 		Createtime: time.Now().Unix(),
 		Updatetime: 0,
 	}
@@ -301,12 +304,46 @@ func (u *user) Register(register *dto.Register) (*dto.UserInfo, error) {
 	return dto.ToUserInfo(user), nil
 }
 
-func (u *user) RequestRegisterEmailCode(email string) error {
+func (u *user) checkEmail(email string) error {
+	emailSuffix, err := u.config.GetConfig(ALLOW_EMAIL_SUFFIX)
+	if err != nil {
+		return err
+	}
+	if emailSuffix != "" {
+		suffixs := strings.Split(emailSuffix, ",")
+		flag := false
+		for _, v := range suffixs {
+			if strings.HasSuffix(email, v) {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			return errs.ErrEmailSuffixNotAllow
+		}
+	}
+	user, err := u.userRepo.FindByEmail(email)
+	if err != nil {
+		return err
+	}
+	if user != nil {
+		return errs.ErrEmailExist
+	}
+	return nil
+}
+
+func (u *user) RequestRegisterEmailCode(email string) (*entity.VerifyCode, error) {
+	if err := u.checkEmail(email); err != nil {
+		return nil, err
+	}
 	v := &entity.VerifyCode{
 		Identifier: email,
 		Op:         "register",
 		Code:       strings.ToUpper(util.RandomStr(6)),
 		Expiretime: time.Now().Add(time.Minute * 5).Unix(),
 	}
-	return u.verifyRepo.Create(v)
+	if err := u.verifyRepo.Save(v); err != nil {
+		return nil, err
+	}
+	return v, nil
 }

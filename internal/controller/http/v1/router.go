@@ -2,6 +2,9 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	repository2 "github.com/scriptscat/cloudcat/internal/domain/safe/repository"
+	service3 "github.com/scriptscat/cloudcat/internal/domain/safe/service"
+	service2 "github.com/scriptscat/cloudcat/internal/domain/system/service"
 	"github.com/scriptscat/cloudcat/internal/domain/user/repository"
 	"github.com/scriptscat/cloudcat/internal/domain/user/service"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
@@ -26,12 +29,14 @@ func register(r *gin.RouterGroup, register ...Register) {
 func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb.KvDb) error {
 
 	v1 := r.Group("/api/v1")
-
-	userSvc := service.NewUser(config.NewSystemConfig(kv), kv, repository.NewBbsOAuth(db.DB), repository.NewWechatOAuth(db.DB), repository.NewUser(db.DB), repository.NewVerifyCode(kv))
+	systemConfig := config.NewSystemConfig(kv)
+	userSvc := service.NewUser(systemConfig, kv, repository.NewBbsOAuth(db.DB), repository.NewWechatOAuth(db.DB), repository.NewUser(db.DB), repository.NewVerifyCode(kv))
+	senderSvc := service2.NewSender(systemConfig)
+	safeSvc := service3.NewSafe(repository2.NewSafe(kv))
 
 	system := NewSystem(kv)
 
-	user := NewUser(cfg.Jwt.Token, userSvc)
+	user := NewUser(cfg.Jwt.Token, userSvc, safeSvc, senderSvc)
 
 	register(v1, system, user)
 

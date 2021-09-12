@@ -26,13 +26,16 @@ func newSqlite(db *gorm.DB) (KvDb, error) {
 }
 
 func (s *sqlite) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
-	m := &kvTable{Key: key, Value: value, Expired: time.Now().Add(expiration).Unix()}
+	m := &kvTable{Key: key, Value: value}
+	if expiration != 0 {
+		m.Expired = time.Now().Add(expiration).Unix()
+	}
 	return s.db.Save(m).Error
 }
 
 func (s *sqlite) Get(ctx context.Context, key string) (string, error) {
-	m := &kvTable{Key: key}
-	if err := s.db.First(m).Error; err != nil {
+	m := &kvTable{}
+	if err := s.db.Where("key=?", key).First(m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return "", nil
 		}
@@ -57,9 +60,9 @@ func (s *sqlite) Del(ctx context.Context, key string) error {
 	return s.db.Delete(m).Error
 }
 
+// IncrBy NOTE: 可能会有并发问题,不过sqlite实现的kv,不要考虑那么多了
 func (s *sqlite) IncrBy(ctx context.Context, key string, value int64) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		tx.Exec("BEGIN EXCLUSIVE TRANSACTION;")
 		m := &kvTable{Key: key}
 		if err := s.db.First(m).Error; err != nil {
 			if err != gorm.ErrRecordNotFound {
