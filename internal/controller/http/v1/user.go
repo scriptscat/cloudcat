@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	goJwt "github.com/golang-jwt/jwt"
 	"github.com/scriptscat/cloudcat/internal/controller/http/v1/dto/request"
+	"github.com/scriptscat/cloudcat/internal/domain/user/dto"
 	"github.com/scriptscat/cloudcat/internal/domain/user/service"
 	"github.com/scriptscat/cloudcat/internal/pkg/errs"
 	"github.com/scriptscat/cloudcat/internal/pkg/httputils"
@@ -107,31 +108,49 @@ func (s *User) bbsOAuthCallback(ctx *gin.Context) {
 		if code == "" {
 			return errs.NewBadRequestError(1001, "code不能为空")
 		}
-		if userInfo, err := s.svc.BBSOAuthLogin(code); err != nil {
+		resp, err := s.svc.BBSOAuthLogin(code)
+		if err != nil {
 			return err
-		} else {
-			tokenString, err := jwt.GenJwt([]byte(s.jwtToken), goJwt.MapClaims{
-				"uid":      userInfo.ID,
-				"username": userInfo.Username,
-				"email":    userInfo.Email,
-			})
-			if err != nil {
-				return err
-			}
-			ctx.SetCookie("auth", tokenString, JwtAuthMaxAge, "/", "", false, true)
-			if uri := ctx.Query("redirect_uri"); uri != "" {
-				ctx.Redirect(http.StatusFound, uri)
-				return nil
-			}
-			return gin.H{
-				"token": tokenString,
-			}
 		}
+		return s.oauthHandle(ctx, resp)
 	})
 }
 
 func (s *User) wechatOAuthCallback(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		code := ctx.Query("code")
+		if code == "" {
+			return errs.NewBadRequestError(1001, "code不能为空")
+		}
+		resp, err := s.svc.WechatAuthLogin(code)
+		if err != nil {
+			return err
+		}
+		return s.oauthHandle(ctx, resp)
+	})
+}
 
+func (s *User) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{} {
+	if !resp.IsBind {
+		// 跳转到注册页面
+		return errs.NewBadRequestError(1002, "账号未注册,请先注册后绑定三方平台")
+	}
+	tokenString, err := jwt.GenJwt([]byte(s.jwtToken), goJwt.MapClaims{
+		"uid":      resp.UserInfo.ID,
+		"username": resp.UserInfo.Username,
+		"email":    resp.UserInfo.Email,
+	})
+	if err != nil {
+		return err
+	}
+	ctx.SetCookie("auth", tokenString, JwtAuthMaxAge, "/", "", false, true)
+	if uri := ctx.Query("redirect_uri"); uri != "" {
+		ctx.Redirect(http.StatusFound, uri)
+		return nil
+	}
+	return gin.H{
+		"token": tokenString,
+	}
 }
 
 func (s *User) Register(r *gin.RouterGroup) {

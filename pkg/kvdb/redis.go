@@ -30,6 +30,10 @@ func (r *redis) Get(ctx context.Context, key string) (string, error) {
 	return ret, nil
 }
 
+func (r *redis) Del(ctx context.Context, key string) error {
+	return r.cli.Del(ctx, key).Err()
+}
+
 func (r *redis) Has(ctx context.Context, key string) (bool, error) {
 	ok, err := r.cli.Exists(ctx, key).Result()
 	if err != nil {

@@ -21,3 +21,8 @@ func ToUserInfo(user *entity.User) *UserInfo {
 		Updatetime: user.Updatetime,
 	}
 }
+
+type OAuthRespond struct {
+	UserInfo *UserInfo
+	IsBind   bool
+}

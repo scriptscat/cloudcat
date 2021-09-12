@@ -9,6 +9,7 @@ import (
 type SystemConfig interface {
 	GetConfig(key string) (string, error)
 	SetConfig(key, value string) error
+	DelConfig(key string) error
 }
 
 type systemConfig struct {
@@ -20,11 +21,27 @@ func NewSystemConfig(kv kvdb.KvDb) SystemConfig {
 }
 
 func (s *systemConfig) GetConfig(key string) (string, error) {
-	return s.kv.Get(context.Background(), s.key(key))
+	key = s.key(key)
+	v, err := s.kv.Get(context.Background(), key)
+	if err != nil {
+		return "", err
+	}
+	return v, nil
 }
 
 func (s *systemConfig) SetConfig(key, value string) error {
-	return s.kv.Set(context.Background(), key, value, 0)
+	key = s.key(key)
+	if err := s.kv.Set(context.Background(), key, value, 0); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *systemConfig) DelConfig(key string) error {
+	if err := s.kv.Del(context.Background(), key); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *systemConfig) key(key string) string {

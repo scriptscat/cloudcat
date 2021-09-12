@@ -48,6 +48,11 @@ func (s *sqlite) Has(ctx context.Context, key string) (bool, error) {
 	return true, nil
 }
 
+func (s *sqlite) Del(ctx context.Context, key string) error {
+	m := &kvTable{Key: key}
+	return s.db.Delete(m).Error
+}
+
 func (s *sqlite) Client() interface{} {
 	panic("implement me")
 }

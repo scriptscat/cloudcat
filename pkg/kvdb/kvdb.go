@@ -12,6 +12,7 @@ import (
 type KvDb interface {
 	Set(ctx context.Context, key string, value string, expiration time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
+	Del(ctx context.Context, key string) error
 	Has(ctx context.Context, key string) (bool, error)
 	Client() interface{}
 	DbType() string
