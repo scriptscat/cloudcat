@@ -25,6 +25,9 @@ func (w *WxCache) Get(key string) interface{} {
 }
 
 func (w *WxCache) Set(key string, val interface{}, timeout time.Duration) error {
+	if timeout == 0 {
+		timeout = time.Hour * 24 * 30
+	}
 	return w.kv.Set(context.Background(), key, val.(string), timeout)
 }
 

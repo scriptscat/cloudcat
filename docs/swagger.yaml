@@ -9,7 +9,7 @@ definitions:
     type: object
   repository.ScriptCatInfo:
     properties:
-      message:
+      notice:
         type: string
       version:
         type: string
@@ -19,6 +19,34 @@ info:
   title: 云猫api文档
   version: "1.0"
 paths:
+  /auth/bbs:
+    post:
+      description: 论坛oauth2.0登录
+      operationId: bbs-login
+      responses:
+        "302":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
+  /auth/wechat:
+    post:
+      description: 微信oauth2.0登录
+      operationId: wechat-login
+      responses:
+        "302":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
   /system/version:
     get:
       consumes:
@@ -39,4 +67,46 @@ paths:
       summary: 系统
       tags:
       - system
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+      description: 用户注册
+      operationId: register
+      parameters:
+      - description: 用户名
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: 邮箱
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: 登录密码
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: 再输入一次登录密码
+        in: formData
+        name: rePassword
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repository.ScriptCatInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
 swagger: "2.0"

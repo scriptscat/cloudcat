@@ -4,7 +4,7 @@ VERSION=v0.1.0
 DOCKER_REPO=codfrm
 REMOTE_REPO=$(DOCKER_REPO)/cloudcat:$(VERSION)
 
-test:
+test: swagger
 	go test -v ./...
 
 build:
@@ -24,4 +24,4 @@ docker-push: docker
 	docker push $(REMOTE_REPO)
 
 swagger:
-	swag init -g internal/interface/http/apiv1/router.go
+	swag init -g internal/controller/http/v1/router.go

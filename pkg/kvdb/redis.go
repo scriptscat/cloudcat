@@ -45,6 +45,14 @@ func (r *redis) Has(ctx context.Context, key string) (bool, error) {
 	return false, nil
 }
 
+func (r *redis) IncrBy(ctx context.Context, key string, value int64) error {
+	return r.cli.IncrBy(ctx, key, value).Err()
+}
+
+func (r *redis) Expire(ctx context.Context, key string, expiration time.Duration) error {
+	return r.cli.Expire(ctx, key, expiration).Err()
+}
+
 func (r *redis) Client() interface{} {
 	return r.cli
 }

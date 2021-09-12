@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/scriptscat/cloudcat/internal/controller/http/v1/dto/respond"
+	"github.com/scriptscat/cloudcat/internal/controller/http/v1/dto"
 	"github.com/scriptscat/cloudcat/internal/pkg/errs"
 	pkgValidator "github.com/scriptscat/cloudcat/pkg/utils/validator"
 	"github.com/sirupsen/logrus"
@@ -34,8 +34,8 @@ func Handle(ctx *gin.Context, f func() interface{}) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"code": -1, "msg": "系统错误",
 		})
-	case *respond.List:
-		list := resp.(*respond.List)
+	case *dto.List:
+		list := resp.(*dto.List)
 		ctx.JSON(http.StatusOK, gin.H{
 			"code": 0, "msg": "ok", "list": list.List, "total": list.Total,
 		})

@@ -19,6 +19,9 @@ func Run(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+	if cfg.Mode == "debug" {
+		db.DB = db.DB.Debug()
+	}
 
 	kv, err := kvdb.NewKvDb(cfg.KvDB)
 

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/scriptscat/cloudcat/internal/domain/user/repository"
 	"github.com/scriptscat/cloudcat/internal/domain/user/service"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
 	"github.com/scriptscat/cloudcat/pkg/database"
@@ -22,12 +23,11 @@ func register(r *gin.RouterGroup, register ...Register) {
 // @title       云猫api文档
 // @version     1.0
 // @BasePath    /api/v1
-
 func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb.KvDb) error {
 
 	v1 := r.Group("/api/v1")
 
-	userSvc := service.NewUser(config.NewSystemConfig(kv))
+	userSvc := service.NewUser(config.NewSystemConfig(kv), kv, repository.NewBbsOAuth(db.DB), repository.NewWechatOAuth(db.DB), repository.NewUser(db.DB), repository.NewVerifyCode(kv))
 
 	system := NewSystem(kv)
 

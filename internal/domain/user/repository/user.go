@@ -6,7 +6,10 @@ import (
 )
 
 type User interface {
+	Save(user *entity.User) error
 	FindById(id int64) (*entity.User, error)
+	FindByName(name string) (*entity.User, error)
+	FindByEmail(email string) (*entity.User, error)
 }
 
 type user struct {
@@ -14,11 +17,38 @@ type user struct {
 }
 
 func NewUser(db *gorm.DB) User {
-	return &user{}
+	return &user{
+		db: db,
+	}
+}
+
+func (u *user) Save(user *entity.User) error {
+	return u.db.Save(user).Error
 }
 
 func (u *user) FindById(id int64) (*entity.User, error) {
 	ret := &entity.User{ID: id}
 	err := u.db.First(ret).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return ret, err
+}
+
+func (u *user) FindByName(name string) (*entity.User, error) {
+	ret := &entity.User{}
+	err := u.db.Where("username=?", name).First(ret).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return ret, err
+}
+
+func (u *user) FindByEmail(email string) (*entity.User, error) {
+	ret := &entity.User{}
+	err := u.db.Where("email=?", email).First(ret).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return ret, err
 }

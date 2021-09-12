@@ -1,4 +1,4 @@
-package respond
+package dto
 
 type List struct {
 	List  interface{} `json:"list"`

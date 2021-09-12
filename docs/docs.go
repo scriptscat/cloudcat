@@ -23,6 +23,48 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/bbs": {
+            "post": {
+                "description": "论坛oauth2.0登录",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "bbs-login",
+                "responses": {
+                    "302": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/wechat": {
+            "post": {
+                "description": "微信oauth2.0登录",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "wechat-login",
+                "responses": {
+                    "302": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
         "/system/version": {
             "get": {
                 "description": "查询脚本猫版本信息",
@@ -37,6 +79,67 @@ var doc = `{
                 ],
                 "summary": "系统",
                 "operationId": "system",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repository.ScriptCatInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/login": {
+            "post": {
+                "description": "用户注册",
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "register",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "登录密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "再输入一次登录密码",
+                        "name": "rePassword",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -69,7 +172,7 @@ var doc = `{
         "repository.ScriptCatInfo": {
             "type": "object",
             "properties": {
-                "message": {
+                "notice": {
                     "type": "string"
                 },
                 "version": {

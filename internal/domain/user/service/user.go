@@ -1,9 +1,12 @@
 package service
 
 import (
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/scriptscat/cloudcat/internal/domain/user/dto"
+	"github.com/scriptscat/cloudcat/internal/domain/user/entity"
 	"github.com/scriptscat/cloudcat/internal/domain/user/errs"
 	"github.com/scriptscat/cloudcat/internal/domain/user/repository"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
@@ -13,15 +16,24 @@ import (
 	"github.com/silenceper/wechat/v2"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
 	"github.com/silenceper/wechat/v2/officialaccount/oauth"
+	"github.com/silenceper/wechat/v2/util"
 )
 
 type User interface {
+	Login(login *dto.Login) (*dto.UserInfo, error)
+	Register(register *dto.Register) (*dto.UserInfo, error)
+	RequestRegisterEmailCode(email string) error
+
 	RedirectOAuth(redirectUrl, platform string) (string, error)
 	BBSOAuthLogin(code string) (*dto.OAuthRespond, error)
 	WechatAuthLogin(code string) (*dto.OAuthRespond, error)
+	UserInfo(uid int64) (*dto.UserInfo, error)
 }
 
 const (
+	ENABLE_REGISTER = "enable_register"
+	ENABLE_INVCODE  = "enable_invcode"
+
 	OAUTH_CONFIG_BBS_CLIENT_ID     = "oauth_config_bbs_client_id"
 	OAUTH_CONFIG_BBS_CLIENT_SECRET = "oauth_config_bbs_client_secret"
 
@@ -30,14 +42,15 @@ const (
 	OAUTH_CONFIG_WECHAT_TOKEN          = "oauth_config_wechat_token"
 	OAUTH_CONFIG_WECHAT_ENCODINGAESKEY = "oauth_config_wechat_encoding_aes_key"
 
-	REQUIRED_EMAIL        = "REQUIRED_EMAIL"
 	REQUIRED_VERIFY_EMAIL = "REQUIRED_VERIFY_EMAIL"
+	ALLOW_EMAIL_SUFFIX    = "allow_email_suffix"
 )
 
 type user struct {
 	kv          kvdb.KvDb
 	config      config.SystemConfig
 	userRepo    repository.User
+	verifyRepo  repository.VerifyCode
 	bbsOAuth    repository.BBSOAuth
 	wechatOAuth repository.WechatOAuth
 	oauth       struct {
@@ -47,12 +60,13 @@ type user struct {
 	}
 }
 
-func NewUser(config config.SystemConfig, kv kvdb.KvDb, bbs repository.BBSOAuth, wc repository.WechatOAuth, userRepo repository.User) User {
+func NewUser(config config.SystemConfig, kv kvdb.KvDb, bbs repository.BBSOAuth, wc repository.WechatOAuth, userRepo repository.User, verifyRepo repository.VerifyCode) User {
 	return &user{
 		config:      config,
 		bbsOAuth:    bbs,
 		wechatOAuth: wc,
 		userRepo:    userRepo,
+		verifyRepo:  verifyRepo,
 		kv:          kv,
 	}
 }
@@ -79,6 +93,13 @@ func (u *user) UserInfo(uid int64) (*dto.UserInfo, error) {
 	user, err := u.userRepo.FindById(uid)
 	if err != nil {
 		return nil, err
+	}
+	return u.toUserInfo(user)
+}
+
+func (u *user) toUserInfo(user *entity.User) (*dto.UserInfo, error) {
+	if user == nil {
+		return nil, errs.ErrUserNotFound
 	}
 	return dto.ToUserInfo(user), nil
 }
@@ -217,4 +238,75 @@ func (u *user) getOAuthConfig(key string) (string, error) {
 		return "", errs.ErrOAuthPlatformNotConfigured
 	}
 	return ret, nil
+}
+
+func (u *user) Login(login *dto.Login) (*dto.UserInfo, error) {
+	var user *entity.User
+	var err error
+	if login.Username != "" {
+		user, err = u.userRepo.FindByName(login.Username)
+	} else if login.Email != "" {
+		user, err = u.userRepo.FindByEmail(login.Email)
+	}
+	if err != nil {
+		return nil, err
+	}
+	info, err := u.toUserInfo(user)
+	if err != nil {
+		return nil, err
+	}
+	if err := user.CheckPassword(login.Password); err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
+func (u *user) Register(register *dto.Register) (*dto.UserInfo, error) {
+	enable, err := u.config.GetConfig(ENABLE_REGISTER)
+	if err != nil {
+		return nil, err
+	}
+	if enable == "0" {
+		return nil, errs.ErrRegisterDisable
+	}
+	verifyEmail, err := u.config.GetConfig(REQUIRED_VERIFY_EMAIL)
+	if err != nil {
+		return nil, err
+	}
+	if verifyEmail == "1" {
+		if register.EmailVerifyCode == "" {
+			return nil, errs.ErrRegisterVerifyEmail
+		}
+		vcode, err := u.verifyRepo.FindById(register.Email)
+		if err != nil {
+			return nil, err
+		}
+		if err := vcode.CheckCode(register.EmailVerifyCode); err != nil {
+			return nil, err
+		}
+	}
+	user := &entity.User{
+		Username:   register.Username,
+		Email:      register.Email,
+		Mobile:     "",
+		Createtime: time.Now().Unix(),
+		Updatetime: 0,
+	}
+	if err := user.SetPassword(register.Password); err != nil {
+		return nil, err
+	}
+	if err := u.userRepo.Save(user); err != nil {
+		return nil, err
+	}
+	return dto.ToUserInfo(user), nil
+}
+
+func (u *user) RequestRegisterEmailCode(email string) error {
+	v := &entity.VerifyCode{
+		Identifier: email,
+		Op:         "register",
+		Code:       strings.ToUpper(util.RandomStr(6)),
+		Expiretime: time.Now().Add(time.Minute * 5).Unix(),
+	}
+	return u.verifyRepo.Create(v)
 }

@@ -2,10 +2,12 @@ package v1
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	goJwt "github.com/golang-jwt/jwt"
-	"github.com/scriptscat/cloudcat/internal/controller/http/v1/dto/request"
+	dto2 "github.com/scriptscat/cloudcat/internal/domain/safe/dto"
+	service2 "github.com/scriptscat/cloudcat/internal/domain/safe/service"
 	"github.com/scriptscat/cloudcat/internal/domain/user/dto"
 	"github.com/scriptscat/cloudcat/internal/domain/user/service"
 	"github.com/scriptscat/cloudcat/internal/pkg/errs"
@@ -17,65 +19,152 @@ const JwtAuthMaxAge = 432000
 const JwtAutoRenew = 259200
 
 type User struct {
+	service.User
+	safe     service2.Safe
 	jwtToken string
-	svc      service.User
 }
 
 func NewUser(jwtToken string, svc service.User) *User {
-	return &User{jwtToken: jwtToken, svc: svc}
+	return &User{jwtToken: jwtToken, User: svc}
 }
 
 // @Summary     用户
 // @Description 用户登录
-// @ID          user
+// @ID          login
 // @Tags  	    user
 // @Accept      json
 // @Produce     json
 // @Accept      application/x-www-form-urlencoded
-// @Param       name formData string false "用户名"
+// @Param       username formData string false "用户名"
 // @Param       email formData string false "邮箱"
 // @Param       password formData string true "登录密码"
-// @Success     200 {object} repository.ScriptCatInfo
+// @Success     200 {object}
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /user/login [post]
 func (s *User) login(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		script := &request.UserLogin{}
-		if err := ctx.ShouldBind(script); err != nil {
+		login := &dto.Login{}
+		err := ctx.ShouldBind(login)
+		if err != nil {
 			return err
 		}
-		return nil
+		var resp *dto.UserInfo
+		if err := s.safe.Rate(&dto2.SafeUserinfo{
+			Identifier: login.Username + login.Email,
+		}, &dto2.SafeRule{
+			Name:        "user-login",
+			Description: "用户登录失败",
+			PeriodCnt:   5,
+			Period:      300 * time.Second,
+		}, func() error {
+			resp, err = s.Login(login)
+			if err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+		return s.oauthHandle(ctx, &dto.OAuthRespond{
+			UserInfo: resp,
+			IsBind:   true,
+		})
 	})
 }
 
 // @Summary     用户
 // @Description 用户注册
-// @ID          user
+// @ID          register
 // @Tags  	    user
 // @Accept      json
 // @Produce     json
 // @Accept      application/x-www-form-urlencoded
-// @Param       name formData string true "用户名"
+// @Param       username formData string true "用户名"
 // @Param       email formData string true "邮箱"
 // @Param       password formData string true "登录密码"
-// @Param       rePassword formData string true "再输入一次登录密码"
-// @Success     200 {object} repository.ScriptCatInfo
+// @Param       repassword formData string true "再输入一次登录密码"
+// @Param       email_verify_code formData string false "邮箱验证码"
+// @Param       inv_code formData string false "邀请码"
+// @Success     200 {object}
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /user/login [post]
 func (s *User) register(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		register := &dto.Register{}
+		err := ctx.ShouldBind(register)
+		if err != nil {
+			return err
+		}
+		var resp *dto.UserInfo
+		if err := s.safe.Limit(&dto2.SafeUserinfo{
+			IP: ctx.ClientIP(),
+		}, &dto2.SafeRule{
+			Name:        "user-register",
+			Description: "用户注册失败",
+			PeriodCnt:   5,
+			Period:      24 * time.Hour,
+		}, func() error {
+			resp, err = s.User.Register(register)
+			if err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+		return s.oauthHandle(ctx, &dto.OAuthRespond{
+			UserInfo: resp,
+			IsBind:   true,
+		})
+	})
+}
 
+// @Summary     用户
+// @Description 请求邮箱验证码
+// @ID          request-email-code
+// @Tags  	    user
+// @Accept      json
+// @Produce     json
+// @Accept      application/x-www-form-urlencoded
+// @Param       email formData string true "邮箱"
+// @Success     200 {object}
+// @Failure     400 {object} errs.JsonRespondError
+// @Router      /user/login [post]
+func (s *User) requestEmailCode(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		email := ctx.PostForm("email")
+		if email == "" {
+			return errs.NewBadRequestError(1001, "邮箱不能为空")
+		}
+		register := &dto.Register{}
+		err := ctx.ShouldBind(register)
+		if err != nil {
+			return err
+		}
+		return s.safe.Limit(&dto2.SafeUserinfo{
+			Identifier: email,
+		}, &dto2.SafeRule{
+			Name:        "register-email-code",
+			Description: "请求邮箱验证码失败",
+			Interval:    30,
+			PeriodCnt:   5,
+			Period:      24 * time.Hour,
+		}, func() error {
+			return s.RequestRegisterEmailCode(email)
+		})
+	})
 }
 
 // @Summary     用户
 // @Description 论坛oauth2.0登录
-// @ID          user
+// @ID          bbs-login
 // @Tags  	    user
 // @Success     302
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /auth/bbs [post]
 func (s *User) bbsOAuth(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		url, err := s.svc.RedirectOAuth(ctx.Request.URL.String(), "bbs")
+		url, err := s.RedirectOAuth(ctx.Request.URL.String(), "bbs")
 		if err != nil {
 			return err
 		}
@@ -86,14 +175,14 @@ func (s *User) bbsOAuth(ctx *gin.Context) {
 
 // @Summary     用户
 // @Description 微信oauth2.0登录
-// @ID          user
+// @ID          wechat-login
 // @Tags  	    user
 // @Success     302
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /auth/wechat [post]
 func (s *User) wechatOAuth(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		url, err := s.svc.RedirectOAuth(ctx.Request.URL.String(), "wechat")
+		url, err := s.RedirectOAuth(ctx.Request.URL.String(), "wechat")
 		if err != nil {
 			return err
 		}
@@ -108,7 +197,7 @@ func (s *User) bbsOAuthCallback(ctx *gin.Context) {
 		if code == "" {
 			return errs.NewBadRequestError(1001, "code不能为空")
 		}
-		resp, err := s.svc.BBSOAuthLogin(code)
+		resp, err := s.BBSOAuthLogin(code)
 		if err != nil {
 			return err
 		}
@@ -122,7 +211,7 @@ func (s *User) wechatOAuthCallback(ctx *gin.Context) {
 		if code == "" {
 			return errs.NewBadRequestError(1001, "code不能为空")
 		}
-		resp, err := s.svc.WechatAuthLogin(code)
+		resp, err := s.WechatAuthLogin(code)
 		if err != nil {
 			return err
 		}
@@ -138,7 +227,6 @@ func (s *User) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 	tokenString, err := jwt.GenJwt([]byte(s.jwtToken), goJwt.MapClaims{
 		"uid":      resp.UserInfo.ID,
 		"username": resp.UserInfo.Username,
-		"email":    resp.UserInfo.Email,
 	})
 	if err != nil {
 		return err
