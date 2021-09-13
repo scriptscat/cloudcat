@@ -90,7 +90,7 @@ func (m *manageCmd) admin(cmd *cobra.Command, args []string) error {
 	if err := db.Where("id=1").First(&user).Error; err != nil {
 		return err
 	}
-	user.Username = m.getValue(m.user, user.Username)
+	user.Nickname = m.getValue(m.user, user.Nickname)
 	if m.passwd != "" {
 		if err := user.SetPassword(m.passwd); err != nil {
 			return err
@@ -128,13 +128,13 @@ func (m *manageCmd) oauth(cmd *cobra.Command, args []string) error {
 	errs := make([]error, 0)
 	switch m.platform {
 	case "wechat":
-		errs = append(errs, config.SetConfig(service2.OAUTH_CONFIG_WECHAT_APP_ID, m.appId))
-		errs = append(errs, config.SetConfig(service2.OAUTH_CONFIG_WECHAT_APP_SECRET, m.appSecret))
-		errs = append(errs, config.SetConfig(service2.OAUTH_CONFIG_WECHAT_TOKEN, m.token))
-		errs = append(errs, config.SetConfig(service2.OAUTH_CONFIG_WECHAT_ENCODINGAESKEY, m.aes))
+		errs = append(errs, config.SetConfig(service2.OauthConfigWechatAppId, m.appId))
+		errs = append(errs, config.SetConfig(service2.OauthConfigWechatAppSecret, m.appSecret))
+		errs = append(errs, config.SetConfig(service2.OauthConfigWechatToken, m.token))
+		errs = append(errs, config.SetConfig(service2.OauthConfigWechatEncodingaeskey, m.aes))
 	case "bbs":
-		errs = append(errs, config.SetConfig(service2.OAUTH_CONFIG_BBS_CLIENT_ID, m.clientId))
-		errs = append(errs, config.SetConfig(service2.OAUTH_CONFIG_BBS_CLIENT_SECRET, m.clientSecret))
+		errs = append(errs, config.SetConfig(service2.OauthConfigBbsClientId, m.clientId))
+		errs = append(errs, config.SetConfig(service2.OauthConfigBbsClientSecret, m.clientSecret))
 	}
 	return utils.Errs(errs...)
 }

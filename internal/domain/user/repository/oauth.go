@@ -1,8 +1,13 @@
 package repository
 
 import (
+	"context"
+	"strconv"
+	"time"
+
 	"github.com/scriptscat/cloudcat/internal/domain/user/entity"
 	"github.com/scriptscat/cloudcat/internal/pkg/cnt"
+	"github.com/scriptscat/cloudcat/pkg/kvdb"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +19,7 @@ type bbsOAuth struct {
 	db *gorm.DB
 }
 
-func NewBbsOAuth(db *gorm.DB) BBSOAuth {
+func NewBbsOAuth(db *gorm.DB, kv kvdb.KvDb) BBSOAuth {
 	return &bbsOAuth{
 		db: db,
 	}
@@ -33,15 +38,19 @@ func (b *bbsOAuth) FindByOpenid(openid string) (*entity.BbsOauthUser, error) {
 
 type WechatOAuth interface {
 	FindByOpenid(openid string) (*entity.WechatOauthUser, error)
+	BindCodeUid(code string, uid int64) error
+	FindCodeUid(code string) (int64, error)
 }
 
 type wechatOAuth struct {
 	db *gorm.DB
+	kv kvdb.KvDb
 }
 
-func NewWechatOAuth(db *gorm.DB) WechatOAuth {
+func NewWechatOAuth(db *gorm.DB, kv kvdb.KvDb) WechatOAuth {
 	return &wechatOAuth{
 		db: db,
+		kv: kv,
 	}
 }
 
@@ -54,4 +63,23 @@ func (b *wechatOAuth) FindByOpenid(openid string) (*entity.WechatOauthUser, erro
 		return nil, err
 	}
 	return ret, nil
+}
+
+func (b *wechatOAuth) BindCodeUid(code string, uid int64) error {
+	return b.kv.Set(context.Background(), b.key(code), strconv.FormatInt(uid, 10), time.Minute*20)
+}
+
+func (b *wechatOAuth) FindCodeUid(code string) (int64, error) {
+	result, err := b.kv.Get(context.Background(), b.key(code))
+	if err != nil {
+		return 0, err
+	}
+	if err := b.kv.Del(context.Background(), b.key(code)); err != nil {
+		return 0, err
+	}
+	return strconv.ParseInt(result, 10, 64)
+}
+
+func (b *wechatOAuth) key(code string) string {
+	return "user:oauth:code:" + code
 }

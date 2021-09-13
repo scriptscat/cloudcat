@@ -30,13 +30,14 @@ func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb
 
 	v1 := r.Group("/api/v1")
 	systemConfig := config.NewSystemConfig(kv)
-	userSvc := service.NewUser(systemConfig, kv, repository.NewBbsOAuth(db.DB), repository.NewWechatOAuth(db.DB), repository.NewUser(db.DB), repository.NewVerifyCode(kv))
+	userSvc := service.NewUser(systemConfig, kv, repository.NewUser(db.DB), repository.NewVerifyCode(kv))
+	oauthSvc := service.NewOAuth(systemConfig, kv, userSvc, repository.NewBbsOAuth(db.DB), repository.NewWechatOAuth(db.DB))
 	senderSvc := service2.NewSender(systemConfig)
 	safeSvc := service3.NewSafe(repository2.NewSafe(kv))
 
 	system := NewSystem(kv)
 
-	user := NewUser(cfg.Jwt.Token, userSvc, safeSvc, senderSvc)
+	user := NewUser(cfg.Jwt.Token, userSvc, oauthSvc, safeSvc, senderSvc)
 
 	register(v1, system, user)
 

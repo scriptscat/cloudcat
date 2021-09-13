@@ -3,6 +3,9 @@ package v1
 import (
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	url2 "net/url"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +18,8 @@ import (
 	"github.com/scriptscat/cloudcat/internal/pkg/errs"
 	"github.com/scriptscat/cloudcat/internal/pkg/httputils"
 	"github.com/scriptscat/cloudcat/pkg/middleware/jwt"
+	"github.com/silenceper/wechat/v2/officialaccount/message"
+	"github.com/sirupsen/logrus"
 )
 
 const JwtAuthMaxAge = 432000
@@ -22,13 +27,14 @@ const JwtAutoRenew = 259200
 
 type User struct {
 	service.User
+	oauthSvc service.OAuth
 	sender   service3.Sender
 	safe     service2.Safe
 	jwtToken string
 }
 
-func NewUser(jwtToken string, svc service.User, safe service2.Safe, sender service3.Sender) *User {
-	return &User{jwtToken: jwtToken, User: svc, safe: safe, sender: sender}
+func NewUser(jwtToken string, svc service.User, oauthSvc service.OAuth, safe service2.Safe, sender service3.Sender) *User {
+	return &User{jwtToken: jwtToken, User: svc, safe: safe, sender: sender, oauthSvc: oauthSvc}
 }
 
 // @Summary     用户
@@ -37,13 +43,12 @@ func NewUser(jwtToken string, svc service.User, safe service2.Safe, sender servi
 // @Tags  	    user
 // @Produce     json
 // @Accept      application/x-www-form-urlencoded
-// @Param       username formData string false "用户名"
-// @Param       email formData string false "邮箱"
+// @Param       account formData string true "邮箱/手机"
 // @Param       password formData string true "登录密码"
 // @Success     200
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /user/login [post]
-func (s *User) login(ctx *gin.Context) {
+func (u *User) login(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		login := &dto.Login{}
 		err := ctx.ShouldBind(login)
@@ -51,15 +56,15 @@ func (s *User) login(ctx *gin.Context) {
 			return err
 		}
 		var resp *dto.UserInfo
-		if err := s.safe.Rate(&dto2.SafeUserinfo{
-			Identifier: login.Username + login.Email,
+		if err := u.safe.Rate(&dto2.SafeUserinfo{
+			Identifier: login.Account,
 		}, &dto2.SafeRule{
 			Name:        "user-login",
 			Description: "用户登录失败",
 			PeriodCnt:   5,
 			Period:      300 * time.Second,
 		}, func() error {
-			resp, err = s.Login(login)
+			resp, err = u.Login(login)
 			if err != nil {
 				return err
 			}
@@ -67,7 +72,7 @@ func (s *User) login(ctx *gin.Context) {
 		}); err != nil {
 			return err
 		}
-		return s.oauthHandle(ctx, &dto.OAuthRespond{
+		return u.oauthHandle(ctx, &dto.OAuthRespond{
 			UserInfo: resp,
 			IsBind:   true,
 		})
@@ -89,7 +94,7 @@ func (s *User) login(ctx *gin.Context) {
 // @Success     200
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /user/register [post]
-func (s *User) register(ctx *gin.Context) {
+func (u *User) register(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		register := &dto.Register{}
 		err := ctx.ShouldBind(register)
@@ -97,7 +102,7 @@ func (s *User) register(ctx *gin.Context) {
 			return err
 		}
 		var resp *dto.UserInfo
-		if err := s.safe.Limit(&dto2.SafeUserinfo{
+		if err := u.safe.Limit(&dto2.SafeUserinfo{
 			IP: ctx.ClientIP(),
 		}, &dto2.SafeRule{
 			Name:        "user-register",
@@ -105,7 +110,7 @@ func (s *User) register(ctx *gin.Context) {
 			PeriodCnt:   5,
 			Period:      24 * time.Hour,
 		}, func() error {
-			resp, err = s.User.Register(register)
+			resp, err = u.User.Register(register)
 			if err != nil {
 				return err
 			}
@@ -113,7 +118,7 @@ func (s *User) register(ctx *gin.Context) {
 		}); err != nil {
 			return err
 		}
-		return s.oauthHandle(ctx, &dto.OAuthRespond{
+		return u.oauthHandle(ctx, &dto.OAuthRespond{
 			UserInfo: resp,
 			IsBind:   true,
 		})
@@ -130,13 +135,13 @@ func (s *User) register(ctx *gin.Context) {
 // @Success     200
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /user/request-email-code [post]
-func (s *User) requestEmailCode(ctx *gin.Context) {
+func (u *User) requestEmailCode(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		email := ctx.PostForm("email")
 		if email == "" {
 			return errs.NewBadRequestError(1001, "邮箱不能为空")
 		}
-		return s.safe.Limit(&dto2.SafeUserinfo{
+		return u.safe.Limit(&dto2.SafeUserinfo{
 			Identifier: email,
 		}, &dto2.SafeRule{
 			Name:        "register-email-code",
@@ -145,11 +150,11 @@ func (s *User) requestEmailCode(ctx *gin.Context) {
 			PeriodCnt:   5,
 			Period:      24 * time.Hour,
 		}, func() error {
-			code, err := s.RequestRegisterEmailCode(email)
+			code, err := u.RequestRegisterEmailCode(email)
 			if err != nil {
 				return err
 			}
-			return s.sender.SendEmail(email, "注册验证码", "您的注册验证码为:"+code.Code+" 请于5分钟内输入", "text/html")
+			return u.sender.SendEmail(email, "注册验证码", "您的注册验证码为:"+code.Code+" 请于5分钟内输入", "text/html")
 		})
 	})
 }
@@ -161,16 +166,14 @@ func (s *User) requestEmailCode(ctx *gin.Context) {
 // @Success     302
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /auth/bbs [post]
-func (s *User) bbsOAuth(ctx *gin.Context) {
-	httputils.Handle(ctx, func() interface{} {
-		redirect := fmt.Sprintf("%s://%s/v1/auth/bbs/callback?redirect=%s", ctx.Request.URL.Scheme, ctx.Request.URL.Host, ctx.Query("redirect"))
-		url, err := s.RedirectOAuth(redirect, "bbs")
-		if err != nil {
-			return err
-		}
-		ctx.Redirect(http.StatusFound, url)
-		return nil
-	})
+func (u *User) bbsOAuth(ctx *gin.Context) {
+	redirect := fmt.Sprintf("%s/api/v1/auth/bbs/callback?redirect=%s", ctx.Request.Header.Get("Origin"), url2.PathEscape(ctx.Query("redirect")))
+	url, err := u.oauthSvc.RedirectOAuth(redirect, "bbs")
+	if err != nil {
+		httputils.HandleError(ctx, err)
+		return
+	}
+	ctx.Redirect(http.StatusFound, url)
 }
 
 // @Summary     用户
@@ -180,54 +183,122 @@ func (s *User) bbsOAuth(ctx *gin.Context) {
 // @Success     302
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /auth/wechat [post]
-func (s *User) wechatOAuth(ctx *gin.Context) {
+func (u *User) wechatOAuth(ctx *gin.Context) {
+	redirect := fmt.Sprintf("%s/api/v1/auth/wechat/callback?redirect=%s", ctx.Request.Header.Get("Origin"), url2.PathEscape(ctx.Query("redirect")))
+	url, err := u.oauthSvc.RedirectOAuth(redirect, "wechat")
+	if err != nil {
+		httputils.HandleError(ctx, err)
+		return
+	}
+	ctx.Redirect(http.StatusFound, url)
+}
+
+func (u *User) bbsOAuthCallback(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		redirect := fmt.Sprintf("%s://%s/v1/auth/bbs/callback?redirect=%s", ctx.Request.URL.Scheme, ctx.Request.URL.Host, ctx.Query("redirect"))
-		url, err := s.RedirectOAuth(redirect, "wechat")
+		code := ctx.Query("code")
+		if code == "" {
+			return errs.NewBadRequestError(1001, "code不能为空")
+		}
+		resp, err := u.oauthSvc.BBSOAuthLogin(code)
 		if err != nil {
 			return err
 		}
-		ctx.Redirect(http.StatusFound, url)
+		return u.oauthHandle(ctx, resp)
+	})
+}
+
+func (u *User) wechatOAuthCallback(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		code := ctx.Query("code")
+		if code == "" {
+			return errs.NewBadRequestError(1001, "code不能为空")
+		}
+		resp, err := u.oauthSvc.WechatAuthLogin(code)
+		if err != nil {
+			return err
+		}
+		return u.oauthHandle(ctx, resp)
+	})
+}
+
+func (u *User) wechatHandle(ctx *gin.Context) {
+	wc, err := u.oauthSvc.GetWechat()
+	if err != nil {
+		httputils.HandleError(ctx, err)
+		return
+	}
+	if wc.Officialaccount == nil {
+		return
+	}
+	s := wc.Officialaccount.GetServer(ctx.Request, ctx.Writer)
+	s.SetMessageHandler(func(msg *message.MixMessage) *message.Reply {
+		switch msg.MsgType {
+		case message.MsgTypeEvent:
+			param := ""
+			switch msg.Event {
+			case message.EventSubscribe:
+				param = strings.TrimSuffix(msg.EventKey, "qrscene_")
+				if param == msg.EventKey {
+					return nil
+				}
+			case message.EventScan:
+				param = msg.EventKey
+			}
+			code := strings.Split(param, "_")
+			if len(code) != 2 {
+				return nil
+			}
+			if code[0] == "login" {
+				if err := u.oauthSvc.WechatScanLogin(string(msg.FromUserName), code[1]); err != nil {
+					logrus.Errorf("wx login message handler: %v", err)
+					return nil
+				}
+			}
+		}
+
 		return nil
 	})
+
+	if err := s.Serve(); err != nil {
+		logrus.Errorf("wx message handler: %v", err)
+		return
+	}
+
+	if wc.ReverseProxy != "" {
+		url, _ := url2.Parse(wc.ReverseProxy)
+		proxy := &httputil.ReverseProxy{
+			Director: func(req *http.Request) {
+				req.URL.Scheme = url.Scheme
+				req.URL.Host = url.Host
+				req.URL.Path, req.URL.RawPath = url.Path, url.RawPath
+				if url.RawQuery == "" || req.URL.RawQuery == "" {
+					req.URL.RawQuery = url.RawQuery + req.URL.RawQuery
+				} else {
+					req.URL.RawQuery = url.RawQuery + "&" + req.URL.RawQuery
+				}
+				if _, ok := req.Header["User-Agent"]; !ok {
+					// explicitly disable User-Agent so it's not set to default value
+					req.Header.Set("User-Agent", "")
+				}
+			},
+		}
+		proxy.ServeHTTP(ctx.Writer, ctx.Request)
+		return
+	}
+
+	if err := s.Send(); err != nil {
+		logrus.Errorf("wx message send: %v", err)
+	}
 }
 
-func (s *User) bbsOAuthCallback(ctx *gin.Context) {
-	httputils.Handle(ctx, func() interface{} {
-		code := ctx.Query("code")
-		if code == "" {
-			return errs.NewBadRequestError(1001, "code不能为空")
-		}
-		resp, err := s.BBSOAuthLogin(code)
-		if err != nil {
-			return err
-		}
-		return s.oauthHandle(ctx, resp)
-	})
-}
-
-func (s *User) wechatOAuthCallback(ctx *gin.Context) {
-	httputils.Handle(ctx, func() interface{} {
-		code := ctx.Query("code")
-		if code == "" {
-			return errs.NewBadRequestError(1001, "code不能为空")
-		}
-		resp, err := s.WechatAuthLogin(code)
-		if err != nil {
-			return err
-		}
-		return s.oauthHandle(ctx, resp)
-	})
-}
-
-func (s *User) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{} {
+func (u *User) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{} {
 	if !resp.IsBind {
 		// 跳转到注册页面
 		return errs.NewBadRequestError(1002, "账号未注册,请先注册后绑定三方平台")
 	}
-	tokenString, err := jwt.GenJwt([]byte(s.jwtToken), goJwt.MapClaims{
+	tokenString, err := jwt.GenJwt([]byte(u.jwtToken), goJwt.MapClaims{
 		"uid":      resp.UserInfo.ID,
-		"username": resp.UserInfo.Username,
+		"username": resp.UserInfo.Nickname,
 	})
 	if err != nil {
 		return err
@@ -242,16 +313,17 @@ func (s *User) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 	}
 }
 
-func (s *User) Register(r *gin.RouterGroup) {
+func (u *User) Register(r *gin.RouterGroup) {
 	rg := r.Group("/user")
-	rg.POST("/login", s.login)
-	rg.POST("/register", s.register)
-	rg.POST("/request-email-code", s.requestEmailCode)
+	rg.POST("/login", u.login)
+	rg.POST("/register", u.register)
+	rg.POST("/request-email-code", u.requestEmailCode)
 
 	rg = r.Group("/auth")
-	rg.POST("/bbs", s.bbsOAuth)
-	rg.GET("/bbs/callback", s.bbsOAuthCallback)
-	rg.POST("/wechat", s.wechatOAuth)
-	rg.GET("/wechat/callback", s.wechatOAuthCallback)
+	rg.POST("/bbs", u.bbsOAuth)
+	rg.GET("/bbs/callback", u.bbsOAuthCallback)
+	rg.POST("/wechat", u.wechatOAuth)
+	//rg.GET("/wechat/callback", s.wechatOAuthCallback)
+	rg.Any("/wechat/handle", u.wechatHandle)
 
 }

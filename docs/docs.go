@@ -67,7 +67,7 @@ var doc = `{
         },
         "/system/version": {
             "get": {
-                "description": "查询脚本猫版本信息",
+                "description": "获取系统环境变量",
                 "consumes": [
                     "application/json"
                 ],
@@ -77,8 +77,8 @@ var doc = `{
                 "tags": [
                     "system"
                 ],
-                "summary": "系统",
-                "operationId": "system",
+                "summary": "系统环境",
+                "operationId": "env",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -112,15 +112,10 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户名",
-                        "name": "username",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "邮箱",
-                        "name": "email",
-                        "in": "formData"
+                        "description": "邮箱/手机",
+                        "name": "account",
+                        "in": "formData",
+                        "required": true
                     },
                     {
                         "type": "string",

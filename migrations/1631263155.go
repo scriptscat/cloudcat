@@ -19,7 +19,7 @@ func T1631263155() *gormigrate.Migration {
 				db.AutoMigrate(&entity.BbsOauthUser{}),
 				func() error {
 					user := &entity.User{
-						Username:   "admin",
+						Nickname:   "admin",
 						Email:      "admin@admin.com",
 						Role:       "admin",
 						Createtime: time.Now().Unix(),

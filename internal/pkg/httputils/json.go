@@ -45,3 +45,22 @@ func Handle(ctx *gin.Context, f func() interface{}) {
 		})
 	}
 }
+
+func HandleError(ctx *gin.Context, err error) {
+	switch err.(type) {
+	case *errs.JsonRespondError:
+		err := err.(*errs.JsonRespondError)
+		ctx.JSON(err.Status, err)
+	case validator.ValidationErrors:
+		err := err.(validator.ValidationErrors)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code": -1, "msg": pkgValidator.TransError(err),
+		})
+	case error:
+		err := err.(error)
+		logrus.Errorf("%s - %s: %v", ctx.Request.RequestURI, ctx.ClientIP(), err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code": -1, "msg": "系统错误",
+		})
+	}
+}

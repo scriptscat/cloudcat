@@ -10,6 +10,7 @@ type User interface {
 	FindById(id int64) (*entity.User, error)
 	FindByName(name string) (*entity.User, error)
 	FindByEmail(email string) (*entity.User, error)
+	FindByMobile(mobile string) (*entity.User, error)
 }
 
 type user struct {
@@ -47,6 +48,15 @@ func (u *user) FindByName(name string) (*entity.User, error) {
 func (u *user) FindByEmail(email string) (*entity.User, error) {
 	ret := &entity.User{}
 	err := u.db.Where("email=?", email).First(ret).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return ret, err
+}
+
+func (u *user) FindByMobile(mobile string) (*entity.User, error) {
+	ret := &entity.User{}
+	err := u.db.Where("mobile=?", mobile).First(ret).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}

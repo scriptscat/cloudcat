@@ -4,7 +4,10 @@ VERSION=v0.1.0
 DOCKER_REPO=codfrm
 REMOTE_REPO=$(DOCKER_REPO)/cloudcat:$(VERSION)
 
-test: swagger
+swagger:
+	swag init -g internal/controller/http/v1/router.go
+
+test:
 	go test -v ./...
 
 build:
@@ -22,6 +25,3 @@ docker-test:
 docker-push: docker
 	docker tag cloudcat $(REMOTE_REPO)
 	docker push $(REMOTE_REPO)
-
-swagger:
-	swag init -g internal/controller/http/v1/router.go

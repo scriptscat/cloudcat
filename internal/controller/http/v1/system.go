@@ -20,7 +20,7 @@ func NewSystem(kv kvdb.KvDb) *System {
 
 // @Summary     系统
 // @Description 查询脚本猫版本信息
-// @ID          system
+// @ID          version
 // @Tags  	    system
 // @Accept      json
 // @Produce     json
@@ -37,7 +37,27 @@ func (s *System) version(ctx *gin.Context) {
 	})
 }
 
+// @Summary     系统环境
+// @Description 获取系统环境变量
+// @ID          env
+// @Tags  	    system
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} repository.ScriptCatInfo
+// @Failure     400 {object} errs.JsonRespondError
+// @Router      /system/version [get]
+func (s *System) env(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		ret, err := s.ScriptCatInfo()
+		if err != nil {
+			return err
+		}
+		return ret
+	})
+}
+
 func (s *System) Register(r *gin.RouterGroup) {
 	v1 := r.Group("/system")
 	v1.GET("/version", s.version)
+	v1.GET("/env", s.env)
 }

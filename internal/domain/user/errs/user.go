@@ -20,4 +20,5 @@ var (
 
 	ErrWrongPassword = errs.NewBadRequestError(1008, "登录密码错误")
 	ErrEmailExist    = errs.NewBadRequestError(1009, "邮箱已经注册过了")
+	ErrMobileExist   = errs.NewBadRequestError(1009, "手机号码已经注册过了")
 )
