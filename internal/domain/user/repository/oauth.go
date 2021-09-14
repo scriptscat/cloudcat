@@ -19,7 +19,7 @@ type bbsOAuth struct {
 	db *gorm.DB
 }
 
-func NewBbsOAuth(db *gorm.DB, kv kvdb.KvDb) BBSOAuth {
+func NewBbsOAuth(db *gorm.DB) BBSOAuth {
 	return &bbsOAuth{
 		db: db,
 	}

@@ -1,5 +1,12 @@
 basePath: /api/v1
 definitions:
+  dto.WechatScanLogin:
+    properties:
+      code:
+        type: string
+      url:
+        type: string
+    type: object
   errs.JsonRespondError:
     properties:
       code:
@@ -47,6 +54,49 @@ paths:
       summary: 用户
       tags:
       - user
+  /auth/wechat/request:
+    post:
+      description: 请求微信登录二维码
+      operationId: wechat-request
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WechatScanLogin'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
+  /auth/wechat/status:
+    post:
+      description: 查询微信扫码状态
+      operationId: wechat-status
+      parameters:
+      - description: 重定向链接
+        in: query
+        name: redirect_uri
+        type: string
+      responses:
+        "200":
+          description: token
+          schema:
+            type: string
+        "302":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
   /system/version:
     get:
       consumes:
@@ -67,6 +117,18 @@ paths:
       summary: 系统环境
       tags:
       - system
+  /user/info:
+    post:
+      description: 用户信息
+      operationId: user-info
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      summary: 用户
+      tags:
+      - user
   /user/login:
     post:
       consumes:

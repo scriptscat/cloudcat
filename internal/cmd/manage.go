@@ -128,13 +128,13 @@ func (m *manageCmd) oauth(cmd *cobra.Command, args []string) error {
 	errs := make([]error, 0)
 	switch m.platform {
 	case "wechat":
-		errs = append(errs, config.SetConfig(service2.OauthConfigWechatAppId, m.appId))
-		errs = append(errs, config.SetConfig(service2.OauthConfigWechatAppSecret, m.appSecret))
-		errs = append(errs, config.SetConfig(service2.OauthConfigWechatToken, m.token))
-		errs = append(errs, config.SetConfig(service2.OauthConfigWechatEncodingaeskey, m.aes))
+		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatAppId, m.appId))
+		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatAppSecret, m.appSecret))
+		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatToken, m.token))
+		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatEncodingaeskey, m.aes))
 	case "bbs":
-		errs = append(errs, config.SetConfig(service2.OauthConfigBbsClientId, m.clientId))
-		errs = append(errs, config.SetConfig(service2.OauthConfigBbsClientSecret, m.clientSecret))
+		errs = append(errs, config.SetConfig(service2.OAuthConfigBbsClientId, m.clientId))
+		errs = append(errs, config.SetConfig(service2.OAuthConfigBbsClientSecret, m.clientSecret))
 	}
 	return utils.Errs(errs...)
 }

@@ -65,6 +65,71 @@ var doc = `{
                 }
             }
         },
+        "/auth/wechat/request": {
+            "post": {
+                "description": "请求微信登录二维码",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "wechat-request",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WechatScanLogin"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/wechat/status": {
+            "post": {
+                "description": "查询微信扫码状态",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "wechat-status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "重定向链接",
+                        "name": "redirect_uri",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "302": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
         "/system/version": {
             "get": {
                 "description": "获取系统环境变量",
@@ -91,6 +156,24 @@ var doc = `{
                         "schema": {
                             "$ref": "#/definitions/errs.JsonRespondError"
                         }
+                    }
+                }
+            }
+        },
+        "/user/info": {
+            "post": {
+                "description": "用户信息",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-info",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
                     }
                 }
             }
@@ -245,6 +328,17 @@ var doc = `{
         }
     },
     "definitions": {
+        "dto.WechatScanLogin": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "errs.JsonRespondError": {
             "type": "object",
             "properties": {

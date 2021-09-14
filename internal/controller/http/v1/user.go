@@ -193,6 +193,65 @@ func (u *User) wechatOAuth(ctx *gin.Context) {
 	ctx.Redirect(http.StatusFound, url)
 }
 
+// @Summary     用户
+// @Description 请求微信登录二维码
+// @ID          wechat-request
+// @Tags  	    user
+// @Success     200 {object} dto.WechatScanLogin
+// @Failure     400 {object} errs.JsonRespondError
+// @Router      /auth/wechat/request [post]
+func (u *User) wechatRequest(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		ret, err := u.oauthSvc.WechatScanLoginRequest()
+		if err != nil {
+			return err
+		}
+		return ret
+	})
+}
+
+// @Summary     用户
+// @Description 查询微信扫码状态
+// @ID          wechat-status
+// @Tags  	    user
+// @Param       redirect_uri query string false "重定向链接"
+// @Success     200 {string} json "token"
+// @Success     302
+// @Failure     400 {object} errs.JsonRespondError
+// @Failure     404 {object} errs.JsonRespondError
+// @Router      /auth/wechat/status [post]
+func (u *User) wechatStatus(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		code := ctx.PostForm("code")
+		if code == "" {
+			return errs.NewBadRequestError(1000, "查询状态码不能为空")
+		}
+		ret, err := u.oauthSvc.WechatScanLoginStatus(code)
+		if err != nil {
+			return err
+		}
+		return u.oauthHandle(ctx, ret)
+	})
+}
+
+// @Summary     用户
+// @Description 用户信息
+// @ID          user-info
+// @Tags  	    user
+// @Success     200
+// @Failure     403
+// @Router      /user/info [post]
+func (u *User) info(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		uid, _ := userId(ctx)
+		ret, err := u.UserInfo(uid)
+		if err != nil {
+			return err
+		}
+		return ret
+	})
+}
+
 func (u *User) bbsOAuthCallback(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		code := ctx.Query("code")
@@ -318,12 +377,15 @@ func (u *User) Register(r *gin.RouterGroup) {
 	rg.POST("/login", u.login)
 	rg.POST("/register", u.register)
 	rg.POST("/request-email-code", u.requestEmailCode)
+	rg.GET("/info", tokenAuth(), u.info)
 
 	rg = r.Group("/auth")
 	rg.POST("/bbs", u.bbsOAuth)
 	rg.GET("/bbs/callback", u.bbsOAuthCallback)
 	rg.POST("/wechat", u.wechatOAuth)
 	//rg.GET("/wechat/callback", s.wechatOAuthCallback)
+	rg.POST("/wechat/request", u.wechatRequest)
+	rg.POST("/wechat/status", u.wechatStatus)
 	rg.Any("/wechat/handle", u.wechatHandle)
 
 }
