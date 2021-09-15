@@ -208,7 +208,7 @@ func (o *oauth) WechatScanLoginRequest() (*dto.WechatScanLogin, error) {
 	if err != nil {
 		return nil, err
 	}
-	code := utils.RandString(32, 10)
+	code := utils.RandString(16, 1)
 	ticket, err := client.GetBasic().GetQRTicket(&basic.Request{
 		ExpireSeconds: 600,
 		ActionName:    "QR_STR_SCENE",
@@ -256,10 +256,16 @@ func (o *oauth) WechatScanLogin(openid, code string) error {
 	if wechat == nil {
 		// 新建账号
 		user := &entity.User{
-			Nickname:   userinfo.Nickname,
+			Username:   userinfo.Nickname,
 			Role:       "user",
 			Createtime: time.Now().Unix(),
 			Updatetime: time.Now().Unix(),
+		}
+		if err := o.userSvc.CheckUsername(user.Username); err != nil {
+			if err != errs.ErrUsernameExist {
+				return err
+			}
+			user.Username += utils.RandString(4, 2)
 		}
 
 		if uid, err = o.userSvc.oauthRegister(user); err != nil {
@@ -293,13 +299,16 @@ func (o *oauth) WechatScanLoginStatus(code string) (*dto.OAuthRespond, error) {
 	if err != nil {
 		return nil, err
 	}
+	if uid == 0 {
+		return nil, errs.ErrRecordNotFound
+	}
 	user, err := o.userSvc.UserInfo(uid)
 	if err != nil {
 		return nil, err
 	}
 	return &dto.OAuthRespond{
 		UserInfo: user,
-		IsBind:   false,
+		IsBind:   true,
 	}, nil
 }
 

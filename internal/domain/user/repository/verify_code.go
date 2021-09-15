@@ -35,6 +35,9 @@ func (v *verifyCode) FindById(id string) (*entity.VerifyCode, error) {
 	if err != nil {
 		return nil, err
 	}
+	if s == "" {
+		return nil, nil
+	}
 	ret := &entity.VerifyCode{}
 	if err := json.Unmarshal([]byte(s), ret); err != nil {
 		return nil, err

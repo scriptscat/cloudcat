@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	url2 "net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,11 +44,12 @@ func NewUser(jwtToken string, svc service.User, oauthSvc service.OAuth, safe ser
 // @Tags  	    user
 // @Produce     json
 // @Accept      application/x-www-form-urlencoded
-// @Param       account formData string true "邮箱/手机"
+// @Param       account formData string true "用户名/邮箱"
 // @Param       password formData string true "登录密码"
+// @Param       auto_login formData bool false "自动登录"
 // @Success     200
 // @Failure     400 {object} errs.JsonRespondError
-// @Router      /user/login [post]
+// @Router      /account/login [post]
 func (u *User) login(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		login := &dto.Login{}
@@ -57,7 +59,8 @@ func (u *User) login(ctx *gin.Context) {
 		}
 		var resp *dto.UserInfo
 		if err := u.safe.Rate(&dto2.SafeUserinfo{
-			Identifier: login.Account,
+			IP:         ctx.ClientIP(),
+			Identifier: login.Username,
 		}, &dto2.SafeRule{
 			Name:        "user-login",
 			Description: "用户登录失败",
@@ -93,7 +96,7 @@ func (u *User) login(ctx *gin.Context) {
 // @Param       inv_code formData string false "邀请码"
 // @Success     200
 // @Failure     400 {object} errs.JsonRespondError
-// @Router      /user/register [post]
+// @Router      /account/register [post]
 func (u *User) register(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		register := &dto.Register{}
@@ -134,7 +137,7 @@ func (u *User) register(ctx *gin.Context) {
 // @Param       email formData string true "邮箱"
 // @Success     200
 // @Failure     400 {object} errs.JsonRespondError
-// @Router      /user/request-email-code [post]
+// @Router      /account/register/request-email-code [post]
 func (u *User) requestEmailCode(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		email := ctx.PostForm("email")
@@ -215,6 +218,7 @@ func (u *User) wechatRequest(ctx *gin.Context) {
 // @ID          wechat-status
 // @Tags  	    user
 // @Param       redirect_uri query string false "重定向链接"
+// @param       code formData string true "查询code"
 // @Success     200 {string} json "token"
 // @Success     302
 // @Failure     400 {object} errs.JsonRespondError
@@ -238,7 +242,7 @@ func (u *User) wechatStatus(ctx *gin.Context) {
 // @Description 用户信息
 // @ID          user-info
 // @Tags  	    user
-// @Success     200
+// @Success     200 {object} dto.UserInfo
 // @Failure     403
 // @Router      /user/info [post]
 func (u *User) info(ctx *gin.Context) {
@@ -356,8 +360,8 @@ func (u *User) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 		return errs.NewBadRequestError(1002, "账号未注册,请先注册后绑定三方平台")
 	}
 	tokenString, err := jwt.GenJwt([]byte(u.jwtToken), goJwt.MapClaims{
-		"uid":      resp.UserInfo.ID,
-		"username": resp.UserInfo.Nickname,
+		"uid":      strconv.FormatInt(resp.UserInfo.ID, 10),
+		"username": resp.UserInfo.Username,
 	})
 	if err != nil {
 		return err
@@ -368,15 +372,18 @@ func (u *User) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 		return nil
 	}
 	return gin.H{
+		"uid":   resp.UserInfo.ID,
 		"token": tokenString,
 	}
 }
 
 func (u *User) Register(r *gin.RouterGroup) {
-	rg := r.Group("/user")
+	rg := r.Group("/account")
 	rg.POST("/login", u.login)
 	rg.POST("/register", u.register)
-	rg.POST("/request-email-code", u.requestEmailCode)
+	rg.POST("/register/request-email-code", u.requestEmailCode)
+
+	rg = r.Group("/user")
 	rg.GET("/info", tokenAuth(), u.info)
 
 	rg = r.Group("/auth")

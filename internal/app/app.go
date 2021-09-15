@@ -2,11 +2,13 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/scriptscat/cloudcat/internal/controller/http/v1"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
 	"github.com/scriptscat/cloudcat/migrations"
 	"github.com/scriptscat/cloudcat/pkg/database"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
+	pkgValidator "github.com/scriptscat/cloudcat/pkg/utils/validator"
 
 	_ "github.com/scriptscat/cloudcat/docs"
 	swaggerFiles "github.com/swaggo/files"
@@ -28,6 +30,8 @@ func Run(cfg *config.Config) error {
 	if err := migrations.RunMigrations(db); err != nil {
 		return err
 	}
+
+	binding.Validator = pkgValidator.NewValidator()
 
 	r := gin.Default()
 

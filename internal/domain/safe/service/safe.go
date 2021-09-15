@@ -23,10 +23,23 @@ func NewSafe(repo repository.Safe) Safe {
 
 // Rate 不管成功与否都计算一次
 func (s *safe) Rate(userinfo *dto.SafeUserinfo, rule *dto.SafeRule, f func() error) error {
+	if userinfo.IP != "" {
+		return s.rate(&dto.SafeUserinfo{
+			IP: userinfo.IP,
+		}, rule, func() error {
+			return s.rate(userinfo, rule, f)
+		})
+	} else {
+		return s.rate(userinfo, rule, f)
+	}
+}
+
+func (s *safe) rate(userinfo *dto.SafeUserinfo, rule *dto.SafeRule, f func() error) error {
 	t, err := s.repo.GetLastOpTime(userinfo.Userinfo(), rule.Name)
 	if err != nil {
 		return err
 	}
+
 	if t > time.Now().Unix()-rule.Interval {
 		return errs.NewOperationTimeToShort(rule)
 	}

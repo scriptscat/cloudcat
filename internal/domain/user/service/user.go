@@ -20,6 +20,7 @@ type User interface {
 	UserInfo(uid int64) (*dto.UserInfo, error)
 	UploadAvatar(uid int64, b []byte) error
 	oauthRegister(user *entity.User) (int64, error)
+	CheckUsername(username string) error
 }
 
 const (
@@ -64,10 +65,10 @@ func (u *user) toUserInfo(user *entity.User) (*dto.UserInfo, error) {
 func (u *user) Login(login *dto.Login) (*dto.UserInfo, error) {
 	var user *entity.User
 	var err error
-	if strings.Index(login.Account, "@") == -1 {
-		user, err = u.userRepo.FindByMobile(login.Account)
+	if strings.Index(login.Username, "@") != -1 && strings.Index(login.Username, ".") != -1 {
+		user, err = u.userRepo.FindByEmail(login.Username)
 	} else {
-		user, err = u.userRepo.FindByEmail(login.Account)
+		user, err = u.userRepo.FindByName(login.Username)
 	}
 	if err != nil {
 		return nil, err
@@ -90,11 +91,14 @@ func (u *user) Register(register *dto.Register) (*dto.UserInfo, error) {
 	if enable == "0" {
 		return nil, errs.ErrRegisterDisable
 	}
-	verifyEmail, err := u.config.GetConfig(RequiredVerifyEmail)
-	if err != nil {
+	if err := u.CheckUsername(register.Username); err != nil {
 		return nil, err
 	}
 	if err := u.checkEmail(register.Email); err != nil {
+		return nil, err
+	}
+	verifyEmail, err := u.config.GetConfig(RequiredVerifyEmail)
+	if err != nil {
 		return nil, err
 	}
 	if verifyEmail == "1" {
@@ -105,12 +109,15 @@ func (u *user) Register(register *dto.Register) (*dto.UserInfo, error) {
 		if err != nil {
 			return nil, err
 		}
+		if vcode == nil {
+			return nil, errs.ErrEmailVCodeNotFound
+		}
 		if err := vcode.CheckCode(register.EmailVerifyCode); err != nil {
 			return nil, err
 		}
 	}
 	user := &entity.User{
-		Nickname:   register.Nickname,
+		Username:   register.Username,
 		Email:      register.Email,
 		Role:       "user",
 		Createtime: time.Now().Unix(),
@@ -131,7 +138,18 @@ func (u *user) checkMobile(mobile string) error {
 		return err
 	}
 	if user != nil {
-		return errs.ErrEmailExist
+		return errs.ErrMobileExist
+	}
+	return nil
+}
+
+func (u *user) CheckUsername(username string) error {
+	user, err := u.userRepo.FindByName(username)
+	if err != nil {
+		return err
+	}
+	if user != nil {
+		return errs.ErrUsernameExist
 	}
 	return nil
 }

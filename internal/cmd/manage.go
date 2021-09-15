@@ -90,7 +90,7 @@ func (m *manageCmd) admin(cmd *cobra.Command, args []string) error {
 	if err := db.Where("id=1").First(&user).Error; err != nil {
 		return err
 	}
-	user.Nickname = m.getValue(m.user, user.Nickname)
+	user.Username = m.getValue(m.user, user.Username)
 	if m.passwd != "" {
 		if err := user.SetPassword(m.passwd); err != nil {
 			return err

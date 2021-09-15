@@ -74,6 +74,9 @@ func (b *wechatOAuth) FindCodeUid(code string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	if result == "" {
+		return 0, nil
+	}
 	if err := b.kv.Del(context.Background(), b.key(code)); err != nil {
 		return 0, err
 	}
