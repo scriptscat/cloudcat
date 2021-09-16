@@ -37,6 +37,7 @@ func (b *bbsOAuth) FindByOpenid(openid string) (*entity.BbsOauthUser, error) {
 }
 
 type WechatOAuth interface {
+	Save(u *entity.WechatOauthUser) error
 	FindByOpenid(openid string) (*entity.WechatOauthUser, error)
 	BindCodeUid(code string, uid int64) error
 	FindCodeUid(code string) (int64, error)
@@ -52,6 +53,10 @@ func NewWechatOAuth(db *gorm.DB, kv kvdb.KvDb) WechatOAuth {
 		db: db,
 		kv: kv,
 	}
+}
+
+func (b *wechatOAuth) Save(u *entity.WechatOauthUser) error {
+	return b.db.Save(u).Error
 }
 
 func (b *wechatOAuth) FindByOpenid(openid string) (*entity.WechatOauthUser, error) {

@@ -9,3 +9,7 @@ config.yaml
 /cloudcat
 
 cloudcat.db
+
+cloudcat*/
+
+resource/

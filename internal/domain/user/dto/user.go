@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/scriptscat/cloudcat/internal/domain/user/entity"
+import (
+	"github.com/scriptscat/cloudcat/internal/domain/user/entity"
+)
 
 type UserInfo struct {
 	ID         int64  `json:"id"` // 用户id
@@ -12,14 +14,17 @@ type UserInfo struct {
 }
 
 func ToUserInfo(user *entity.User) *UserInfo {
-	return &UserInfo{
+	ret := &UserInfo{
 		ID:         user.ID,
 		Username:   user.Username,
-		Avatar:     user.Avatar,
 		Role:       user.Role,
 		Createtime: user.Createtime,
 		Updatetime: user.Updatetime,
 	}
+	if user.Avatar != "" {
+		ret.Avatar = "/api/v1/user/avatar"
+	}
+	return ret
 }
 
 type OAuthRespond struct {

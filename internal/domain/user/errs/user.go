@@ -24,4 +24,7 @@ var (
 	ErrMobileExist    = errs.NewBadRequestError(1010, "手机号码已经注册过了")
 	ErrUsernameExist  = errs.NewBadRequestError(1011, "用户名已经注册过了")
 	ErrRecordNotFound = errs.NewError(http.StatusNotFound, 1012, "记录未找到")
+
+	ErrAvatarNotImage = errs.NewBadRequestError(1013, "上传的头像不是一个正确的图片")
+	ErrAvatarIsNil    = errs.NewBadRequestError(1014, "头像是空的")
 )

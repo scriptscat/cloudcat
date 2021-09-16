@@ -242,8 +242,8 @@ paths:
       summary: 系统环境
       tags:
       - system
-  /user/info:
-    post:
+  /user:
+    get:
       description: 用户信息
       operationId: user-info
       responses:
@@ -256,4 +256,44 @@ paths:
       summary: 用户
       tags:
       - user
+  /user/avatar:
+    get:
+      description: 当前用户头像
+      operationId: user-avatar
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+    put:
+      consumes:
+      - multipart/form-data
+      description: 更新用户头像
+      operationId: user-update-avatar
+      parameters:
+      - description: 头像
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

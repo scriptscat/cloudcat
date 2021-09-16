@@ -9,6 +9,7 @@ import (
 	"github.com/scriptscat/cloudcat/internal/domain/user/entity"
 	"github.com/scriptscat/cloudcat/internal/domain/user/errs"
 	"github.com/scriptscat/cloudcat/internal/domain/user/repository"
+	"github.com/scriptscat/cloudcat/internal/pkg/cnt"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/pkg/oauth/bbs"
@@ -20,6 +21,7 @@ import (
 	offOAuth "github.com/silenceper/wechat/v2/officialaccount/oauth"
 	"github.com/silenceper/wechat/v2/util"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type OAuth interface {
@@ -57,18 +59,20 @@ type oauth struct {
 	config          config.SystemConfig
 	bbsOAuthRepo    repository.BBSOAuth
 	wechatOAuthRepo repository.WechatOAuth
+	tx              *gorm.DB
 
 	wechat          *offOAuth.Oauth
 	bbs             *bbs.Client
 	officialaccount *officialaccount.OfficialAccount
 }
 
-func NewOAuth(config config.SystemConfig, kv kvdb.KvDb, userSvc User, bbs repository.BBSOAuth, wc repository.WechatOAuth) OAuth {
+func NewOAuth(config config.SystemConfig, kv kvdb.KvDb, tx *gorm.DB, userSvc User, bbs repository.BBSOAuth, wc repository.WechatOAuth) OAuth {
 	return &oauth{
 		config:          config,
 		bbsOAuthRepo:    bbs,
 		wechatOAuthRepo: wc,
 		kv:              kv,
+		tx:              tx,
 		userSvc:         userSvc,
 	}
 }
@@ -169,11 +173,11 @@ func (o *oauth) getWechatClient() (*officialaccount.OfficialAccount, error) {
 		if err != nil {
 			return nil, err
 		}
-		token, err := o.getOAuthConfig(OAuthConfigWechatAppSecret)
+		token, err := o.getOAuthConfig(OAuthConfigWechatToken)
 		if err != nil {
 			return nil, err
 		}
-		encodingAESKey, err := o.getOAuthConfig(OAuthConfigWechatAppSecret)
+		encodingAESKey, err := o.getOAuthConfig(OAuthConfigWechatEncodingaeskey)
 		if err != nil {
 			return nil, err
 		}
@@ -197,8 +201,12 @@ func (o *oauth) GetWechat() (*WechatConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	wc, err := o.getWechatClient()
+	if err != nil {
+		return nil, err
+	}
 	return &WechatConfig{
-		Officialaccount: o.officialaccount,
+		Officialaccount: wc,
 		ReverseProxy:    reverseProxy,
 	}, nil
 }
@@ -267,18 +275,28 @@ func (o *oauth) WechatScanLogin(openid, code string) error {
 			}
 			user.Username += utils.RandString(4, 2)
 		}
-
-		if uid, err = o.userSvc.oauthRegister(user); err != nil {
+		if err := o.tx.Transaction(func(tx *gorm.DB) error {
+			uid, err = o.userSvc.oauthRegister(tx, user)
+			if err != nil {
+				return err
+			}
+			return repository.NewWechatOAuth(tx, o.kv).Save(&entity.WechatOauthUser{
+				Openid:     openid,
+				Unionid:    userinfo.UnionID,
+				UserID:     uid,
+				Status:     cnt.ACTIVE,
+				Createtime: time.Now().Unix(),
+			})
+		}); err != nil {
 			return err
-		} else {
-			if userinfo.Headimgurl != "" {
-				if b, err := util.HTTPGet(userinfo.Headimgurl); err == nil {
-					if err := o.userSvc.UploadAvatar(uid, b); err != nil {
-						logrus.Errorf("wechat register upload %s avatar: %v", userinfo.Headimgurl, err)
-					}
-				} else {
-					logrus.Errorf("wechat register download %s avatar: %v", userinfo.Headimgurl, err)
+		}
+		if userinfo.Headimgurl != "" {
+			if b, err := util.HTTPGet(userinfo.Headimgurl); err == nil {
+				if err := o.userSvc.UploadAvatar(uid, b); err != nil {
+					logrus.Errorf("wechat register upload %s avatar: %v", userinfo.Headimgurl, err)
 				}
+			} else {
+				logrus.Errorf("wechat register download %s avatar: %v", userinfo.Headimgurl, err)
 			}
 		}
 	} else {

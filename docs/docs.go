@@ -321,8 +321,8 @@ var doc = `{
                 }
             }
         },
-        "/user/info": {
-            "post": {
+        "/user": {
+            "get": {
                 "description": "用户信息",
                 "tags": [
                     "user"
@@ -335,6 +335,62 @@ var doc = `{
                         "schema": {
                             "$ref": "#/definitions/dto.UserInfo"
                         }
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/user/avatar": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "当前用户头像",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-avatar",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新用户头像",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-update-avatar",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "头像",
+                        "name": "avatar",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
                     },
                     "403": {
                         "description": ""
@@ -400,6 +456,13 @@ var doc = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

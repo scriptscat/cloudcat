@@ -16,7 +16,13 @@ func run(db *database.Database, fs ...func() *gormigrate.Migration) error {
 	for _, f := range fs {
 		ms = append(ms, f())
 	}
-	m := gormigrate.New(db.DB, gormigrate.DefaultOptions, ms)
+	m := gormigrate.New(db.DB, &gormigrate.Options{
+		TableName:                 "migrations",
+		IDColumnName:              "id",
+		IDColumnSize:              200,
+		UseTransaction:            true,
+		ValidateUnknownMigrations: true,
+	}, ms)
 	if err := m.Migrate(); err != nil {
 		return err
 	}

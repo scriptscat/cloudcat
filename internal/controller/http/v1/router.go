@@ -27,9 +27,13 @@ func register(r *gin.RouterGroup, register ...Register) {
 var jwtAuth func(enforce bool) func(ctx *gin.Context)
 var tokenAuth func() func(ctx *gin.Context)
 
+// NewRouter
 // Swagger spec:
 // @title       云猫api文档
 // @version     1.0
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 // @BasePath    /api/v1
 func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb.KvDb) error {
 	jwtAuth = func(enforce bool) func(ctx *gin.Context) {
@@ -39,12 +43,13 @@ func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb
 	v1 := r.Group("/api/v1")
 	systemConfig := config.NewSystemConfig(kv)
 	userSvc := service.NewUser(systemConfig, kv, repository.NewUser(db.DB), repository.NewVerifyCode(kv))
-	oauthSvc := service.NewOAuth(systemConfig, kv, userSvc, repository.NewBbsOAuth(db.DB), repository.NewWechatOAuth(db.DB, kv))
+	oauthSvc := service.NewOAuth(systemConfig, kv, db.DB, userSvc, repository.NewBbsOAuth(db.DB), repository.NewWechatOAuth(db.DB, kv))
 	senderSvc := service2.NewSender(systemConfig)
 	safeSvc := service3.NewSafe(repository2.NewSafe(kv))
 
 	system := NewSystem(kv)
 
+	auth := NewAuth(cfg.Jwt.Token, userSvc, oauthSvc, safeSvc, senderSvc)
 	user := NewUser(cfg.Jwt.Token, userSvc, oauthSvc, safeSvc, senderSvc)
 
 	enforceJwt := jwt.Jwt([]byte(cfg.Jwt.Token), true, jwt.WithExpired(JwtAuthMaxAge))
@@ -53,7 +58,7 @@ func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb
 			enforceJwt(ctx)
 			if !ctx.IsAborted() {
 				uid, _ := userId(ctx)
-				if _, err := user.UserInfo(uid); err != nil {
+				if _, err := auth.UserInfo(uid); err != nil {
 					httputils.HandleError(ctx, err)
 					ctx.Abort()
 				}
@@ -61,7 +66,7 @@ func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb
 		}
 	}
 
-	register(v1, system, user)
+	register(v1, system, user, auth)
 
 	return nil
 }

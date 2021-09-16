@@ -1,6 +1,11 @@
 package service
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"net/http"
+	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -11,6 +16,7 @@ import (
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/pkg/utils"
+	"gorm.io/gorm"
 )
 
 type User interface {
@@ -18,8 +24,9 @@ type User interface {
 	Register(register *dto.Register) (*dto.UserInfo, error)
 	RequestRegisterEmailCode(email string) (*entity.VerifyCode, error)
 	UserInfo(uid int64) (*dto.UserInfo, error)
+	Avatar(uid int64) ([]byte, error)
 	UploadAvatar(uid int64, b []byte) error
-	oauthRegister(user *entity.User) (int64, error)
+	oauthRegister(tx *gorm.DB, user *entity.User) (int64, error)
 	CheckUsername(username string) error
 }
 
@@ -32,18 +39,20 @@ const (
 )
 
 type user struct {
-	config     config.SystemConfig
-	kv         kvdb.KvDb
-	userRepo   repository.User
-	verifyRepo repository.VerifyCode
+	config      config.SystemConfig
+	kv          kvdb.KvDb
+	userRepo    repository.User
+	verifyRepo  repository.VerifyCode
+	resourceDir string
 }
 
 func NewUser(config config.SystemConfig, kv kvdb.KvDb, userRepo repository.User, verifyRepo repository.VerifyCode) User {
 	return &user{
-		config:     config,
-		userRepo:   userRepo,
-		verifyRepo: verifyRepo,
-		kv:         kv,
+		config:      config,
+		userRepo:    userRepo,
+		verifyRepo:  verifyRepo,
+		kv:          kv,
+		resourceDir: "./resource/user",
 	}
 }
 
@@ -198,13 +207,49 @@ func (u *user) RequestRegisterEmailCode(email string) (*entity.VerifyCode, error
 	return v, nil
 }
 
-func (u *user) UploadAvatar(uid int64, b []byte) error {
-
-	return nil
+func (u *user) Avatar(uid int64) ([]byte, error) {
+	user, err := u.userRepo.FindById(uid)
+	if err != nil {
+		return nil, err
+	}
+	if user.Avatar == "" {
+		return nil, errs.ErrAvatarIsNil
+	}
+	return os.ReadFile(user.Avatar)
 }
 
-func (u *user) oauthRegister(user *entity.User) (int64, error) {
-	if err := u.userRepo.Save(user); err != nil {
+// UploadAvatar NOTE: resource这块可能要重构
+func (u *user) UploadAvatar(uid int64, b []byte) error {
+	user, err := u.UserInfo(uid)
+	if err != nil {
+		return err
+	}
+	c := http.DetectContentType(b)
+	if strings.Index(c, "image") == -1 {
+		return errs.ErrAvatarNotImage
+	}
+	suffix := c[strings.LastIndex(c, "/")+1:]
+	p, name := u.getDir(b, "."+suffix)
+	p = path.Join(u.resourceDir, "avatar", p)
+	if err := os.MkdirAll(p, 0755); err != nil {
+		return err
+	}
+	p = path.Join(p, name)
+	if err := os.WriteFile(p, b, 0644); err != nil {
+		return err
+	}
+	return u.userRepo.SaveUserAvatar(user.ID, p)
+}
+
+func (u *user) getDir(b []byte, suffix string) (string, string) {
+	d := fmt.Sprintf("%x", sha1.Sum(b))
+	return path.Join(d[:2], d[2:4]), d + suffix
+}
+
+//NOTE: 有点丑陋,先简单实现了
+func (u *user) oauthRegister(tx *gorm.DB, user *entity.User) (int64, error) {
+	userRepo := repository.NewUser(tx)
+	if err := userRepo.Save(user); err != nil {
 		return 0, nil
 	}
 	return user.ID, nil
