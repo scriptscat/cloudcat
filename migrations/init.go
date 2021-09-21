@@ -8,6 +8,7 @@ import (
 func RunMigrations(db *database.Database) error {
 	return run(db,
 		T1631263155,
+		T1631861288,
 	)
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 type kvTable struct {
-	Key     string `gorm:"primarykey;column:key;type:varchar(255);index:key,unique"`
+	Key     string `gorm:"primarykey;type:varchar(255)"`
 	Value   string `gorm:"column:value;type:text"`
 	Expired int64  `gorm:"column:expired;type:bigint;index:expired"`
 }
