@@ -6,8 +6,8 @@ type SyncScript struct {
 	Action     string             `json:"action"`
 	Actiontime int64              `json:"actiontime"`
 	UUID       string             `json:"uuid"`
-	Msg        string             `json:"msg"`
-	Script     *entity.SyncScript `json:"script"`
+	Msg        string             `json:"msg,omitempty"`
+	Script     *entity.SyncScript `json:"script,omitempty"`
 }
 
 type SyncValue struct {

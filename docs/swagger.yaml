@@ -1,5 +1,18 @@
 basePath: /api/v1
 definitions:
+  dto.SyncScript:
+    properties:
+      action:
+        type: string
+      actiontime:
+        type: integer
+      msg:
+        type: string
+      script:
+        $ref: '#/definitions/entity.SyncScript'
+      uuid:
+        type: string
+    type: object
   dto.UserInfo:
     properties:
       avatar:
@@ -21,6 +34,35 @@ definitions:
       code:
         type: string
       url:
+        type: string
+    type: object
+  entity.SyncScript:
+    properties:
+      code:
+        type: string
+      createtime:
+        type: integer
+      device_id:
+        type: integer
+      meta_json:
+        type: string
+      name:
+        type: string
+      origin:
+        type: string
+      self_meta:
+        type: string
+      sort:
+        type: integer
+      state:
+        type: integer
+      type:
+        type: integer
+      updatetime:
+        type: integer
+      user_id:
+        type: integer
+      uuid:
         type: string
     type: object
   errs.JsonRespondError:
@@ -222,6 +264,64 @@ paths:
       summary: 用户
       tags:
       - user
+  /sync/{device}/script/pull/{version}:
+    get:
+      consumes:
+      - application/json
+      description: 拉取脚本变更
+      operationId: sync-pull-script
+      parameters:
+      - description: 设备id
+        in: path
+        name: device
+        required: true
+        type: integer
+      - description: 版本号
+        in: path
+        name: version
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SyncScript'
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 同步
+      tags:
+      - sync
+  /sync/{device}/script/push/{version}:
+    put:
+      consumes:
+      - application/json
+      description: 推送脚本变更,需要先拉取获得版本号
+      operationId: sync-push-script
+      parameters:
+      - description: 设备id
+        in: path
+        name: device
+        required: true
+        type: integer
+      - description: 版本号
+        in: path
+        name: version
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SyncScript'
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 同步
+      tags:
+      - sync
   /system/version:
     get:
       consumes:

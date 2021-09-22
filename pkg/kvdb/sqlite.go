@@ -61,8 +61,9 @@ func (s *sqlite) Del(ctx context.Context, key string) error {
 }
 
 // IncrBy NOTE: 可能会有并发问题,不过sqlite实现的kv,不要考虑那么多了
-func (s *sqlite) IncrBy(ctx context.Context, key string, value int64) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+func (s *sqlite) IncrBy(ctx context.Context, key string, value int64) (int64, error) {
+	var ret int64
+	err := s.db.Transaction(func(tx *gorm.DB) error {
 		m := &kvTable{Key: key}
 		if err := s.db.First(m).Error; err != nil {
 			if err != gorm.ErrRecordNotFound {
@@ -75,10 +76,12 @@ func (s *sqlite) IncrBy(ctx context.Context, key string, value int64) error {
 				Expired: 0,
 			}
 		}
-		t, _ := strconv.ParseInt(m.Value, 10, 64)
-		m.Value = strconv.FormatInt(t+value, 10)
+		ret, _ = strconv.ParseInt(m.Value, 10, 64)
+		ret += value
+		m.Value = strconv.FormatInt(ret, 10)
 		return tx.Save(m).Error
 	})
+	return ret, err
 }
 
 func (s *sqlite) Expire(ctx context.Context, key string, expiration time.Duration) error {

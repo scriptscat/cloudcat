@@ -12,6 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v8 v8.11.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang/mock v1.5.0
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/silenceper/wechat/v2 v2.0.9-rc.2.0.20210910020849-bc9f483c8ee5

@@ -42,7 +42,7 @@ func (s *safe) SetLastOpTime(user, op string, t int64, expired time.Duration) er
 		return err
 	}
 	k := s.key(user, op) + ":period"
-	if err := s.kv.IncrBy(context.Background(), k, 1); err != nil {
+	if _, err := s.kv.IncrBy(context.Background(), k, 1); err != nil {
 		return err
 	}
 	if err := s.kv.Expire(context.Background(), k, expired); err != nil {
@@ -57,7 +57,7 @@ func (s *safe) DelLastOpTime(user, op string) error {
 		return err
 	}
 	k := s.key(user, op) + ":period"
-	if err := s.kv.IncrBy(context.Background(), k, -1); err != nil {
+	if _, err := s.kv.IncrBy(context.Background(), k, -1); err != nil {
 		return err
 	}
 	return nil

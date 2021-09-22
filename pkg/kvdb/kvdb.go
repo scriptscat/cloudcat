@@ -14,7 +14,7 @@ type KvDb interface {
 	Get(ctx context.Context, key string) (string, error)
 	Del(ctx context.Context, key string) error
 	Has(ctx context.Context, key string) (bool, error)
-	IncrBy(ctx context.Context, key string, value int64) error
+	IncrBy(ctx context.Context, key string, value int64) (int64, error)
 	Expire(ctx context.Context, key string, expiration time.Duration) error
 	Client() interface{}
 	DbType() string

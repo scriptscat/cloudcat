@@ -17,16 +17,17 @@ func NewSync() *Sync {
 }
 
 // @Summary     同步
-// @Description 同步脚本
-// @ID          sync-script
+// @Description 推送脚本变更,需要先拉取获得版本号
+// @ID          sync-push-script
 // @Tags  	    sync
 // @Accept      json
 // @Security    BearerAuth
 // @Param       device path int true "设备id"
-// @Success     200 {object} []*dto.SyncScript
+// @Param       version path int true "版本号"
+// @Success     200 {object} dto.SyncScript
 // @Failure     403
-// @Router      /sync/{device}/script/sync [put]
-func (s *Sync) syncScript(c *gin.Context) {
+// @Router      /sync/{device}/script/push/{version} [put]
+func (s *Sync) pushScript(c *gin.Context) {
 	httputils.Handle(c, func() interface{} {
 		uid, _ := userId(c)
 		device := utils.StringToInt64(c.Param("device"))
@@ -34,32 +35,49 @@ func (s *Sync) syncScript(c *gin.Context) {
 		if err := c.BindJSON(&sync); err != nil {
 			return err
 		}
-		ret, err := s.SyncScript(uid, device, sync)
+		version := utils.StringToInt64(c.Param("version"))
+		ret, version, err := s.PushScript(uid, device, version, sync)
 		if err != nil {
 			return err
 		}
-		return ret
+		return gin.H{
+			"version": version,
+			"push":    ret,
+		}
 	})
 }
 
 // @Summary     同步
-// @Description 同步脚本
-// @ID          sync-script
+// @Description 拉取脚本变更
+// @ID          sync-pull-script
 // @Tags  	    sync
 // @Accept      json
 // @Security    BearerAuth
 // @Param       device path int true "设备id"
-// @Success     200 {object} []*dto.SyncScript
+// @Param       version path int true "版本号"
+// @Success     200 {object} dto.SyncScript
 // @Failure     403
-// @Router      /sync/{device}/script/sync [put]
-func (s *Sync) fullScript(c *gin.Context) {
-
+// @Router      /sync/{device}/script/pull/{version} [get]
+func (s *Sync) pullScript(c *gin.Context) {
+	httputils.Handle(c, func() interface{} {
+		uid, _ := userId(c)
+		device := utils.StringToInt64(c.Param("device"))
+		version := utils.StringToInt64(c.Param("version"))
+		ret, version, err := s.PullScript(uid, device, version)
+		if err != nil {
+			return err
+		}
+		return gin.H{
+			"version": version,
+			"pull":    ret,
+		}
+	})
 }
 
 func (s *Sync) Register(r *gin.RouterGroup) {
 	rg := r.Group("/sync/:device", tokenAuth())
 	rgg := rg.Group("/script")
-	rgg.PUT("/sync", s.syncScript)
-	rgg.PUT("/full", s.syncScript)
+	rgg.PUT("/push/:version", s.pushScript)
+	rgg.GET("/pull/:version", s.pullScript)
 
 }

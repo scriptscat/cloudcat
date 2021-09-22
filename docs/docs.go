@@ -291,6 +291,96 @@ var doc = `{
                 }
             }
         },
+        "/sync/{device}/script/pull/{version}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "拉取脚本变更",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "同步",
+                "operationId": "sync-pull-script",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "设备id",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "版本号",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SyncScript"
+                        }
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/sync/{device}/script/push/{version}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "推送脚本变更,需要先拉取获得版本号",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "同步",
+                "operationId": "sync-push-script",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "设备id",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "版本号",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SyncScript"
+                        }
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/system/version": {
             "get": {
                 "description": "获取系统环境变量",
@@ -400,6 +490,26 @@ var doc = `{
         }
     },
     "definitions": {
+        "dto.SyncScript": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "actiontime": {
+                    "type": "integer"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "script": {
+                    "$ref": "#/definitions/entity.SyncScript"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UserInfo": {
             "type": "object",
             "properties": {
@@ -431,6 +541,50 @@ var doc = `{
                     "type": "string"
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.SyncScript": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "createtime": {
+                    "type": "integer"
+                },
+                "device_id": {
+                    "type": "integer"
+                },
+                "meta_json": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "origin": {
+                    "type": "string"
+                },
+                "self_meta": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "updatetime": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "uuid": {
                     "type": "string"
                 }
             }
