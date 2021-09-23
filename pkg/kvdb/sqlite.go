@@ -14,6 +14,13 @@ type kvTable struct {
 	Expired int64  `gorm:"column:expired;type:bigint;index:expired"`
 }
 
+//type HashTable struct {
+//	Key  string `gorm:"column:key;index:hash_key;type:varchar(255)"`
+//	HKey string `gorm:"column:hkey;type:varchar(255)"`
+//	Value   string `gorm:"column:value;type:text"`
+//	Expired int64  `gorm:"column:expired;type:bigint;index:expired"`
+//}
+
 type sqlite struct {
 	db *gorm.DB
 }
@@ -22,6 +29,9 @@ func newSqlite(db *gorm.DB) (KvDb, error) {
 	if err := db.Migrator().AutoMigrate(&kvTable{}); err != nil {
 		return nil, err
 	}
+	//if err := db.Migrator().AutoMigrate(&HashTable{}); err != nil {
+	//	return nil, err
+	//}
 	return &sqlite{db: db}, nil
 }
 

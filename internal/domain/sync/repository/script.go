@@ -104,7 +104,7 @@ func (s *script) key(user, device int64) string {
 
 func (s *script) ListScript(user, device int64) ([]*entity.SyncScript, error) {
 	list := make([]*entity.SyncScript, 0)
-	if err := s.db.Model(&entity.SyncScript{}).Where("user_id=? and device_id=? and state=?", user, device, cnt.ACTIVE).Scan(&list).Error; err != nil {
+	if err := s.db.Model(&entity.SyncScript{}).Where("user_id=? and device_id=? and status=?", user, device, cnt.ACTIVE).Scan(&list).Error; err != nil {
 		return nil, err
 	}
 	return list, nil

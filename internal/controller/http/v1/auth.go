@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	goJwt "github.com/golang-jwt/jwt"
 	dto2 "github.com/scriptscat/cloudcat/internal/domain/safe/dto"
 	service2 "github.com/scriptscat/cloudcat/internal/domain/safe/service"
 	service3 "github.com/scriptscat/cloudcat/internal/domain/system/service"
@@ -20,7 +19,9 @@ import (
 	"github.com/scriptscat/cloudcat/internal/domain/user/service"
 	"github.com/scriptscat/cloudcat/internal/pkg/errs"
 	"github.com/scriptscat/cloudcat/internal/pkg/httputils"
-	"github.com/scriptscat/cloudcat/pkg/middleware/jwt"
+	"github.com/scriptscat/cloudcat/pkg/cache"
+	"github.com/scriptscat/cloudcat/pkg/middleware/token"
+	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"github.com/sirupsen/logrus"
 )
@@ -30,11 +31,11 @@ type Auth struct {
 	oauthSvc service.OAuth
 	sender   service3.Sender
 	safe     service2.Safe
-	jwtToken string
+	cache    cache.Cache
 }
 
-func NewAuth(jwtToken string, svc service.User, oauthSvc service.OAuth, safe service2.Safe, sender service3.Sender) *Auth {
-	return &Auth{jwtToken: jwtToken, User: svc, safe: safe, sender: sender, oauthSvc: oauthSvc}
+func NewAuth(cache cache.Cache, svc service.User, oauthSvc service.OAuth, safe service2.Safe, sender service3.Sender) *Auth {
+	return &Auth{cache: cache, User: svc, safe: safe, sender: sender, oauthSvc: oauthSvc}
 }
 
 // @Summary     用户
@@ -43,7 +44,7 @@ func NewAuth(jwtToken string, svc service.User, oauthSvc service.OAuth, safe ser
 // @Tags  	    user
 // @Produce     json
 // @Accept      x-www-form-urlencoded
-// @Param       account formData string true "用户名/邮箱"
+// @Param       username formData string true "用户名/邮箱"
 // @Param       password formData string true "登录密码"
 // @Param       auto_login formData bool false "自动登录"
 // @Success     200
@@ -337,14 +338,15 @@ func (a *Auth) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 		// 跳转到注册页面
 		return errs.NewBadRequestError(1002, "账号未注册,请先注册后绑定三方平台")
 	}
-	tokenString, err := jwt.GenJwt([]byte(a.jwtToken), goJwt.MapClaims{
+	tokenString, err := token.GenToken(a.cache, gin.H{
 		"uid":      strconv.FormatInt(resp.UserInfo.ID, 10),
 		"username": resp.UserInfo.Username,
+		"token":    utils.RandString(16, 1),
 	})
 	if err != nil {
 		return err
 	}
-	ctx.SetCookie("auth", tokenString, JwtAuthMaxAge, "/", "", false, true)
+	ctx.SetCookie("token", tokenString, JwtAuthMaxAge, "/", "", false, true)
 	if uri := ctx.Query("redirect_uri"); uri != "" {
 		ctx.Redirect(http.StatusFound, uri)
 		return nil

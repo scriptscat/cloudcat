@@ -9,9 +9,10 @@ import (
 	"github.com/scriptscat/cloudcat/internal/domain/user/service"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
 	"github.com/scriptscat/cloudcat/internal/pkg/httputils"
+	"github.com/scriptscat/cloudcat/pkg/cache"
 	"github.com/scriptscat/cloudcat/pkg/database"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
-	"github.com/scriptscat/cloudcat/pkg/middleware/jwt"
+	"github.com/scriptscat/cloudcat/pkg/middleware/token"
 )
 
 type Register interface {
@@ -24,10 +25,10 @@ func register(r *gin.RouterGroup, register ...Register) {
 	}
 }
 
-var jwtAuth func(enforce bool) func(ctx *gin.Context)
-var tokenAuth func() func(ctx *gin.Context)
+var tokenAuth func(enforce bool) func(ctx *gin.Context)
+var userAuth func() func(ctx *gin.Context)
 
-// NewRouter
+// NewRouter 初始化路由
 // Swagger spec:
 // @title       云猫api文档
 // @version     1.0
@@ -35,9 +36,9 @@ var tokenAuth func() func(ctx *gin.Context)
 // @in header
 // @name Authorization
 // @BasePath    /api/v1
-func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb.KvDb) error {
-	jwtAuth = func(enforce bool) func(ctx *gin.Context) {
-		return jwt.Jwt([]byte(cfg.Jwt.Token), enforce, jwt.WithExpired(JwtAuthMaxAge))
+func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb.KvDb, cache cache.Cache) error {
+	tokenAuth = func(enforce bool) func(ctx *gin.Context) {
+		return token.TokenMiddleware(cache, enforce, token.WithExpired(JwtAuthMaxAge))
 	}
 
 	v1 := r.Group("/api/v1")
@@ -49,13 +50,13 @@ func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb
 
 	system := NewSystem(kv)
 
-	auth := NewAuth(cfg.Jwt.Token, userSvc, oauthSvc, safeSvc, senderSvc)
-	user := NewUser(cfg.Jwt.Token, userSvc, oauthSvc, safeSvc, senderSvc)
+	auth := NewAuth(cache, userSvc, oauthSvc, safeSvc, senderSvc)
+	user := NewUser(userSvc, oauthSvc, safeSvc, senderSvc)
 
-	enforceJwt := jwt.Jwt([]byte(cfg.Jwt.Token), true, jwt.WithExpired(JwtAuthMaxAge))
-	tokenAuth = func() func(ctx *gin.Context) {
+	enforceAuth := token.TokenMiddleware(cache, true, token.WithExpired(JwtAuthMaxAge))
+	userAuth = func() func(ctx *gin.Context) {
 		return func(ctx *gin.Context) {
-			enforceJwt(ctx)
+			enforceAuth(ctx)
 			if !ctx.IsAborted() {
 				uid, _ := userId(ctx)
 				if _, err := auth.UserInfo(uid); err != nil {

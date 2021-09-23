@@ -2,6 +2,8 @@ package cache
 
 import (
 	"time"
+
+	kvdb2 "github.com/scriptscat/cloudcat/pkg/kvdb"
 )
 
 type Cache interface {
@@ -14,6 +16,35 @@ type Cache interface {
 type Depend interface {
 	Val() interface{}
 	Ok() error
+}
+
+func NewCache(cfg *Config) (Cache, error) {
+	var ret Cache
+	switch cfg.Type {
+	case "redis", "sqlite":
+		kvdb, err := kvdb2.NewKvDb(&kvdb2.Config{
+			Type: cfg.Type,
+			Redis: struct {
+				Addr   string
+				Passwd string
+				DB     int
+			}{
+				Addr:   cfg.Redis.Addr,
+				Passwd: cfg.Redis.Passwd,
+				DB:     cfg.Redis.DB,
+			},
+			Sqlite: struct {
+				File string
+			}{
+				File: cfg.Sqlite.File,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		ret = NewKvdb(kvdb)
+	}
+	return ret, nil
 }
 
 type Option func(*Options)

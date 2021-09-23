@@ -21,18 +21,22 @@ type Sync interface {
 	PushScript(user, device, version int64, scripts []*dto.SyncScript) ([]*dto.SyncScript, int64, error)
 	PullScript(user, device, version int64) ([]*dto.SyncScript, int64, error)
 
-	UploadSubscribe(user, device int64)
-	FullSubscribe(user, device int64) error
+	PushSubscribe(user, device int64, version int64, sub []*dto.SyncSubscribe) ([]*dto.SyncSubscribe, int64, error)
+	PullSubscribe(user, device int64, version int64) ([]*dto.SyncSubscribe, int64, error)
 
 	SyncSetting(user, device int64) error
 }
 
 type sync struct {
-	script repository.Script
+	script    repository.Script
+	subscribe repository.Subscribe
 }
 
-func NewSync(script repository.Script) Sync {
-	return &sync{script: script}
+func NewSync(script repository.Script, subscribe repository.Subscribe) Sync {
+	return &sync{
+		script:    script,
+		subscribe: subscribe,
+	}
 }
 
 func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript) ([]*dto.SyncScript, int64, error) {
@@ -56,14 +60,14 @@ func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript
 			}
 			continue
 		}
-		// 时间小或者是空,更新脚本
+		// 时间小或者为空,更新脚本
 		v.Script.UserID = user
 		v.Script.DeviceID = device
 		v.Script.Updatetime = v.Actiontime
 		if v.Action == "uninstall" {
-			v.Script.State = cnt.DELETE
+			v.Script.Status = cnt.DELETE
 		} else {
-			v.Script.State = cnt.ACTIVE
+			v.Script.Status = cnt.ACTIVE
 		}
 		if script != nil {
 			v.Script.ID = script.ID
@@ -130,12 +134,99 @@ func (s *sync) PullScript(user, device, version int64) ([]*dto.SyncScript, int64
 	return ret, latest, nil
 }
 
-func (s *sync) UploadSubscribe(user, device int64) {
-
+func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscribe) ([]*dto.SyncSubscribe, int64, error) {
+	if len(sub) == 0 {
+		return nil, 0, errs.ErrSyncIsNil
+	}
+	if v, err := s.subscribe.LatestVersion(user, device); err != nil {
+		return nil, 0, err
+	} else if v != version {
+		return nil, 0, errs.ErrSyncVersionError
+	}
+	data := make([]*dto.SyncSubscribe, 0)
+	ret := make([]*dto.SyncSubscribe, len(sub))
+	for i, v := range sub {
+		script, err := s.subscribe.FindByUrl(user, device, v.URL)
+		if err != nil {
+			logrus.Warnf("push subscribe find subscribe error: %v", err)
+			ret[i] = &dto.SyncSubscribe{
+				Action: "error",
+				Msg:    "同步失败,系统错误",
+			}
+			continue
+		}
+		// 时间小或者为空,更新脚本
+		v.Subscribe.UserID = user
+		v.Subscribe.DeviceID = device
+		v.Subscribe.Updatetime = v.Actiontime
+		if v.Action == "unsubscribe" {
+			v.Subscribe.Status = cnt.DELETE
+		} else {
+			v.Subscribe.Status = cnt.ACTIVE
+		}
+		if script != nil {
+			v.Subscribe.ID = script.ID
+			v.Subscribe.Createtime = script.Createtime
+		}
+		if err := s.subscribe.Save(v.Subscribe); err != nil {
+			logrus.Warnf("sync subscribe save subscribe error: %v", err)
+			ret[i] = &dto.SyncSubscribe{
+				Action: "error",
+				Msg:    "同步失败,系统错误",
+			}
+			continue
+		}
+		ret[i] = &dto.SyncSubscribe{
+			Action:    "ok",
+			Subscribe: v.Subscribe,
+		}
+		data = append(data, &dto.SyncSubscribe{
+			Action:     v.Action,
+			Actiontime: v.Actiontime,
+			URL:        v.URL,
+		})
+	}
+	version, err := s.subscribe.PushVersion(user, device, data)
+	if err != nil {
+		return nil, 0, err
+	}
+	return ret, version, nil
 }
 
-func (s *sync) FullSubscribe(user, device int64) error {
-	panic("implement me")
+func (s *sync) PullSubscribe(user, device int64, version int64) ([]*dto.SyncSubscribe, int64, error) {
+	latest, err := s.subscribe.LatestVersion(user, device)
+	if err != nil {
+		return nil, 0, err
+	}
+	if latest == version {
+		return nil, latest, nil
+	}
+	list, err := s.subscribe.ActionList(user, device, version)
+	if err != nil {
+		return nil, 0, err
+	}
+	ret := make([]*dto.SyncSubscribe, 0)
+	unique := make(map[string]*dto.SyncSubscribe, 0)
+	for _, v := range list {
+		for _, v := range v {
+			unique[v.URL] = v
+		}
+	}
+	for _, v := range unique {
+		switch v.Action {
+		case "subscribe", "resubscribe":
+			subscribe, err := s.subscribe.FindByUrl(user, device, v.URL)
+			if err != nil {
+				logrus.Warnf("pull subscribe find subscribe error: %v", err)
+				v.Action = "error"
+				v.Msg = "同步失败,系统错误"
+			} else {
+				v.Subscribe = subscribe
+			}
+		}
+		ret = append(ret, v)
+	}
+	return ret, latest, nil
 }
 
 func (s *sync) SyncSetting(user, device int64) error {

@@ -20,11 +20,10 @@ type User struct {
 	oauthSvc service.OAuth
 	sender   service3.Sender
 	safe     service2.Safe
-	jwtToken string
 }
 
-func NewUser(jwtToken string, svc service.User, oauthSvc service.OAuth, safe service2.Safe, sender service3.Sender) *User {
-	return &User{jwtToken: jwtToken, User: svc, safe: safe, sender: sender, oauthSvc: oauthSvc}
+func NewUser(svc service.User, oauthSvc service.OAuth, safe service2.Safe, sender service3.Sender) *User {
+	return &User{User: svc, safe: safe, sender: sender, oauthSvc: oauthSvc}
 }
 
 // @Summary     用户
@@ -107,7 +106,7 @@ func (u *User) updateAvatar(ctx *gin.Context) {
 }
 
 func (u *User) Register(r *gin.RouterGroup) {
-	rg := r.Group("/user", tokenAuth())
+	rg := r.Group("/user", userAuth())
 	rg.GET("", u.get)
 	rg.PUT("", u.update)
 	rg.GET("/avatar", u.avatar)

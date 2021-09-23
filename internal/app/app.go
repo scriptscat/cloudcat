@@ -6,6 +6,7 @@ import (
 	"github.com/scriptscat/cloudcat/internal/controller/http/v1"
 	"github.com/scriptscat/cloudcat/internal/pkg/config"
 	"github.com/scriptscat/cloudcat/migrations"
+	cache2 "github.com/scriptscat/cloudcat/pkg/cache"
 	"github.com/scriptscat/cloudcat/pkg/database"
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 	pkgValidator "github.com/scriptscat/cloudcat/pkg/utils/validator"
@@ -16,17 +17,18 @@ import (
 )
 
 func Run(cfg *config.Config) error {
-
 	db, err := database.NewDatabase(cfg.Database, cfg.Mode == "debug")
 	if err != nil {
 		return err
 	}
-
 	kv, err := kvdb.NewKvDb(cfg.KvDB)
 	if err != nil {
 		return err
 	}
-
+	cache, err := cache2.NewCache(cfg.Cache)
+	if err != nil {
+		return err
+	}
 	if err := migrations.RunMigrations(db); err != nil {
 		return err
 	}
@@ -40,7 +42,7 @@ func Run(cfg *config.Config) error {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 	}
 
-	if err := v1.NewRouter(r, cfg, db, kv); err != nil {
+	if err := v1.NewRouter(r, cfg, db, kv, cache); err != nil {
 		return err
 	}
 

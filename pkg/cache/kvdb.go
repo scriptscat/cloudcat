@@ -6,20 +6,20 @@ import (
 	"reflect"
 	"time"
 
-	goRedis "github.com/go-redis/redis/v8"
+	"github.com/scriptscat/cloudcat/pkg/kvdb"
 )
 
-type redisCache struct {
-	redis *goRedis.Client
+type kvdbCache struct {
+	kv kvdb.KvDb
 }
 
-func NewRedisCache(redis *goRedis.Client) *redisCache {
-	return &redisCache{
-		redis: redis,
+func NewKvdb(kv kvdb.KvDb) *kvdbCache {
+	return &kvdbCache{
+		kv: kv,
 	}
 }
 
-func (r *redisCache) GetOrSet(key string, get interface{}, set func() (interface{}, error), opts ...Option) error {
+func (r *kvdbCache) GetOrSet(key string, get interface{}, set func() (interface{}, error), opts ...Option) error {
 	err := r.Get(key, get, opts...)
 	if err != nil {
 		val, err := set()
@@ -33,8 +33,8 @@ func (r *redisCache) GetOrSet(key string, get interface{}, set func() (interface
 	return nil
 }
 
-func (r *redisCache) Get(key string, get interface{}, opts ...Option) error {
-	val, err := r.redis.Get(context.Background(), key).Result()
+func (r *kvdbCache) Get(key string, get interface{}, opts ...Option) error {
+	val, err := r.kv.Get(context.Background(), key)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (r *redisCache) Get(key string, get interface{}, opts ...Option) error {
 	return nil
 }
 
-func (r *redisCache) Set(key string, val interface{}, opts ...Option) error {
+func (r *kvdbCache) Set(key string, val interface{}, opts ...Option) error {
 	options := NewOptions(opts...)
 	ttl := time.Duration(0)
 	if options.TTL > 0 {
@@ -65,21 +65,18 @@ func (r *redisCache) Set(key string, val interface{}, opts ...Option) error {
 	if err != nil {
 		return err
 	}
-	if err := r.redis.Set(context.Background(), key, b, ttl).Err(); err != nil {
+	if err := r.kv.Set(context.Background(), key, string(b), ttl); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *redisCache) Has(key string) (bool, error) {
-	ok, err := r.redis.Exists(context.Background(), key).Result()
+func (r *kvdbCache) Has(key string) (bool, error) {
+	ok, err := r.kv.Has(context.Background(), key)
 	if err != nil {
 		return false, err
 	}
-	if ok == 1 {
-		return true, nil
-	}
-	return false, nil
+	return ok, nil
 }
 
 func copyInterface(dst interface{}, src interface{}) {

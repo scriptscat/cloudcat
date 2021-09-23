@@ -30,7 +30,3 @@ cache:
 
 # 监听地址
 addr: :8080
-
-# jwt token
-jwt:
-  token: xxx

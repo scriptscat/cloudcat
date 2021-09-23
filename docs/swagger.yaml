@@ -13,6 +13,19 @@ definitions:
       uuid:
         type: string
     type: object
+  dto.SyncSubscribe:
+    properties:
+      action:
+        type: string
+      actiontime:
+        type: integer
+      msg:
+        type: string
+      subscribe:
+        $ref: '#/definitions/entity.SyncSubscribe'
+      url:
+        type: string
+    type: object
   dto.UserInfo:
     properties:
       avatar:
@@ -54,8 +67,10 @@ definitions:
         type: string
       sort:
         type: integer
-      state:
+      status:
         type: integer
+      subscribe_url:
+        type: string
       type:
         type: integer
       updatetime:
@@ -64,6 +79,31 @@ definitions:
         type: integer
       uuid:
         type: string
+    type: object
+  entity.SyncSubscribe:
+    properties:
+      code:
+        type: string
+      createtime:
+        type: integer
+      device_id:
+        type: integer
+      meta_json:
+        type: string
+      name:
+        type: string
+      scripts:
+        type: string
+      status:
+        type: integer
+      updatetime:
+        type: integer
+      url:
+        type: string
+      url_hash:
+        type: string
+      user_id:
+        type: integer
     type: object
   errs.JsonRespondError:
     properties:
@@ -93,7 +133,7 @@ paths:
       parameters:
       - description: 用户名/邮箱
         in: formData
-        name: account
+        name: username
         required: true
         type: string
       - description: 登录密码
@@ -315,6 +355,64 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/dto.SyncScript'
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 同步
+      tags:
+      - sync
+  /sync/{device}/subscribe/pull/{version}:
+    get:
+      consumes:
+      - application/json
+      description: 拉取脚本变更
+      operationId: sync-pull-subscribe
+      parameters:
+      - description: 设备id
+        in: path
+        name: device
+        required: true
+        type: integer
+      - description: 版本号
+        in: path
+        name: version
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SyncSubscribe'
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 同步
+      tags:
+      - sync
+  /sync/{device}/subscribe/push/{version}:
+    put:
+      consumes:
+      - application/json
+      description: 推送订阅变更,需要先拉取获得版本号
+      operationId: sync-push-subscribe
+      parameters:
+      - description: 设备id
+        in: path
+        name: device
+        required: true
+        type: integer
+      - description: 版本号
+        in: path
+        name: version
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SyncSubscribe'
         "403":
           description: ""
       security:

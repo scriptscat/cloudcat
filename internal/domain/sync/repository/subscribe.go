@@ -1,37 +1,123 @@
 package repository
 
 import (
-	"crypto/sha1"
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 
+	"github.com/go-redis/redis/v8"
+	"github.com/scriptscat/cloudcat/internal/domain/sync/dto"
 	"github.com/scriptscat/cloudcat/internal/domain/sync/entity"
+	"github.com/scriptscat/cloudcat/pkg/kvdb"
+	"github.com/scriptscat/cloudcat/pkg/utils"
 	"gorm.io/gorm"
 )
 
+//go:generate mockgen -source ./subscribe.go -destination ./mock/subscribe.go
+
 type Subscribe interface {
+	LatestVersion(user, device int64) (int64, error)
+	PushVersion(user, device int64, data []*dto.SyncSubscribe) (int64, error)
+	ActionList(user, device, version int64) ([][]*dto.SyncSubscribe, error)
+	FindByUrl(user, device int64, uuid string) (*entity.SyncSubscribe, error)
 	Save(entity *entity.SyncSubscribe) error
-	FindByUrl(user, device int64, url string) (*entity.SyncSubscribe, error)
 }
 
 type subscribe struct {
-	db *gorm.DB
+	db    *gorm.DB
+	kv    kvdb.KvDb
+	redis *redis.Client
 }
 
-func NewSubscribe(db *gorm.DB) Subscribe {
-	return &subscribe{db: db}
+func NewSubscribe(db *gorm.DB, kv kvdb.KvDb) Subscribe {
+	var rds *redis.Client
+	if kv.DbType() == "redis" {
+		rds = kv.Client().(*redis.Client)
+	}
+	return &subscribe{
+		db:    db,
+		kv:    kv,
+		redis: rds,
+	}
 }
 
-func (s *subscribe) Save(entity *entity.SyncSubscribe) error {
-	return s.db.Save(entity).Error
+func (s *subscribe) LatestVersion(user, device int64) (int64, error) {
+	result, err := s.kv.Get(context.Background(), s.key(user, device)+":version")
+	if err != nil {
+		return 0, err
+	}
+	return utils.StringToInt64(result), nil
 }
 
-func (s *subscribe) FindByUrl(user, device int64, url string) (*entity.SyncSubscribe, error) {
+func (s *subscribe) PushVersion(user, device int64, data []*dto.SyncSubscribe) (int64, error) {
+	rds, err := s.rds()
+	if err != nil {
+		return 0, err
+	}
+	b, err := json.Marshal(data)
+	if err != nil {
+		return 0, err
+	}
+	version, err := s.kv.IncrBy(context.Background(), s.key(user, device)+":version", 1)
+	if err != nil {
+		return 0, err
+	}
+	err = rds.ZAdd(context.Background(), s.key(user, device), &redis.Z{
+		Score:  float64(version),
+		Member: b,
+	}).Err()
+	if err != nil {
+		return 0, err
+	}
+	return version, nil
+}
+
+func (s *subscribe) ActionList(user, device, version int64) ([][]*dto.SyncSubscribe, error) {
+	rds, err := s.rds()
+	if err != nil {
+		return nil, err
+	}
+	list, err := rds.ZRangeByScore(context.Background(), s.key(user, device), &redis.ZRangeBy{
+		Min: fmt.Sprintf("%d", version),
+		Max: "+inf",
+	}).Result()
+	if err != nil {
+		return nil, err
+	}
+	ret := make([][]*dto.SyncSubscribe, 0)
+	for _, v := range list {
+		s := make([]*dto.SyncSubscribe, 0)
+		if err := json.Unmarshal([]byte(v), &s); err != nil {
+			return nil, err
+		}
+		ret = append(ret, s)
+	}
+	return ret, nil
+}
+
+func (s *subscribe) key(user, device int64) string {
+	return fmt.Sprintf("sync:subscribe:list:%d:%d", user, device)
+}
+
+func (s *subscribe) FindByUrl(user, device int64, uuid string) (*entity.SyncSubscribe, error) {
 	ret := &entity.SyncSubscribe{}
-	if err := s.db.Where("user_id=? and device_id=? and url_hash=?", user, device, fmt.Sprintf("%x", sha1.Sum([]byte(url)))).First(&ret).Error; err != nil {
+	if err := s.db.Where("user_id=? and device_id=? and uuid=?", user, device, uuid).First(ret).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
 		return nil, err
 	}
 	return ret, nil
+}
+
+func (s *subscribe) Save(entity *entity.SyncSubscribe) error {
+	return s.db.Save(entity).Error
+}
+
+func (s *subscribe) rds() (*redis.Client, error) {
+	if s.redis == nil {
+		return nil, errors.New("请使用redis作为kvdb,否则无法存储script数据")
+	}
+	return s.redis, nil
 }

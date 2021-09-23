@@ -41,7 +41,7 @@ var doc = `{
                     {
                         "type": "string",
                         "description": "用户名/邮箱",
-                        "name": "account",
+                        "name": "username",
                         "in": "formData",
                         "required": true
                     },
@@ -381,6 +381,96 @@ var doc = `{
                 }
             }
         },
+        "/sync/{device}/subscribe/pull/{version}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "拉取脚本变更",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "同步",
+                "operationId": "sync-pull-subscribe",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "设备id",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "版本号",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SyncSubscribe"
+                        }
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/sync/{device}/subscribe/push/{version}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "推送订阅变更,需要先拉取获得版本号",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "同步",
+                "operationId": "sync-push-subscribe",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "设备id",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "版本号",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SyncSubscribe"
+                        }
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/system/version": {
             "get": {
                 "description": "获取系统环境变量",
@@ -510,6 +600,26 @@ var doc = `{
                 }
             }
         },
+        "dto.SyncSubscribe": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "actiontime": {
+                    "type": "integer"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "subscribe": {
+                    "$ref": "#/definitions/entity.SyncSubscribe"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UserInfo": {
             "type": "object",
             "properties": {
@@ -572,8 +682,11 @@ var doc = `{
                 "sort": {
                     "type": "integer"
                 },
-                "state": {
+                "status": {
                     "type": "integer"
+                },
+                "subscribe_url": {
+                    "type": "string"
                 },
                 "type": {
                     "type": "integer"
@@ -586,6 +699,44 @@ var doc = `{
                 },
                 "uuid": {
                     "type": "string"
+                }
+            }
+        },
+        "entity.SyncSubscribe": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "createtime": {
+                    "type": "integer"
+                },
+                "device_id": {
+                    "type": "integer"
+                },
+                "meta_json": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "scripts": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatetime": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "url_hash": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

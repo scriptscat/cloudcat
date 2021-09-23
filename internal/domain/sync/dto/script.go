@@ -10,5 +10,13 @@ type SyncScript struct {
 	Script     *entity.SyncScript `json:"script,omitempty"`
 }
 
+type SyncSubscribe struct {
+	Action     string                `json:"action"`
+	Actiontime int64                 `json:"actiontime"`
+	URL        string                `json:"url"`
+	Msg        string                `json:"msg,omitempty"`
+	Subscribe  *entity.SyncSubscribe `json:"subscribe,omitempty"`
+}
+
 type SyncValue struct {
 }
