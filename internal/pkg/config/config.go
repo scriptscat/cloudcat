@@ -18,17 +18,12 @@ type Config struct {
 	OAuth    struct {
 		BBS OAuth `yaml:"bbs"`
 	} `yaml:"oauth"`
-	Jwt  Jwt
 	Addr string `yaml:"addr"`
 }
 
 type OAuth struct {
 	ClientID     string `yaml:"clientId"`
 	ClientSecret string `yaml:"clientSecret"`
-}
-
-type Jwt struct {
-	Token string `yaml:"token"`
 }
 
 func Init(filename string) (*Config, error) {

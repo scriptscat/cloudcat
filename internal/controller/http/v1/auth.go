@@ -21,7 +21,6 @@ import (
 	"github.com/scriptscat/cloudcat/internal/pkg/httputils"
 	"github.com/scriptscat/cloudcat/pkg/cache"
 	"github.com/scriptscat/cloudcat/pkg/middleware/token"
-	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"github.com/sirupsen/logrus"
 )
@@ -341,12 +340,11 @@ func (a *Auth) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 	tokenString, err := token.GenToken(a.cache, gin.H{
 		"uid":      strconv.FormatInt(resp.UserInfo.ID, 10),
 		"username": resp.UserInfo.Username,
-		"token":    utils.RandString(16, 1),
 	})
 	if err != nil {
 		return err
 	}
-	ctx.SetCookie("token", tokenString, JwtAuthMaxAge, "/", "", false, true)
+	ctx.SetCookie("token", tokenString, TokenAuthMaxAge, "/", "", false, true)
 	if uri := ctx.Query("redirect_uri"); uri != "" {
 		ctx.Redirect(http.StatusFound, uri)
 		return nil

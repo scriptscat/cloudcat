@@ -12,8 +12,8 @@ import (
 	"github.com/scriptscat/cloudcat/internal/pkg/httputils"
 )
 
-const JwtAuthMaxAge = 432000
-const JwtAutoRenew = 259200
+const TokenAuthMaxAge = 432000
+const TokenAutoRegen = 259200
 
 type User struct {
 	service.User

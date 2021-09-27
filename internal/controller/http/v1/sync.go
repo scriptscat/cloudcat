@@ -12,8 +12,10 @@ type Sync struct {
 	service.Sync
 }
 
-func NewSync() *Sync {
-	return &Sync{}
+func NewSync(sync service.Sync) *Sync {
+	return &Sync{
+		Sync: sync,
+	}
 }
 
 // @Summary     同步
@@ -132,8 +134,31 @@ func (s *Sync) pullSubscribe(c *gin.Context) {
 	})
 }
 
+// @Summary     同步
+// @Description 获取设备列表
+// @ID          sync-device-list
+// @Tags  	    sync
+// @Accept      json
+// @Security    BearerAuth
+// @Success     200 {object} entity.SyncDevice
+// @Failure     403
+// @Router      /sync/device [get]
+func (s *Sync) device(c *gin.Context) {
+	httputils.Handle(c, func() interface{} {
+		uid, _ := userId(c)
+		list, err := s.Sync.DeviceList(uid)
+		if err != nil {
+			return err
+		}
+		return list
+	})
+}
+
 func (s *Sync) Register(r *gin.RouterGroup) {
-	rg := r.Group("/sync/:device", userAuth())
+	rg := r.Group("/sync", userAuth())
+	rg.GET("/device", s.device)
+
+	rg = rg.Group("/:device")
 	rgg := rg.Group("/script")
 	rgg.PUT("/push/:version", s.pushScript)
 	rgg.GET("/pull/:version", s.pullScript)

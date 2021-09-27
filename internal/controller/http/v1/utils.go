@@ -21,3 +21,11 @@ func isadmin(ctx *gin.Context) (int64, bool) {
 	}
 	return utils.StringToInt64(u.(gin.H)["uid"].(string)), false
 }
+
+func authtoken(ctx *gin.Context) (*token.Token, bool) {
+	t, ok := ctx.Get(token.AuthToken)
+	if !ok {
+		return nil, false
+	}
+	return t.(*token.Token), true
+}

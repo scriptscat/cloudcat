@@ -11,9 +11,13 @@ import (
 )
 
 const Userinfo = "userinfo"
-const JwtToken = "jwt_token"
+const AuthToken = "auth_token"
 
-func TokenMiddleware(cache cache.Cache, enforce bool, handlers ...HandlerFunc) gin.HandlerFunc {
+func Middleware(cache cache.Cache, enforce bool, option ...Option) gin.HandlerFunc {
+	opts := &options{}
+	for _, o := range option {
+		o(opts)
+	}
 	return func(ctx *gin.Context) {
 		token, _ := ctx.Cookie("token")
 		if token == "" {
@@ -40,15 +44,30 @@ func TokenMiddleware(cache cache.Cache, enforce bool, handlers ...HandlerFunc) g
 			}
 			return
 		}
-		tokenInfo := &Token{}
+		tokenInfo := &Token{
+			Token: token,
+		}
 		err := cache.Get("token:token:"+token, tokenInfo)
 		if err != nil {
+			for _, v := range opts.authFailed {
+				if err := v(tokenInfo); err != nil {
+					ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+						"code": 1002, "msg": err.Error(),
+					})
+					return
+				}
+			}
+			if tokenInfo.Info != nil {
+				ctx.Set(Userinfo, tokenInfo.Info)
+				ctx.Set(AuthToken, tokenInfo)
+				return
+			}
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"code": 1002, "msg": err.Error(),
 			})
 			return
 		}
-		for _, v := range handlers {
+		for _, v := range opts.tokenHandlerFunc {
 			if err := v(tokenInfo); err != nil {
 				ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 					"code": 1002, "msg": err.Error(),
@@ -57,6 +76,7 @@ func TokenMiddleware(cache cache.Cache, enforce bool, handlers ...HandlerFunc) g
 			}
 		}
 		ctx.Set(Userinfo, tokenInfo.Info)
+		ctx.Set(AuthToken, tokenInfo)
 	}
 }
 

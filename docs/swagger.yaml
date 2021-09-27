@@ -49,6 +49,17 @@ definitions:
       url:
         type: string
     type: object
+  entity.SyncDevice:
+    properties:
+      createtime:
+        type: integer
+      name:
+        type: string
+      remark:
+        type: string
+      user_id:
+        type: integer
+    type: object
   entity.SyncScript:
     properties:
       code:
@@ -413,6 +424,24 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/dto.SyncSubscribe'
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 同步
+      tags:
+      - sync
+  /sync/device:
+    get:
+      consumes:
+      - application/json
+      description: 获取设备列表
+      operationId: sync-device-list
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.SyncDevice'
         "403":
           description: ""
       security:

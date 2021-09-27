@@ -1,7 +1,10 @@
 package service
 
 import (
+	"time"
+
 	"github.com/scriptscat/cloudcat/internal/domain/sync/dto"
+	"github.com/scriptscat/cloudcat/internal/domain/sync/entity"
 	"github.com/scriptscat/cloudcat/internal/domain/sync/errs"
 	"github.com/scriptscat/cloudcat/internal/domain/sync/repository"
 	"github.com/scriptscat/cloudcat/internal/pkg/cnt"
@@ -18,6 +21,8 @@ import (
 */
 
 type Sync interface {
+	DeviceList(user int64) ([]*dto.Device, error)
+
 	PushScript(user, device, version int64, scripts []*dto.SyncScript) ([]*dto.SyncScript, int64, error)
 	PullScript(user, device, version int64) ([]*dto.SyncScript, int64, error)
 
@@ -28,15 +33,50 @@ type Sync interface {
 }
 
 type sync struct {
+	device    repository.Device
 	script    repository.Script
 	subscribe repository.Subscribe
 }
 
-func NewSync(script repository.Script, subscribe repository.Subscribe) Sync {
+func NewSync(device repository.Device, script repository.Script, subscribe repository.Subscribe) Sync {
 	return &sync{
+		device:    device,
 		script:    script,
 		subscribe: subscribe,
 	}
+}
+
+func (s *sync) DeviceList(user int64) ([]*dto.Device, error) {
+	list, err := s.device.ListDevice(user)
+	if err != nil {
+		return nil, err
+	}
+	if len(list) == 0 {
+		def := &entity.SyncDevice{
+			ID:         0,
+			UserID:     user,
+			Name:       "默认设备",
+			Remark:     "默认设备",
+			Createtime: time.Now().Unix(),
+		}
+		if err := s.device.Save(def); err != nil {
+			return nil, err
+		}
+		list = append(list, def)
+	}
+	ret := make([]*dto.Device, len(list))
+	for n, v := range list {
+		script, err := s.script.LatestVersion(user, v.ID)
+		if err != nil {
+			return nil, err
+		}
+		subscribe, err := s.subscribe.LatestVersion(user, v.ID)
+		if err != nil {
+			return nil, err
+		}
+		ret[n] = dto.ToDevice(v, script, subscribe)
+	}
+	return ret, nil
 }
 
 func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript) ([]*dto.SyncScript, int64, error) {
@@ -64,7 +104,7 @@ func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript
 		v.Script.UserID = user
 		v.Script.DeviceID = device
 		v.Script.Updatetime = v.Actiontime
-		if v.Action == "uninstall" {
+		if v.Action == "delete" {
 			v.Script.Status = cnt.DELETE
 		} else {
 			v.Script.Status = cnt.ACTIVE
@@ -118,8 +158,7 @@ func (s *sync) PullScript(user, device, version int64) ([]*dto.SyncScript, int64
 		}
 	}
 	for _, v := range unique {
-		switch v.Action {
-		case "install", "reinstall":
+		if v.Action == "update" {
 			script, err := s.script.FindByUUID(user, device, v.UUID)
 			if err != nil {
 				logrus.Warnf("pull script find script error: %v", err)
@@ -159,7 +198,7 @@ func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscri
 		v.Subscribe.UserID = user
 		v.Subscribe.DeviceID = device
 		v.Subscribe.Updatetime = v.Actiontime
-		if v.Action == "unsubscribe" {
+		if v.Action == "delete" {
 			v.Subscribe.Status = cnt.DELETE
 		} else {
 			v.Subscribe.Status = cnt.ACTIVE
@@ -213,8 +252,7 @@ func (s *sync) PullSubscribe(user, device int64, version int64) ([]*dto.SyncSubs
 		}
 	}
 	for _, v := range unique {
-		switch v.Action {
-		case "subscribe", "resubscribe":
+		if v.Action == "update" {
 			subscribe, err := s.subscribe.FindByUrl(user, device, v.URL)
 			if err != nil {
 				logrus.Warnf("pull subscribe find subscribe error: %v", err)

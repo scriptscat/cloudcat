@@ -291,6 +291,35 @@ var doc = `{
                 }
             }
         },
+        "/sync/device": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取设备列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "同步",
+                "operationId": "sync-device-list",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.SyncDevice"
+                        }
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/sync/{device}/script/pull/{version}": {
             "get": {
                 "security": [
@@ -652,6 +681,23 @@ var doc = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "entity.SyncDevice": {
+            "type": "object",
+            "properties": {
+                "createtime": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

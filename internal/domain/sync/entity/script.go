@@ -26,10 +26,10 @@ type SyncScript struct {
 type SyncSubscribe struct {
 	ID         int64  `gorm:"primaryKey" json:"-"`
 	UserID     int64  `gorm:"index:sync_subscribe_user_id;column:user_id;type:bigint(20);not null" json:"user_id"`
-	DeviceID   int64  `gorm:"uniqueIndex:url_hash;column:device_id;type:bigint(20);not null" json:"device_id"`
+	DeviceID   int64  `gorm:"uniqueIndex:device_url;column:device_id;type:bigint(20);not null" json:"device_id"`
 	Name       string `gorm:"column:name;type:varchar(255);not null" json:"name"`
 	URL        string `gorm:"column:url;type:text;not null" json:"url"`
-	URLHash    string `gorm:"uniqueIndex:url_hash;column:url_hash;type:varchar(128);not null" json:"url_hash"`
+	URLHash    string `gorm:"uniqueIndex:device_url;column:url_hash;type:varchar(128);not null" json:"url_hash"`
 	Code       string `gorm:"column:code;type:text;not null" json:"code"`
 	MetaJSON   string `gorm:"column:meta_json;type:text;not null" json:"meta_json"`
 	Scripts    string `gorm:"column:scripts;type:text;not null" json:"scripts"`

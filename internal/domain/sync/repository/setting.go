@@ -11,10 +11,9 @@ import (
 	"github.com/scriptscat/cloudcat/pkg/kvdb"
 )
 
-// TODO: 考虑value是否需要云同步,或者只同步userconfig
-// Setting 同步Value和系统设置
-type Setting interface {
-	SaveValue(value *entity.SyncValue) error
+// Value 同步Value和系统设置
+type Value interface {
+	Save(value *entity.SyncValue) error
 }
 
 type setting struct {
@@ -24,7 +23,7 @@ type setting struct {
 }
 
 // NewSetting kvdb必须是redis才能储存value数据,否则是直接返回成功和空
-func NewSetting(kv kvdb.KvDb) Setting {
+func NewSetting(kv kvdb.KvDb) Value {
 	var rds *redis.Client
 	if kv.DbType() == "redis" {
 		rds = kv.Client().(*redis.Client)
@@ -32,7 +31,7 @@ func NewSetting(kv kvdb.KvDb) Setting {
 	return &setting{kv: kv, redis: rds}
 }
 
-func (s *setting) SaveValue(value *entity.SyncValue) error {
+func (s *setting) Save(value *entity.SyncValue) error {
 	rds, err := s.rds()
 	if err != nil {
 		return err
