@@ -20,8 +20,9 @@ type Subscribe interface {
 	LatestVersion(user, device int64) (int64, error)
 	PushVersion(user, device int64, data []*dto.SyncSubscribe) (int64, error)
 	ActionList(user, device, version int64) ([][]*dto.SyncSubscribe, error)
-	FindByUrl(user, device int64, uuid string) (*entity.SyncSubscribe, error)
+	FindByUrl(user, device int64, url string) (*entity.SyncSubscribe, error)
 	Save(entity *entity.SyncSubscribe) error
+	SetStatus(id int64, status int8) error
 }
 
 type subscribe struct {
@@ -100,9 +101,9 @@ func (s *subscribe) key(user, device int64) string {
 	return fmt.Sprintf("sync:subscribe:list:%d:%d", user, device)
 }
 
-func (s *subscribe) FindByUrl(user, device int64, uuid string) (*entity.SyncSubscribe, error) {
+func (s *subscribe) FindByUrl(user, device int64, url string) (*entity.SyncSubscribe, error) {
 	ret := &entity.SyncSubscribe{}
-	if err := s.db.Where("user_id=? and device_id=? and uuid=?", user, device, uuid).First(ret).Error; err != nil {
+	if err := s.db.Where("user_id=? and device_id=? and url=?", user, device, url).First(ret).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -113,6 +114,10 @@ func (s *subscribe) FindByUrl(user, device int64, uuid string) (*entity.SyncSubs
 
 func (s *subscribe) Save(entity *entity.SyncSubscribe) error {
 	return s.db.Save(entity).Error
+}
+
+func (s *subscribe) SetStatus(id int64, status int8) error {
+	return s.db.Model(&entity.SyncSubscribe{}).Where("id=?", id).Update("status", status).Error
 }
 
 func (s *subscribe) rds() (*redis.Client, error) {

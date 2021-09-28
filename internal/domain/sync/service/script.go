@@ -101,25 +101,34 @@ func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript
 			continue
 		}
 		// 时间小或者为空,更新脚本
-		v.Script.UserID = user
-		v.Script.DeviceID = device
-		v.Script.Updatetime = v.Actiontime
 		if v.Action == "delete" {
-			v.Script.Status = cnt.DELETE
-		} else {
-			v.Script.Status = cnt.ACTIVE
-		}
-		if script != nil {
-			v.Script.ID = script.ID
-			v.Script.Createtime = script.Createtime
-		}
-		if err := s.script.Save(v.Script); err != nil {
-			logrus.Warnf("sync script save script error: %v", err)
-			ret[i] = &dto.SyncScript{
-				Action: "error",
-				Msg:    "同步失败,系统错误",
+			if script != nil {
+				if err := s.script.SetStatus(script.ID, cnt.DELETE); err != nil {
+					logrus.Warnf("sync script save script error: %v", err)
+					ret[i] = &dto.SyncScript{
+						Action: "error",
+						Msg:    "同步失败,系统错误",
+					}
+					continue
+				}
 			}
-			continue
+		} else {
+			v.Script.UserID = user
+			v.Script.DeviceID = device
+			v.Script.Updatetime = v.Actiontime
+			v.Script.Status = cnt.ACTIVE
+			if script != nil {
+				v.Script.ID = script.ID
+				v.Script.Createtime = script.Createtime
+			}
+			if err := s.script.Save(v.Script); err != nil {
+				logrus.Warnf("sync script save script error: %v", err)
+				ret[i] = &dto.SyncScript{
+					Action: "error",
+					Msg:    "同步失败,系统错误",
+				}
+				continue
+			}
 		}
 		ret[i] = &dto.SyncScript{
 			Action: "ok",
@@ -185,7 +194,7 @@ func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscri
 	data := make([]*dto.SyncSubscribe, 0)
 	ret := make([]*dto.SyncSubscribe, len(sub))
 	for i, v := range sub {
-		script, err := s.subscribe.FindByUrl(user, device, v.URL)
+		subscribe, err := s.subscribe.FindByUrl(user, device, v.URL)
 		if err != nil {
 			logrus.Warnf("push subscribe find subscribe error: %v", err)
 			ret[i] = &dto.SyncSubscribe{
@@ -194,26 +203,32 @@ func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscri
 			}
 			continue
 		}
-		// 时间小或者为空,更新脚本
-		v.Subscribe.UserID = user
-		v.Subscribe.DeviceID = device
-		v.Subscribe.Updatetime = v.Actiontime
 		if v.Action == "delete" {
-			v.Subscribe.Status = cnt.DELETE
-		} else {
-			v.Subscribe.Status = cnt.ACTIVE
-		}
-		if script != nil {
-			v.Subscribe.ID = script.ID
-			v.Subscribe.Createtime = script.Createtime
-		}
-		if err := s.subscribe.Save(v.Subscribe); err != nil {
-			logrus.Warnf("sync subscribe save subscribe error: %v", err)
-			ret[i] = &dto.SyncSubscribe{
-				Action: "error",
-				Msg:    "同步失败,系统错误",
+			if err := s.subscribe.SetStatus(subscribe.ID, cnt.DELETE); err != nil {
+				logrus.Warnf("sync subscribe save subscribe error: %v", err)
+				ret[i] = &dto.SyncSubscribe{
+					Action: "error",
+					Msg:    "同步失败,系统错误",
+				}
+				continue
 			}
-			continue
+		} else {
+			v.Subscribe.UserID = user
+			v.Subscribe.DeviceID = device
+			v.Subscribe.Updatetime = v.Actiontime
+			v.Subscribe.Status = cnt.ACTIVE
+			if subscribe != nil {
+				v.Subscribe.ID = subscribe.ID
+				v.Subscribe.Createtime = subscribe.Createtime
+			}
+			if err := s.subscribe.Save(v.Subscribe); err != nil {
+				logrus.Warnf("sync subscribe save subscribe error: %v", err)
+				ret[i] = &dto.SyncSubscribe{
+					Action: "error",
+					Msg:    "同步失败,系统错误",
+				}
+				continue
+			}
 		}
 		ret[i] = &dto.SyncSubscribe{
 			Action:    "ok",

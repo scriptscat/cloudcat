@@ -24,6 +24,7 @@ type Script interface {
 	ListScript(user, device int64) ([]*entity.SyncScript, error)
 	FindByUUID(user, device int64, uuid string) (*entity.SyncScript, error)
 	Save(entity *entity.SyncScript) error
+	SetStatus(id int64, status int8) error
 }
 
 type script struct {
@@ -123,6 +124,10 @@ func (s *script) FindByUUID(user, device int64, uuid string) (*entity.SyncScript
 
 func (s *script) Save(entity *entity.SyncScript) error {
 	return s.db.Save(entity).Error
+}
+
+func (s *script) SetStatus(id int64, status int8) error {
+	return s.db.Model(&entity.SyncScript{}).Where("id=?", id).Update("status", status).Error
 }
 
 func (s *script) rds() (*redis.Client, error) {

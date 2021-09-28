@@ -696,6 +696,9 @@ var doc = `{
                 "remark": {
                     "type": "string"
                 },
+                "setting": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }
