@@ -242,7 +242,7 @@ paths:
       tags:
       - user
   /auth/bbs:
-    post:
+    get:
       description: 论坛oauth2.0登录
       operationId: bbs-login
       responses:

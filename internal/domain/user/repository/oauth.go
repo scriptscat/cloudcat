@@ -13,6 +13,7 @@ import (
 
 type BBSOAuth interface {
 	FindByOpenid(openid string) (*entity.BbsOauthUser, error)
+	Save(bbs *entity.BbsOauthUser) error
 }
 
 type bbsOAuth struct {
@@ -34,6 +35,10 @@ func (b *bbsOAuth) FindByOpenid(openid string) (*entity.BbsOauthUser, error) {
 		return nil, err
 	}
 	return ret, nil
+}
+
+func (b *bbsOAuth) Save(bbs *entity.BbsOauthUser) error {
+	return b.db.Save(bbs).Error
 }
 
 type WechatOAuth interface {

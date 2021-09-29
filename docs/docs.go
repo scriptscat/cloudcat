@@ -178,7 +178,7 @@ var doc = `{
             }
         },
         "/auth/bbs": {
-            "post": {
+            "get": {
                 "description": "论坛oauth2.0登录",
                 "tags": [
                     "user"

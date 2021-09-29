@@ -167,9 +167,9 @@ func (a *Auth) requestEmailCode(ctx *gin.Context) {
 // @Tags  	    user
 // @Success     302
 // @Failure     400 {object} errs.JsonRespondError
-// @Router      /auth/bbs [post]
+// @Router      /auth/bbs [get]
 func (a *Auth) bbsOAuth(ctx *gin.Context) {
-	redirect := fmt.Sprintf("%s/api/v1/auth/bbs/callback?redirect=%s", ctx.Request.Header.Get("Origin"), url.PathEscape(ctx.Query("redirect")))
+	redirect := fmt.Sprintf("/api/v1/auth/bbs/callback?redirect=%s", url.PathEscape(ctx.Query("redirect")))
 	url, err := a.oauthSvc.RedirectOAuth(redirect, "bbs")
 	if err != nil {
 		httputils.HandleError(ctx, err)
@@ -345,7 +345,7 @@ func (a *Auth) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 		return err
 	}
 	ctx.SetCookie("token", tokenString, TokenAuthMaxAge, "/", "", false, true)
-	if uri := ctx.Query("redirect_uri"); uri != "" {
+	if uri := ctx.Query("redirect"); uri != "" {
 		ctx.Redirect(http.StatusFound, uri)
 		return nil
 	}
@@ -362,7 +362,7 @@ func (a *Auth) Register(r *gin.RouterGroup) {
 	rg.POST("/register/request-email-code", a.requestEmailCode)
 
 	rg = r.Group("/auth")
-	rg.POST("/bbs", a.bbsOAuth)
+	rg.GET("/bbs", a.bbsOAuth)
 	rg.GET("/bbs/callback", a.bbsOAuthCallback)
 	rg.POST("/wechat", a.wechatOAuth)
 	//rg.GET("/wechat/callback", s.wechatOAuthCallback)

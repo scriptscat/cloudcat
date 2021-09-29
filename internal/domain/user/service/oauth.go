@@ -18,6 +18,7 @@ import (
 	"github.com/silenceper/wechat/v2/officialaccount"
 	"github.com/silenceper/wechat/v2/officialaccount/basic"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
+	"github.com/silenceper/wechat/v2/officialaccount/message"
 	offOAuth "github.com/silenceper/wechat/v2/officialaccount/oauth"
 	"github.com/silenceper/wechat/v2/util"
 	"github.com/sirupsen/logrus"
@@ -37,6 +38,8 @@ type OAuth interface {
 }
 
 const (
+	HomeUrl = "home_url"
+
 	OAuthConfigBbsClientId     = "oauth_config_bbs_client_id"
 	OAuthConfigBbsClientSecret = "oauth_config_bbs_client_secret"
 
@@ -78,6 +81,8 @@ func NewOAuth(config config.SystemConfig, kv kvdb.KvDb, tx *gorm.DB, userSvc Use
 }
 
 func (o *oauth) RedirectOAuth(redirectUrl, platform string) (string, error) {
+	homeUrl, _ := o.config.GetConfig(HomeUrl)
+	redirectUrl = homeUrl + redirectUrl
 	switch platform {
 	case "bbs":
 		client, err := o.getBbsClient()
@@ -112,13 +117,48 @@ func (o *oauth) BBSOAuthLogin(code string) (*dto.OAuthRespond, error) {
 	if err != nil {
 		return nil, err
 	}
+	var uid int64
 	if bbs == nil {
 		// 需要绑定账号登录
-		return &dto.OAuthRespond{
-			IsBind: false,
-		}, nil
+		user := &entity.User{
+			Username:   userResp.User.Username,
+			Role:       "user",
+			Createtime: time.Now().Unix(),
+			Updatetime: time.Now().Unix(),
+		}
+		if err := o.userSvc.CheckUsername(user.Username); err != nil {
+			if err != errs.ErrUsernameExist {
+				return nil, err
+			}
+			user.Username += utils.RandString(4, 2)
+		}
+		if err := o.tx.Transaction(func(tx *gorm.DB) error {
+			uid, err = o.userSvc.oauthRegister(tx, user)
+			if err != nil {
+				return err
+			}
+			return repository.NewBbsOAuth(tx).Save(&entity.BbsOauthUser{
+				Openid:     userResp.User.Uid,
+				UserID:     uid,
+				Status:     cnt.ACTIVE,
+				Createtime: time.Now().Unix(),
+			})
+		}); err != nil {
+			return nil, err
+		}
+		if userResp.User.Avatar != "" {
+			if b, err := util.HTTPGet(userResp.User.Avatar); err == nil {
+				if err := o.userSvc.UploadAvatar(uid, b); err != nil {
+					logrus.Errorf("bbs register upload %s avatar: %v", userResp.User.Avatar, err)
+				}
+			} else {
+				logrus.Errorf("bbs register download %s avatar: %v", userResp.User.Avatar, err)
+			}
+		}
+	} else {
+		uid = bbs.UserID
 	}
-	user, err := o.userSvc.UserInfo(bbs.UserID)
+	user, err := o.userSvc.UserInfo(uid)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +349,13 @@ func (o *oauth) WechatScanLogin(openid, code string) error {
 	if err := o.wechatOAuthRepo.BindCodeUid(code, uid); err != nil {
 		return err
 	}
-	return nil
+	return client.GetCustomerMessageManager().Send(&message.CustomerMessage{
+		ToUser:  openid,
+		Msgtype: "text",
+		Text: &message.MediaText{
+			Content: "扫码登录成功",
+		},
+	})
 }
 
 func (o *oauth) WechatScanLoginStatus(code string) (*dto.OAuthRespond, error) {
@@ -332,7 +378,7 @@ func (o *oauth) WechatScanLoginStatus(code string) (*dto.OAuthRespond, error) {
 
 func (o *oauth) getBbsClient() (*bbs.Client, error) {
 	o.RLock()
-	if o.wechat == nil {
+	if o.bbs == nil {
 		o.RUnlock()
 		o.Lock()
 		defer o.Unlock()
