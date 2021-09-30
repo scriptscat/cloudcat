@@ -17,10 +17,10 @@ test:
 	go test -v ./...
 
 build:
-	CGO_LDFLAGS="-static" go build -o cloudcat$(SUFFIX) ./cmd/app
+	CGO_LDFLAGS="-static" go build -tags netgo -o cloudcat$(SUFFIX) ./cmd/app
 
 target:
-	CGO_LDFLAGS="-static" go build -o $(NAME)$(SUFFIX) ./cmd/app
+	CGO_LDFLAGS="-static" go build -tags netgo -o $(NAME)$(SUFFIX) ./cmd/app
 
 docker:
 	docker build -t cloudcat .

@@ -108,7 +108,7 @@ func (s *Sync) pushSubscribe(c *gin.Context) {
 }
 
 // @Summary     同步
-// @Description 拉取脚本变更
+// @Description 拉取订阅变更
 // @ID          sync-pull-subscribe
 // @Tags  	    sync
 // @Accept      json
@@ -154,11 +154,66 @@ func (s *Sync) device(c *gin.Context) {
 	})
 }
 
+// @Summary     同步
+// @Description 推送设置变更
+// @ID          sync-push-setting
+// @Tags  	    sync
+// @Accept      json
+// @Security    BearerAuth
+// @Param       device path int true "设备id"
+// @Param       setting formData string true "设置json字符串"
+// @Param       settingtime formData string true "设置更新时间"
+// @Success     200
+// @Failure     403
+// @Router      /sync/{device}/setting/push [put]
+func (s *Sync) pushSetting(c *gin.Context) {
+	httputils.Handle(c, func() interface{} {
+		uid, _ := userId(c)
+		device := utils.StringToInt64(c.Param("device"))
+		setting := c.PostForm("setting")
+		settingtime := utils.StringToInt64(c.PostForm("settingtime"))
+		err := s.PushSetting(uid, device, setting, settingtime)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// @Summary     同步
+// @Description 拉取设置变更
+// @ID          sync-pull-setting
+// @Tags  	    sync
+// @Accept      json
+// @Security    BearerAuth
+// @Param       device path int true "设备id"
+// @Success     200
+// @Failure     403
+// @Router      /sync/{device}/setting/pull [get]
+func (s *Sync) pullSetting(c *gin.Context) {
+	httputils.Handle(c, func() interface{} {
+		uid, _ := userId(c)
+		device := utils.StringToInt64(c.Param("device"))
+		ret, time, err := s.PullSetting(uid, device)
+		if err != nil {
+			return err
+		}
+		return gin.H{
+			"setting":     ret,
+			"settingtime": time,
+		}
+	})
+}
+
 func (s *Sync) Register(r *gin.RouterGroup) {
 	rg := r.Group("/sync", userAuth())
 	rg.GET("/device", s.device)
 
 	rg = rg.Group("/:device")
+
+	rg.PUT("/setting/push", s.pushSetting)
+	rg.GET("/setting/pull", s.pullSetting)
+
 	rgg := rg.Group("/script")
 	rgg.PUT("/push/:version", s.pushScript)
 	rgg.GET("/pull/:version", s.pullScript)

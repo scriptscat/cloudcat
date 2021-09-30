@@ -35,6 +35,7 @@ func Run(cfg *config.Config) error {
 
 	binding.Validator = pkgValidator.NewValidator()
 
+	gin.SetMode(cfg.Mode)
 	r := gin.Default()
 
 	if cfg.Mode != gin.ReleaseMode {

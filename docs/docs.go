@@ -410,6 +410,90 @@ var doc = `{
                 }
             }
         },
+        "/sync/{device}/setting/pull": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "拉取设置变更",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "同步",
+                "operationId": "sync-pull-setting",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "设备id",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/sync/{device}/setting/push": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "推送设置变更",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "同步",
+                "operationId": "sync-push-setting",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "设备id",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "设置json字符串",
+                        "name": "setting",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "设置更新时间",
+                        "name": "settingtime",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/sync/{device}/subscribe/pull/{version}": {
             "get": {
                 "security": [
@@ -417,7 +501,7 @@ var doc = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "拉取脚本变更",
+                "description": "拉取订阅变更",
                 "consumes": [
                     "application/json"
                 ],
@@ -699,6 +783,9 @@ var doc = `{
                 "setting": {
                     "type": "string"
                 },
+                "settingtime": {
+                    "type": "integer"
+                },
                 "user_id": {
                     "type": "integer"
                 }
@@ -779,9 +866,6 @@ var doc = `{
                     "type": "integer"
                 },
                 "url": {
-                    "type": "string"
-                },
-                "url_hash": {
                     "type": "string"
                 },
                 "user_id": {

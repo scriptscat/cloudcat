@@ -23,13 +23,16 @@ import (
 type Sync interface {
 	DeviceList(user int64) ([]*dto.Device, error)
 
+	DeviceInfo(user, device int64) (*dto.Device, error)
+
 	PushScript(user, device, version int64, scripts []*dto.SyncScript) ([]*dto.SyncScript, int64, error)
 	PullScript(user, device, version int64) ([]*dto.SyncScript, int64, error)
 
 	PushSubscribe(user, device int64, version int64, sub []*dto.SyncSubscribe) ([]*dto.SyncSubscribe, int64, error)
 	PullSubscribe(user, device int64, version int64) ([]*dto.SyncSubscribe, int64, error)
 
-	SyncSetting(user, device int64) error
+	PushSetting(user, device int64, setting string, settingtime int64) error
+	PullSetting(user, device int64) (string, int64, error)
 }
 
 type sync struct {
@@ -79,13 +82,37 @@ func (s *sync) DeviceList(user int64) ([]*dto.Device, error) {
 	return ret, nil
 }
 
+func (s *sync) DeviceInfo(user, device int64) (*dto.Device, error) {
+	d, err := s.device.FindById(device)
+	if err != nil {
+		return nil, err
+	}
+	if d == nil {
+		return nil, errs.ErrDeviceNotFound
+	}
+	if d.UserID != user {
+		return nil, errs.ErrDeviceNotFound
+	}
+	script, err := s.script.LatestVersion(user, d.ID)
+	if err != nil {
+		return nil, err
+	}
+	subscribe, err := s.subscribe.LatestVersion(user, d.ID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.ToDevice(d, script, subscribe), nil
+}
+
 func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript) ([]*dto.SyncScript, int64, error) {
 	if len(scripts) == 0 {
 		return nil, 0, errs.ErrSyncIsNil
 	}
-	if v, err := s.script.LatestVersion(user, device); err != nil {
+	d, err := s.DeviceInfo(user, device)
+	if err != nil {
 		return nil, 0, err
-	} else if v != version {
+	}
+	if d.SyncVersion.Script != version {
 		return nil, 0, errs.ErrSyncVersionError
 	}
 	data := make([]*dto.SyncScript, 0)
@@ -140,7 +167,7 @@ func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript
 			UUID:       v.UUID,
 		})
 	}
-	version, err := s.script.PushVersion(user, device, data)
+	version, err = s.script.PushVersion(user, device, data)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -148,12 +175,12 @@ func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript
 }
 
 func (s *sync) PullScript(user, device, version int64) ([]*dto.SyncScript, int64, error) {
-	latest, err := s.script.LatestVersion(user, device)
+	d, err := s.DeviceInfo(user, device)
 	if err != nil {
 		return nil, 0, err
 	}
-	if latest == version {
-		return nil, latest, nil
+	if d.SyncVersion.Script == version {
+		return nil, version, nil
 	}
 	list, err := s.script.ActionList(user, device, version)
 	if err != nil {
@@ -179,16 +206,18 @@ func (s *sync) PullScript(user, device, version int64) ([]*dto.SyncScript, int64
 		}
 		ret = append(ret, v)
 	}
-	return ret, latest, nil
+	return ret, d.SyncVersion.Script, nil
 }
 
 func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscribe) ([]*dto.SyncSubscribe, int64, error) {
 	if len(sub) == 0 {
 		return nil, 0, errs.ErrSyncIsNil
 	}
-	if v, err := s.subscribe.LatestVersion(user, device); err != nil {
+	d, err := s.DeviceInfo(user, device)
+	if err != nil {
 		return nil, 0, err
-	} else if v != version {
+	}
+	if d.SyncVersion.Subscribe != version {
 		return nil, 0, errs.ErrSyncVersionError
 	}
 	data := make([]*dto.SyncSubscribe, 0)
@@ -240,7 +269,7 @@ func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscri
 			URL:        v.URL,
 		})
 	}
-	version, err := s.subscribe.PushVersion(user, device, data)
+	version, err = s.subscribe.PushVersion(user, device, data)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -248,12 +277,12 @@ func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscri
 }
 
 func (s *sync) PullSubscribe(user, device int64, version int64) ([]*dto.SyncSubscribe, int64, error) {
-	latest, err := s.subscribe.LatestVersion(user, device)
+	d, err := s.DeviceInfo(user, device)
 	if err != nil {
 		return nil, 0, err
 	}
-	if latest == version {
-		return nil, latest, nil
+	if d.SyncVersion.Subscribe == version {
+		return nil, version, nil
 	}
 	list, err := s.subscribe.ActionList(user, device, version)
 	if err != nil {
@@ -279,9 +308,21 @@ func (s *sync) PullSubscribe(user, device int64, version int64) ([]*dto.SyncSubs
 		}
 		ret = append(ret, v)
 	}
-	return ret, latest, nil
+	return ret, d.SyncVersion.Subscribe, nil
 }
 
-func (s *sync) SyncSetting(user, device int64) error {
-	panic("implement me")
+func (s *sync) PushSetting(user, device int64, setting string, settingtime int64) error {
+	_, err := s.DeviceInfo(user, device)
+	if err != nil {
+		return err
+	}
+	return s.device.UpdateSetting(device, setting, settingtime)
+}
+
+func (s *sync) PullSetting(user, device int64) (string, int64, error) {
+	d, err := s.DeviceInfo(user, device)
+	if err != nil {
+		return "", 0, err
+	}
+	return d.Setting, d.Settingtime, nil
 }
