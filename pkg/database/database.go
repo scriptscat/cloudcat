@@ -26,6 +26,9 @@ func NewDatabase(cfg *Config, debug bool) (*Database, error) {
 				SingularTable: true,
 			},
 		})
+		if err == nil {
+			db.DB.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+		}
 	case "sqlite":
 		db.DB, err = gorm.Open(sqlite.Open(cfg.Sqlite.File), &gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
