@@ -160,6 +160,7 @@ func (s *sync) PushScript(user, device, version int64, scripts []*dto.SyncScript
 		ret[i] = &dto.SyncScript{
 			Action: "ok",
 			Script: v.Script,
+			UUID:   v.UUID,
 		}
 		data = append(data, &dto.SyncScript{
 			Action:     v.Action,

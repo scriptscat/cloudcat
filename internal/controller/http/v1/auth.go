@@ -82,6 +82,27 @@ func (a *Auth) login(ctx *gin.Context) {
 }
 
 // @Summary     用户
+// @Description 登出
+// @ID          logout
+// @Tags  	    user
+// @Produce     json
+// @Accept      x-www-form-urlencoded
+// @Success     200
+// @Failure     400 {object} errs.JsonRespondError
+// @Router      /account/logout [post]
+func (a *Auth) logout(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		t, ok := authtoken(ctx)
+		if !ok {
+			return nil
+		}
+		ctx.SetCookie("token", "", -1, "/", "", false, true)
+		token.DelToken(a.cache, t.Token)
+		return nil
+	})
+}
+
+// @Summary     用户
 // @Description 用户注册
 // @ID          register
 // @Tags  	    user
@@ -358,6 +379,7 @@ func (a *Auth) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 func (a *Auth) Register(r *gin.RouterGroup) {
 	rg := r.Group("/account")
 	rg.POST("/login", a.login)
+	rg.GET("/logout", a.logout)
 	rg.POST("/register", a.register)
 	rg.POST("/register/request-email-code", a.requestEmailCode)
 

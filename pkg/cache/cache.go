@@ -11,6 +11,7 @@ type Cache interface {
 	Set(key string, val interface{}, opts ...Option) error
 	Get(key string, get interface{}, opts ...Option) error
 	Has(key string) (bool, error)
+	Del(key string) error
 }
 
 type Depend interface {

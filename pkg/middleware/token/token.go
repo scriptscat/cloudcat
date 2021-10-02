@@ -91,3 +91,7 @@ func GenToken(c cache.Cache, info gin.H) (string, error) {
 	}
 	return tokenInfo.Token, nil
 }
+
+func DelToken(c cache.Cache, token string) error {
+	return c.Del("token:token:" + token)
+}

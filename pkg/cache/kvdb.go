@@ -79,6 +79,10 @@ func (r *kvdbCache) Has(key string) (bool, error) {
 	return ok, nil
 }
 
+func (r *kvdbCache) Del(key string) error {
+	return r.kv.Del(context.Background(), key)
+}
+
 func copyInterface(dst interface{}, src interface{}) {
 	dstof := reflect.ValueOf(dst)
 	if dstof.Kind() == reflect.Ptr {
