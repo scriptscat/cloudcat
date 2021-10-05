@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate mockgen -source ./device.go -destination ./mock/device.go
+
 type Device interface {
 	FindById(id int64) (*entity.SyncDevice, error)
 	ListDevice(user int64) ([]*entity.SyncDevice, error)

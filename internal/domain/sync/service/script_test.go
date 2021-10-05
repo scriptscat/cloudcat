@@ -81,7 +81,7 @@ func Test_sync_PushScript(t *testing.T) {
 				UUID:       "uuid1",
 				Script:     nils,
 			}},
-		}, []*dto.SyncScript{{Action: "ok", Script: nils}}, 3, false},
+		}, []*dto.SyncScript{{Action: "ok", UUID: "uuid1", Script: nils}}, 3, false},
 		{"多条覆盖全部条件", success, args{
 			user:    2,
 			device:  2,
@@ -110,18 +110,27 @@ func Test_sync_PushScript(t *testing.T) {
 				Script:     id2,
 			}},
 		}, []*dto.SyncScript{
-			{Action: "ok", Script: nils},
-			{Action: "error", Msg: "同步失败,系统错误"},
-			{Action: "ok", Script: id1},
-			{Action: "ok", Script: id2},
+			{Action: "ok", UUID: "uuid1", Script: nils},
+			{Action: "error", UUID: "", Msg: "同步失败,系统错误"},
+			{Action: "ok", UUID: "uuid3", Script: id1},
+			{Action: "ok", UUID: "uuid4", Script: id2},
 		}, 3, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockctl := gomock.NewController(t)
 			defer mockctl.Finish()
+			mock := mock_repository.NewMockDevice(mockctl)
+			mock.EXPECT().FindById(gomock.Any()).Return(&entity.SyncDevice{
+				ID:     tt.args.device,
+				UserID: tt.args.user,
+			}, nil).AnyTimes()
+			subMock := mock_repository.NewMockSubscribe(mockctl)
+			subMock.EXPECT().LatestVersion(gomock.Any(), gomock.Any()).Return(int64(1), nil).AnyTimes()
 			s := &sync{
-				script: tt.fields(mockctl, tt.args),
+				device:    mock,
+				subscribe: subMock,
+				script:    tt.fields(mockctl, tt.args),
 			}
 			got, got1, err := s.PushScript(tt.args.user, tt.args.device, tt.args.version, tt.args.scripts)
 			if (err != nil) != tt.wantErr {
