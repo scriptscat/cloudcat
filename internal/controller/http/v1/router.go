@@ -31,7 +31,7 @@ func register(r *gin.RouterGroup, register ...Register) {
 }
 
 var tokenAuth func(enforce bool) func(ctx *gin.Context)
-var userAuth func() func(ctx *gin.Context)
+var userAuth func(enforce bool) func(ctx *gin.Context)
 
 // NewRouter 初始化路由
 // Swagger spec:
@@ -68,22 +68,26 @@ func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb
 	user := NewUser(userSvc, oauthSvc, safeSvc, senderSvc)
 	sync := NewSync(syncSvc)
 
-	enforceAuth := tokenAuth(true)
 	if disableAuth {
-		userAuth = func() func(ctx *gin.Context) {
+		userAuth = func(enforce bool) func(ctx *gin.Context) {
+			auth := tokenAuth(enforce)
 			return func(ctx *gin.Context) {
-				enforceAuth(ctx)
+				auth(ctx)
 			}
 		}
 	} else {
-		userAuth = func() func(ctx *gin.Context) {
+		userAuth = func(enforce bool) func(ctx *gin.Context) {
+			authHandler := tokenAuth(enforce)
 			return func(ctx *gin.Context) {
-				enforceAuth(ctx)
+				authHandler(ctx)
 				if !ctx.IsAborted() {
 					uid, _ := userId(ctx)
-					if _, err := auth.UserInfo(uid); err != nil {
-						httputils.HandleError(ctx, err)
-						ctx.Abort()
+					if uid != 0 {
+						// NOTE:用户信息可以写入context
+						if _, err := auth.UserInfo(uid); err != nil {
+							httputils.HandleError(ctx, err)
+							ctx.Abort()
+						}
 					}
 				}
 			}

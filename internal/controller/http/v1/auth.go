@@ -220,13 +220,34 @@ func (a *Auth) wechatOAuth(ctx *gin.Context) {
 // @Description 请求微信登录二维码
 // @ID          wechat-request
 // @Tags  	    user
-// @Success     200 {object} dto.WechatScanLogin
+// @Success     200 {object} dto.WechatScan
 // @Failure     400 {object} errs.JsonRespondError
 // @Router      /auth/wechat/request [post]
 func (a *Auth) wechatRequest(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		ret, err := a.oauthSvc.WechatScanLoginRequest()
+		ret, err := a.oauthSvc.WechatScanRequest("login")
 		if err != nil {
+			return err
+		}
+		return ret
+	})
+}
+
+// @Summary     用户
+// @Description 绑定微信
+// @ID          wechat-bind-request
+// @Tags  	    user
+// @Success     200 {object} dto.WechatScan
+// @Failure     400 {object} errs.JsonRespondError
+// @Router      /auth/bind/wechat/request [post]
+func (a *Auth) wechatBindRequest(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		uid, _ := userId(ctx)
+		ret, err := a.oauthSvc.WechatScanRequest("bind")
+		if err != nil {
+			return err
+		}
+		if err := a.oauthSvc.WechatScanBindCode(uid, ret.Code); err != nil {
 			return err
 		}
 		return ret
@@ -260,9 +281,21 @@ func (a *Auth) wechatStatus(ctx *gin.Context) {
 
 func (a *Auth) bbsOAuthCallback(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
+		uid, ok := userId(ctx)
 		code := ctx.Query("code")
 		if code == "" {
 			return errs.NewBadRequestError(1001, "code不能为空")
+		}
+		if ok {
+			err := a.oauthSvc.BindBbs(uid, code)
+			if err != nil {
+				return err
+			}
+			if uri := ctx.Query("redirect"); uri != "" {
+				ctx.Redirect(http.StatusFound, uri)
+				return nil
+			}
+			return "绑定成功"
 		}
 		resp, err := a.oauthSvc.BBSOAuthLogin(code)
 		if err != nil {
@@ -320,9 +353,15 @@ func (a *Auth) wechatHandle(ctx *gin.Context) {
 			if len(code) != 2 {
 				return nil
 			}
-			if code[0] == "login" {
+			switch code[0] {
+			case "login":
 				if err := a.oauthSvc.WechatScanLogin(string(msg.FromUserName), code[1]); err != nil {
 					logrus.Errorf("wx login message handler: %v", err)
+					return nil
+				}
+			case "bind":
+				if err := a.oauthSvc.WechatScanBind(string(msg.FromUserName), code[1]); err != nil {
+					logrus.Errorf("wx bind message handler: %v", err)
 					return nil
 				}
 			}
@@ -379,16 +418,20 @@ func (a *Auth) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 func (a *Auth) Register(r *gin.RouterGroup) {
 	rg := r.Group("/account")
 	rg.POST("/login", a.login)
-	rg.GET("/logout", userAuth(), a.logout)
+	rg.GET("/logout", userAuth(false), a.logout)
 	rg.POST("/register", a.register)
 	rg.POST("/register/request-email-code", a.requestEmailCode)
 
 	rg = r.Group("/auth")
 	rg.GET("/bbs", a.bbsOAuth)
-	rg.GET("/bbs/callback", a.bbsOAuthCallback)
+	rg.GET("/bbs/callback", userAuth(false), a.bbsOAuthCallback)
 	rg.POST("/wechat", a.wechatOAuth)
 	//rg.GET("/wechat/callback", s.wechatOAuthCallback)
 	rg.POST("/wechat/request", a.wechatRequest)
 	rg.POST("/wechat/status", a.wechatStatus)
 	rg.Any("/wechat/handle", a.wechatHandle)
+
+	rg = r.Group("/auth/bind", userAuth(true))
+	rg.GET("/wechat/request", a.wechatBindRequest)
+
 }

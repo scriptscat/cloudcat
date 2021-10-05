@@ -225,6 +225,30 @@ var doc = `{
                 }
             }
         },
+        "/auth/bind/wechat/request": {
+            "post": {
+                "description": "绑定微信",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "wechat-bind-request",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WechatScan"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/wechat": {
             "post": {
                 "description": "微信oauth2.0登录",
@@ -258,7 +282,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.WechatScanLogin"
+                            "$ref": "#/definitions/dto.WechatScan"
                         }
                     },
                     "400": {
@@ -767,6 +791,38 @@ var doc = `{
                 }
             }
         },
+        "/user/oauth": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "解绑三方登录",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-delete-oauth",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "普通:bbs|wechat",
+                        "name": "platform",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/user/password": {
             "put": {
                 "security": [
@@ -812,6 +868,29 @@ var doc = `{
                         "required": true
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/user/setting": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "用户设置信息",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-setting-info",
                 "responses": {
                     "200": {
                         "description": ""
@@ -888,7 +967,7 @@ var doc = `{
                 }
             }
         },
-        "dto.WechatScanLogin": {
+        "dto.WechatScan": {
             "type": "object",
             "properties": {
                 "code": {

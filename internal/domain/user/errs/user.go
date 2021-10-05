@@ -28,4 +28,7 @@ var (
 	ErrAvatarNotImage = errs.NewBadRequestError(1013, "上传的头像不是一个正确的图片")
 	ErrAvatarIsNil    = errs.NewBadRequestError(1014, "头像是空的")
 	ErrAvatarTooBig   = errs.NewBadRequestError(1015, "头像不能超过1M")
+	ErrNotUnbind      = errs.NewBadRequestError(10016, "绑定未超过30天,禁止解绑")
+	ErrBindOtherUser  = errs.NewBadRequestError(10017, "绑定过其他账号了")
+	ErrBindOtherOAuth = errs.NewBadRequestError(10017, "绑定过其他三方账号了")
 )

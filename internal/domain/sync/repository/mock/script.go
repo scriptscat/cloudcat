@@ -123,3 +123,17 @@ func (mr *MockScriptMockRecorder) Save(entity interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockScript)(nil).Save), entity)
 }
+
+// SetStatus mocks base method.
+func (m *MockScript) SetStatus(id int64, status int8) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetStatus", id, status)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetStatus indicates an expected call of SetStatus.
+func (mr *MockScriptMockRecorder) SetStatus(id, status interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatus", reflect.TypeOf((*MockScript)(nil).SetStatus), id, status)
+}

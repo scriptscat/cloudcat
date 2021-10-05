@@ -30,11 +30,19 @@ type OAuth interface {
 	BBSOAuthLogin(code string) (*dto.OAuthRespond, error)
 	WechatAuthLogin(code string) (*dto.OAuthRespond, error)
 
-	WechatScanLoginRequest() (*dto.WechatScanLogin, error)
+	WechatScanRequest(op string) (*dto.WechatScan, error)
 	WechatScanLogin(openid, code string) error
 	WechatScanLoginStatus(code string) (*dto.OAuthRespond, error)
 
 	GetWechat() (*WechatConfig, error)
+
+	OAuthPlatform(uid int64) (*dto.OpenPlatform, error)
+
+	WechatScanBind(openid, code string) error
+	WechatScanBindCode(uid int64, code string) error
+
+	BindBbs(uid int64, code string) error
+	Unbind(uid int64, platform string) error
 }
 
 const (
@@ -251,7 +259,7 @@ func (o *oauth) GetWechat() (*WechatConfig, error) {
 	}, nil
 }
 
-func (o *oauth) WechatScanLoginRequest() (*dto.WechatScanLogin, error) {
+func (o *oauth) WechatScanRequest(op string) (*dto.WechatScan, error) {
 	client, err := o.getWechatClient()
 	if err != nil {
 		return nil, err
@@ -270,7 +278,7 @@ func (o *oauth) WechatScanLoginRequest() (*dto.WechatScanLogin, error) {
 				SceneStr string `json:"scene_str,omitempty"`
 				SceneID  int    `json:"scene_id,omitempty"`
 			}{
-				SceneStr: "login_" + code,
+				SceneStr: op + "_" + code,
 			},
 		},
 	})
@@ -278,7 +286,7 @@ func (o *oauth) WechatScanLoginRequest() (*dto.WechatScanLogin, error) {
 		return nil, err
 	}
 
-	return &dto.WechatScanLogin{
+	return &dto.WechatScan{
 		URL:  "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" + ticket.Ticket,
 		Code: code,
 	}, nil
@@ -409,4 +417,145 @@ func (o *oauth) getOAuthConfig(key string) (string, error) {
 		return "", errs.ErrOAuthPlatformNotConfigured
 	}
 	return ret, nil
+}
+
+func (o *oauth) OAuthPlatform(uid int64) (*dto.OpenPlatform, error) {
+	bbs, err := o.bbsOAuthRepo.FindByUid(uid)
+	if err != nil {
+		return nil, err
+	}
+	wechat, err := o.wechatOAuthRepo.FindByUid(uid)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.OpenPlatform{
+		Bbs:    bbs != nil,
+		Wechat: wechat != nil,
+	}, nil
+}
+
+// NOTE:code的利用方法和登录相反
+
+func (o *oauth) WechatScanBind(openid, code string) error {
+	client, err := o.getWechatClient()
+	if err != nil {
+		return err
+	}
+	userinfo, err := client.GetUser().GetUserInfo(openid)
+	if err != nil {
+		return err
+	}
+	if userinfo.Subscribe == 0 {
+		return errors.New("没有关注公众号")
+	}
+	wechat, err := o.wechatOAuthRepo.FindByOpenid(openid)
+	if err != nil {
+		return err
+	}
+	// 消费掉这个code
+	uid, err := o.wechatOAuthRepo.FindCodeUid(code)
+	if err != nil {
+		return err
+	}
+	if uid == 0 {
+		return errs.ErrRecordNotFound
+	}
+	if wechat != nil {
+		return client.GetCustomerMessageManager().Send(&message.CustomerMessage{
+			ToUser:  openid,
+			Msgtype: "text",
+			Text: &message.MediaText{
+				Content: "该微信已绑定过账号了",
+			},
+		})
+	}
+	w, err := o.wechatOAuthRepo.FindByUid(uid)
+	if err != nil {
+		return err
+	}
+	if w != nil {
+		return client.GetCustomerMessageManager().Send(&message.CustomerMessage{
+			ToUser:  openid,
+			Msgtype: "text",
+			Text: &message.MediaText{
+				Content: "该账号已经绑定过其他微信了",
+			},
+		})
+	}
+	if err := o.wechatOAuthRepo.Save(&entity.WechatOauthUser{
+		Openid:     openid,
+		UserID:     uid,
+		Status:     cnt.ACTIVE,
+		Createtime: time.Now().Unix(),
+	}); err != nil {
+		return err
+	}
+	return client.GetCustomerMessageManager().Send(&message.CustomerMessage{
+		ToUser:  openid,
+		Msgtype: "text",
+		Text: &message.MediaText{
+			Content: "绑定成功",
+		},
+	})
+}
+
+func (o *oauth) WechatScanBindCode(uid int64, code string) error {
+	return o.wechatOAuthRepo.BindCodeUid(code, uid)
+}
+
+func (o *oauth) BindBbs(uid int64, code string) error {
+	client, err := o.getBbsClient()
+	if err != nil {
+		return err
+	}
+	resp, err := client.RequestAccessToken(code)
+	if err != nil {
+		return err
+	}
+	userResp, err := client.RequestUser(resp.AccessToken)
+	if err != nil {
+		return err
+	}
+	bbs, err := o.bbsOAuthRepo.FindByOpenid(userResp.User.Uid)
+	if err != nil {
+		return err
+	}
+	if bbs != nil {
+		return errs.ErrBindOtherUser
+	}
+	if u, err := o.bbsOAuthRepo.FindByUid(uid); err != nil {
+		return err
+	} else if u != nil {
+		return errs.ErrBindOtherOAuth
+	}
+	return o.bbsOAuthRepo.Save(&entity.BbsOauthUser{
+		Openid:     userResp.User.Uid,
+		UserID:     uid,
+		Status:     cnt.ACTIVE,
+		Createtime: time.Now().Unix(),
+	})
+}
+
+func (o *oauth) Unbind(uid int64, platform string) error {
+	switch platform {
+	case "bbs":
+		bbs, err := o.bbsOAuthRepo.FindByUid(uid)
+		if err != nil {
+			return err
+		}
+		if bbs.Createtime+2592000 > time.Now().Unix() {
+			return errs.ErrNotUnbind
+		}
+		return o.bbsOAuthRepo.Delete(bbs.ID)
+	case "wechat":
+		wechat, err := o.wechatOAuthRepo.FindByUid(uid)
+		if err != nil {
+			return err
+		}
+		if wechat.Createtime+2592000 > time.Now().Unix() {
+			return errs.ErrNotUnbind
+		}
+		return o.wechatOAuthRepo.Delete(wechat.ID)
+	}
+	return nil
 }

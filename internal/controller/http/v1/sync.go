@@ -206,7 +206,7 @@ func (s *Sync) pullSetting(c *gin.Context) {
 }
 
 func (s *Sync) Register(r *gin.RouterGroup) {
-	rg := r.Group("/sync", userAuth())
+	rg := r.Group("/sync", userAuth(true))
 	rg.GET("/device", s.device)
 
 	rg = rg.Group("/:device")

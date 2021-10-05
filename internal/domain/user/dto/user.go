@@ -53,7 +53,7 @@ type VerifyEmail struct {
 	Code string `json:"code"`
 }
 
-type WechatScanLogin struct {
+type WechatScan struct {
 	URL  string `json:"url"`
 	Code string `json:"code"`
 }
@@ -68,4 +68,9 @@ type UpdatePassword struct {
 	OldPassword string `form:"password" binding:"required,min=6,max=18" label:"旧密码"`
 	Password    string `form:"password" binding:"required,min=6,max=18" label:"密码"`
 	Repassword  string `form:"repassword" binding:"required,min=6,max=18,eqfield=Password" label:"再输入一次密码"`
+}
+
+type OpenPlatform struct {
+	Bbs    bool `json:"bbs"`
+	Wechat bool `json:"wechat"`
 }

@@ -42,7 +42,7 @@ definitions:
       username:
         type: string
     type: object
-  dto.WechatScanLogin:
+  dto.WechatScan:
     properties:
       code:
         type: string
@@ -273,6 +273,22 @@ paths:
       summary: 用户
       tags:
       - user
+  /auth/bind/wechat/request:
+    post:
+      description: 绑定微信
+      operationId: wechat-bind-request
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WechatScan'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
   /auth/wechat:
     post:
       description: 微信oauth2.0登录
@@ -295,7 +311,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.WechatScanLogin'
+            $ref: '#/definitions/dto.WechatScan'
         "400":
           description: Bad Request
           schema:
@@ -623,6 +639,26 @@ paths:
       summary: 用户
       tags:
       - user
+  /user/oauth:
+    delete:
+      description: 解绑三方登录
+      operationId: user-delete-oauth
+      parameters:
+      - description: 普通:bbs|wechat
+        in: formData
+        name: platform
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
   /user/password:
     put:
       description: 修改用户密码
@@ -647,6 +683,20 @@ paths:
         name: email
         required: true
         type: string
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+  /user/setting:
+    get:
+      description: 用户设置信息
+      operationId: user-setting-info
       responses:
         "200":
           description: ""

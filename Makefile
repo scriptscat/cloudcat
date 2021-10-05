@@ -1,5 +1,5 @@
-export GOOS=linux
-export GOARCH=amd64
+GOOS=linux
+GOARCH=amd64
 VERSION=v0.1.0
 DOCKER_REPO=codfrm
 REMOTE_REPO=$(DOCKER_REPO)/cloudcat:$(VERSION)
@@ -14,13 +14,16 @@ swagger:
 	swag init -g internal/controller/http/v1/router.go
 
 test:
-	go test -v ./...
+	GOOS=$(GOOS) go test -v ./...
 
-build:
+generate:
+	go generate ./... -x
+
+build: swagger generate
 	CGO_LDFLAGS="-static" go build -tags netgo -o cloudcat$(SUFFIX) ./cmd/app
 
 target:
-	CGO_LDFLAGS="-static" go build -tags netgo -o $(NAME)$(SUFFIX) ./cmd/app
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_LDFLAGS="-static" go build -tags netgo -o $(NAME)$(SUFFIX) ./cmd/app
 
 docker:
 	docker build -t cloudcat .

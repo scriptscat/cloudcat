@@ -50,6 +50,29 @@ func (u *User) get(ctx *gin.Context) {
 }
 
 // @Summary     用户
+// @Description 用户设置信息
+// @ID          user-setting-info
+// @Tags  	    user
+// @Security    BearerAuth
+// @Success     200
+// @Failure     403
+// @Router      /user/setting [get]
+func (u *User) setting(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		uid, _ := userId(ctx)
+		info, err := u.UserInfo(uid)
+		if err != nil {
+			return err
+		}
+		open, err := u.oauthSvc.OAuthPlatform(uid)
+		return gin.H{
+			"info": info,
+			"open": open,
+		}
+	})
+}
+
+// @Summary     用户
 // @Description 请求邮箱修改验证码
 // @ID          change-email-code
 // @Tags  	    user
@@ -170,12 +193,31 @@ func (u *User) updateAvatar(ctx *gin.Context) {
 	})
 }
 
+// @Summary     用户
+// @Description 解绑三方登录
+// @ID          user-delete-oauth
+// @Tags  	    user
+// @Security    BearerAuth
+// @Param       platform formData string true "普通:bbs|wechat"
+// @Success     200
+// @Failure     403
+// @Router      /user/oauth [delete]
+func (u *User) deleteOAuth(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		uid, _ := userId(ctx)
+		platform := ctx.PostForm("platform")
+		return u.oauthSvc.Unbind(uid, platform)
+	})
+}
+
 func (u *User) Register(r *gin.RouterGroup) {
-	rg := r.Group("/user", userAuth())
+	rg := r.Group("/user", userAuth(true))
 	rg.GET("", u.get)
 	rg.PUT("", u.update)
+	rg.GET("/setting", u.setting)
 	rg.POST("/request-change-email-code", u.requestChangeEmailCode)
 	rg.PUT("/password", u.password)
 	rg.GET("/avatar", u.avatar)
 	rg.PUT("/avatar", u.updateAvatar)
+	rg.DELETE("/oauth", u.deleteOAuth)
 }
