@@ -15,7 +15,7 @@ type VerifyCode struct {
 	Expiretime int64
 }
 
-func (v *VerifyCode) CheckCode(code string) error {
+func (v *VerifyCode) CheckCode(code, op string) error {
 	if time.Now().Unix() > v.Expiretime {
 		return errs.NewBadRequestError(1000, "验证码过期")
 	}
@@ -24,6 +24,9 @@ func (v *VerifyCode) CheckCode(code string) error {
 	}
 	if v.Code != strings.ToUpper(code) {
 		return errs.NewBadRequestError(1001, "验证码错误")
+	}
+	if op != v.Op {
+		return errs.NewBadRequestError(1002, "验证码错误")
 	}
 	return nil
 }

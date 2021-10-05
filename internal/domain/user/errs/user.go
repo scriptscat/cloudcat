@@ -27,4 +27,5 @@ var (
 
 	ErrAvatarNotImage = errs.NewBadRequestError(1013, "上传的头像不是一个正确的图片")
 	ErrAvatarIsNil    = errs.NewBadRequestError(1014, "头像是空的")
+	ErrAvatarTooBig   = errs.NewBadRequestError(1015, "头像不能超过1M")
 )

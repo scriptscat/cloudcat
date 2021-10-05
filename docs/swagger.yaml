@@ -170,6 +170,24 @@ paths:
       summary: 用户
       tags:
       - user
+  /account/logout:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 登出
+      operationId: logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
   /account/register:
     post:
       consumes:
@@ -536,6 +554,37 @@ paths:
             $ref: '#/definitions/dto.UserInfo'
         "403":
           description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+    put:
+      description: 修改用户信息
+      operationId: user-update-info
+      parameters:
+      - description: 用户名
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: 邮箱
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: 邮箱验证码
+        in: formData
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
       summary: 用户
       tags:
       - user
@@ -564,6 +613,40 @@ paths:
         name: avatar
         required: true
         type: file
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+  /user/password:
+    put:
+      description: 修改用户密码
+      operationId: user-update-password
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+  /user/request-change-email-code:
+    put:
+      description: 请求邮箱修改验证码
+      operationId: change-email-code
+      parameters:
+      - description: 邮箱
+        in: formData
+        name: email
+        required: true
+        type: string
       responses:
         "200":
           description: ""

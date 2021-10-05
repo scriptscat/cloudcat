@@ -80,9 +80,6 @@ func NewRouter(r *gin.Engine, cfg *config.Config, db *database.Database, kv kvdb
 			return func(ctx *gin.Context) {
 				enforceAuth(ctx)
 				if !ctx.IsAborted() {
-					if os.Getenv("DISABLE_AUTH") == "true" {
-
-					}
 					uid, _ := userId(ctx)
 					if _, err := auth.UserInfo(uid); err != nil {
 						httputils.HandleError(ctx, err)

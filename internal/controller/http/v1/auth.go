@@ -98,7 +98,7 @@ func (a *Auth) logout(ctx *gin.Context) {
 		}
 		ctx.SetCookie("token", "", -1, "/", "", false, true)
 		token.DelToken(a.cache, t.Token)
-		return nil
+		return "登出成功"
 	})
 }
 
@@ -173,7 +173,7 @@ func (a *Auth) requestEmailCode(ctx *gin.Context) {
 			PeriodCnt:   5,
 			Period:      24 * time.Hour,
 		}, func() error {
-			code, err := a.RequestRegisterEmailCode(email)
+			code, err := a.RequestEmailCode(email, "register")
 			if err != nil {
 				return err
 			}
@@ -379,7 +379,7 @@ func (a *Auth) oauthHandle(ctx *gin.Context, resp *dto.OAuthRespond) interface{}
 func (a *Auth) Register(r *gin.RouterGroup) {
 	rg := r.Group("/account")
 	rg.POST("/login", a.login)
-	rg.GET("/logout", a.logout)
+	rg.GET("/logout", userAuth(), a.logout)
 	rg.POST("/register", a.register)
 	rg.POST("/register/request-email-code", a.requestEmailCode)
 

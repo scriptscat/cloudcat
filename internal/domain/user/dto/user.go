@@ -42,7 +42,7 @@ type Register struct {
 	Username   string `form:"username" binding:"required,min=3,max=16" label:"用户名"`
 	Email      string `form:"email" binding:"required,min=3,max=32,email" label:"邮箱"`
 	Password   string `form:"password" binding:"required,min=6,max=18" label:"密码"`
-	Repassword string `form:"password" binding:"required,min=6,max=18,eqfield=Password" label:"再输入一次密码"`
+	Repassword string `form:"repassword" binding:"required,min=6,max=18,eqfield=Password" label:"再输入一次密码"`
 	// 开启邮箱验证
 	EmailVerifyCode string `form:"email_verify_code" binding:"omitempty,len=6,alphanum" label:"邮箱验证码"`
 	// 开启邀请码注册
@@ -56,4 +56,16 @@ type VerifyEmail struct {
 type WechatScanLogin struct {
 	URL  string `json:"url"`
 	Code string `json:"code"`
+}
+
+type UpdateUserInfo struct {
+	Username        string `form:"username" binding:"required,min=3,max=16" label:"用户名"`
+	Email           string `form:"email" binding:"required,min=3,max=32,email" label:"邮箱"`
+	EmailVerifyCode string `form:"email_verify_code" binding:"len=6,alphanum" label:"邮箱验证码"`
+}
+
+type UpdatePassword struct {
+	OldPassword string `form:"password" binding:"required,min=6,max=18" label:"旧密码"`
+	Password    string `form:"password" binding:"required,min=6,max=18" label:"密码"`
+	Repassword  string `form:"repassword" binding:"required,min=6,max=18,eqfield=Password" label:"再输入一次密码"`
 }

@@ -72,6 +72,33 @@ var doc = `{
                 }
             }
         },
+        "/account/logout": {
+            "post": {
+                "description": "登出",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "logout",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
         "/account/register": {
             "post": {
                 "description": "用户注册",
@@ -616,6 +643,11 @@ var doc = `{
         },
         "/user": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "用户信息",
                 "tags": [
                     "user"
@@ -628,6 +660,50 @@ var doc = `{
                         "schema": {
                             "$ref": "#/definitions/dto.UserInfo"
                         }
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "修改用户信息",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-update-info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮箱验证码",
+                        "name": "code",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
                     },
                     "403": {
                         "description": ""
@@ -677,6 +753,61 @@ var doc = `{
                         "type": "file",
                         "description": "头像",
                         "name": "avatar",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/user/password": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "修改用户密码",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-update-password",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/user/request-change-email-code": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "请求邮箱修改验证码",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "change-email-code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
                         "in": "formData",
                         "required": true
                     }

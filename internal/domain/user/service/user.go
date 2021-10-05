@@ -22,12 +22,14 @@ import (
 type User interface {
 	Login(login *dto.Login) (*dto.UserInfo, error)
 	Register(register *dto.Register) (*dto.UserInfo, error)
-	RequestRegisterEmailCode(email string) (*entity.VerifyCode, error)
+	RequestEmailCode(email, op string) (*entity.VerifyCode, error)
 	UserInfo(uid int64) (*dto.UserInfo, error)
 	Avatar(uid int64) ([]byte, error)
 	UploadAvatar(uid int64, b []byte) error
 	oauthRegister(tx *gorm.DB, user *entity.User) (int64, error)
 	CheckUsername(username string) error
+	UpdateUserInfo(uid int64, req *dto.UpdateUserInfo) error
+	UpdatePassword(uid int64, req *dto.UpdatePassword) error
 }
 
 const (
@@ -121,7 +123,7 @@ func (u *user) Register(register *dto.Register) (*dto.UserInfo, error) {
 		if vcode == nil {
 			return nil, errs.ErrEmailVCodeNotFound
 		}
-		if err := vcode.CheckCode(register.EmailVerifyCode); err != nil {
+		if err := vcode.CheckCode(register.EmailVerifyCode, "register"); err != nil {
 			return nil, err
 		}
 	}
@@ -191,13 +193,13 @@ func (u *user) checkEmail(email string) error {
 	return nil
 }
 
-func (u *user) RequestRegisterEmailCode(email string) (*entity.VerifyCode, error) {
+func (u *user) RequestEmailCode(email, op string) (*entity.VerifyCode, error) {
 	if err := u.checkEmail(email); err != nil {
 		return nil, err
 	}
 	v := &entity.VerifyCode{
 		Identifier: email,
-		Op:         "register",
+		Op:         op,
 		Code:       strings.ToUpper(utils.RandString(6, 0)),
 		Expiretime: time.Now().Add(time.Minute * 5).Unix(),
 	}
@@ -228,6 +230,9 @@ func (u *user) UploadAvatar(uid int64, b []byte) error {
 	if strings.Index(c, "image") == -1 {
 		return errs.ErrAvatarNotImage
 	}
+	if len(b) > 1024*1024 {
+		return errs.ErrAvatarTooBig
+	}
 	suffix := c[strings.LastIndex(c, "/")+1:]
 	p, name := u.getDir(b, "."+suffix)
 	p = path.Join(u.resourceDir, "avatar", p)
@@ -253,4 +258,49 @@ func (u *user) oauthRegister(tx *gorm.DB, user *entity.User) (int64, error) {
 		return 0, nil
 	}
 	return user.ID, nil
+}
+
+func (u *user) UpdateUserInfo(uid int64, req *dto.UpdateUserInfo) error {
+	user, err := u.userRepo.FindById(uid)
+	if err != nil {
+		return err
+	}
+	if req.Username != user.Username {
+		// 更新用户名
+		if u, err := u.userRepo.FindByName(req.Username); err != nil {
+			return err
+		} else if u != nil {
+			return errs.ErrUsernameExist
+		}
+		user.Username = req.Username
+	}
+	if req.Email != req.Email {
+		// 更新邮箱
+		vcode, err := u.verifyRepo.FindById(req.Email)
+		if err != nil {
+			return err
+		}
+		if vcode == nil {
+			return errs.ErrEmailVCodeNotFound
+		}
+		if err := vcode.CheckCode(req.EmailVerifyCode, "change-user-info"); err != nil {
+			return err
+		}
+		user.Email = req.Email
+	}
+	return u.userRepo.Save(user)
+}
+
+func (u *user) UpdatePassword(uid int64, req *dto.UpdatePassword) error {
+	user, err := u.userRepo.FindById(uid)
+	if err != nil {
+		return err
+	}
+	if err := user.CheckPassword(req.Password); err != nil {
+		return err
+	}
+	if err := user.SetPassword(req.Password); err != nil {
+		return err
+	}
+	return u.userRepo.Save(user)
 }
