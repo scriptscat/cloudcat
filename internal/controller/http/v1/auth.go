@@ -377,6 +377,10 @@ func (a *Auth) wechatHandle(ctx *gin.Context) {
 
 	if ctx.Query("echostr") == "" && wc.ReverseProxy != "" {
 		resp, err := http.Post(wc.ReverseProxy+"?"+ctx.Request.URL.RawQuery, "application/xml", bytes.NewBuffer(bodyBytes))
+		if err != nil {
+			logrus.Errorf("wx proxy: %v", err)
+			return
+		}
 		ctx.Writer.WriteHeader(resp.StatusCode)
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
