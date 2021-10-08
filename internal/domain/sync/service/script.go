@@ -234,13 +234,15 @@ func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscri
 			continue
 		}
 		if v.Action == "delete" {
-			if err := s.subscribe.SetStatus(subscribe.ID, cnt.DELETE); err != nil {
-				logrus.Warnf("sync subscribe save subscribe error: %v", err)
-				ret[i] = &dto.SyncSubscribe{
-					Action: "error",
-					Msg:    "同步失败,系统错误",
+			if subscribe != nil {
+				if err := s.subscribe.SetStatus(subscribe.ID, cnt.DELETE); err != nil {
+					logrus.Warnf("sync subscribe save subscribe error: %v", err)
+					ret[i] = &dto.SyncSubscribe{
+						Action: "error",
+						Msg:    "同步失败,系统错误",
+					}
+					continue
 				}
-				continue
 			}
 		} else {
 			v.Subscribe.UserID = user
@@ -251,6 +253,7 @@ func (s *sync) PushSubscribe(user, device, version int64, sub []*dto.SyncSubscri
 				v.Subscribe.ID = subscribe.ID
 				v.Subscribe.Createtime = subscribe.Createtime
 			}
+			v.Subscribe.SetUrl(v.Subscribe.URL)
 			if err := s.subscribe.Save(v.Subscribe); err != nil {
 				logrus.Warnf("sync subscribe save subscribe error: %v", err)
 				ret[i] = &dto.SyncSubscribe{
