@@ -6,6 +6,13 @@
 
 ![](https://img.shields.io/github/stars/scriptscat/cloudcat.svg)![](https://img.shields.io/github/v/tag/scriptscat/cloudcat.svg?label=version&sort=semver)
 
+[API文档](http://localhost:8080/swagger/index.html)
+
+## 需要环境
+
+```shell
+go install github.com/swaggo/swag/cmd/swag@latest
+```
 
 
 ## 编译

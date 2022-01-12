@@ -1062,6 +1062,9 @@
                 "url": {
                     "type": "string"
                 },
+                "url_hash": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }

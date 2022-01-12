@@ -10,6 +10,6 @@ config.yaml
 
 cloudcat.db
 
-cloudcat*/
+/cloudcat*/
 
 resource/

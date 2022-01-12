@@ -11,7 +11,8 @@ ifeq ($(GOOS),windows)
 endif
 
 swagger:
-	swag init -g internal/controller/http/v1/router.go
+	swag fmt -g interfaces/api/router.go
+	swag init -g interfaces/api/router.go
 
 test:
 	GOOS=$(GOOS) go test -v ./...
@@ -20,10 +21,10 @@ generate:
 	go generate ./... -x
 
 build: swagger generate
-	CGO_LDFLAGS="-static" go build -tags netgo -o cloudcat$(SUFFIX) ./cmd/app
+	CGO_LDFLAGS="-static" go build -tags netgo -o cloudcat$(SUFFIX) ./cmd/cloudcat
 
 target:
-	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_LDFLAGS="-static" go build -tags netgo -o $(NAME)$(SUFFIX) ./cmd/app
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_LDFLAGS="-static" go build -tags netgo -o $(NAME)$(SUFFIX) ./cmd/cloudcat
 
 docker:
 	docker build -t cloudcat .

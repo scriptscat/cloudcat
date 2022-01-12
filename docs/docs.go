@@ -1078,6 +1078,9 @@ var doc = `{
                 "url": {
                     "type": "string"
                 },
+                "url_hash": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }
@@ -1166,5 +1169,5 @@ func (s *s) ReadDoc() string {
 }
 
 func init() {
-	swag.Register(swag.Name, &s{})
+	swag.Register("swagger", &s{})
 }

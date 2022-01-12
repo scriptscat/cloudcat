@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
-	"github.com/scriptscat/cloudcat/internal/domain/user/entity"
+	entity2 "github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
 	"github.com/scriptscat/cloudcat/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -14,11 +14,11 @@ func T1631263155() *gormigrate.Migration {
 		ID: "1631263155",
 		Migrate: func(db *gorm.DB) error {
 			return utils.Errs(
-				db.AutoMigrate(&entity.User{}),
-				db.AutoMigrate(&entity.WechatOauthUser{}),
-				db.AutoMigrate(&entity.BbsOauthUser{}),
+				db.AutoMigrate(&entity2.User{}),
+				db.AutoMigrate(&entity2.WechatOauthUser{}),
+				db.AutoMigrate(&entity2.BbsOauthUser{}),
 				func() error {
-					user := &entity.User{
+					user := &entity2.User{
 						Username:   "admin",
 						Email:      "admin@admin.com",
 						Role:       "admin",
@@ -34,9 +34,9 @@ func T1631263155() *gormigrate.Migration {
 		},
 		Rollback: func(db *gorm.DB) error {
 			return utils.Errs(
-				db.Migrator().DropTable(&entity.User{}),
-				db.Migrator().DropTable(&entity.WechatOauthUser{}),
-				db.Migrator().DropTable(&entity.BbsOauthUser{}),
+				db.Migrator().DropTable(&entity2.User{}),
+				db.Migrator().DropTable(&entity2.WechatOauthUser{}),
+				db.Migrator().DropTable(&entity2.BbsOauthUser{}),
 			)
 		},
 	}

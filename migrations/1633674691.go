@@ -2,7 +2,7 @@ package migrations
 
 import (
 	"github.com/go-gormigrate/gormigrate/v2"
-	"github.com/scriptscat/cloudcat/internal/domain/sync/entity"
+	"github.com/scriptscat/cloudcat/internal/service/sync/domain/entity"
 	"github.com/scriptscat/cloudcat/pkg/utils"
 	"gorm.io/gorm"
 )

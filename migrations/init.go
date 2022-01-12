@@ -2,7 +2,7 @@ package migrations
 
 import (
 	"github.com/go-gormigrate/gormigrate/v2"
-	"github.com/scriptscat/cloudcat/pkg/database"
+	"github.com/scriptscat/cloudcat/internal/infrastructure/database"
 )
 
 func RunMigrations(db *database.Database) error {

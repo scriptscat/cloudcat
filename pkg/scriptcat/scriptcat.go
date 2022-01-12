@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"github.com/scriptscat/cloudcat/pkg/executor"
+	executor2 "github.com/scriptscat/cloudcat/pkg/scriptcat/executor"
 	"github.com/sirupsen/logrus"
 	"rogchap.com/v8go"
 )
@@ -94,7 +94,7 @@ func (s *ScriptCat) RunOnce(ctx context.Context, script string, opt ...Option) (
 	return ret, nil
 }
 
-func (s *ScriptCat) runOnce(ctx context.Context, exec *executor.Executor, code string) (msg string, err error) {
+func (s *ScriptCat) runOnce(ctx context.Context, exec *executor2.Executor, code string) (msg string, err error) {
 	ret, err := exec.Run(code)
 	if err != nil {
 		return "", err
@@ -128,7 +128,7 @@ func (s *ScriptCat) runOnce(ctx context.Context, exec *executor.Executor, code s
 	return
 }
 
-func (s *ScriptCat) compile(script string, options *Options) (*executor.Executor, map[string][]string, string, error) {
+func (s *ScriptCat) compile(script string, options *Options) (*executor2.Executor, map[string][]string, string, error) {
 	// 解析script
 	metaJson := ParseMetaToJson(ParseMeta(script))
 	exec, err := s.buildExecutor(metaJson, options)
@@ -140,18 +140,18 @@ func (s *ScriptCat) compile(script string, options *Options) (*executor.Executor
 	return exec, metaJson, "function app() {\n" + script + "\n}\napp();", nil
 }
 
-func (s *ScriptCat) buildExecutor(meta map[string][]string, opts *Options) (*executor.Executor, error) {
-	contextOpts := []executor.Option{
-		executor.WithLogger(opts.log),
-		executor.Console(),
+func (s *ScriptCat) buildExecutor(meta map[string][]string, opts *Options) (*executor2.Executor, error) {
+	contextOpts := []executor2.Option{
+		executor2.WithLogger(opts.log),
+		executor2.Console(),
 	}
 
-	optMap := map[string]func() executor.Option{
-		"GM_xmlhttpRequest": func() executor.Option {
-			return executor.GmXmlHttpRequest(opts.cookieJar)
+	optMap := map[string]func() executor2.Option{
+		"GM_xmlhttpRequest": func() executor2.Option {
+			return executor2.GmXmlHttpRequest(opts.cookieJar)
 		},
-		"GM_notification": func() executor.Option {
-			return executor.GmNotification()
+		"GM_notification": func() executor2.Option {
+			return executor2.GmNotification()
 		},
 	}
 
@@ -161,7 +161,7 @@ func (s *ScriptCat) buildExecutor(meta map[string][]string, opts *Options) (*exe
 		}
 	}
 
-	exec, err := executor.NewExecutor(contextOpts...)
+	exec, err := executor2.NewExecutor(contextOpts...)
 	if err != nil {
 		return nil, err
 	}

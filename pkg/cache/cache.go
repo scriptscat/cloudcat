@@ -3,7 +3,7 @@ package cache
 import (
 	"time"
 
-	kvdb2 "github.com/scriptscat/cloudcat/pkg/kvdb"
+	kvdb3 "github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
 )
 
 type Cache interface {
@@ -23,7 +23,7 @@ func NewCache(cfg *Config) (Cache, error) {
 	var ret Cache
 	switch cfg.Type {
 	case "redis", "sqlite":
-		kvdb, err := kvdb2.NewKvDb(&kvdb2.Config{
+		kvdb, err := kvdb3.NewKvDb(&kvdb3.Config{
 			Type: cfg.Type,
 			Redis: struct {
 				Addr   string
