@@ -11,11 +11,9 @@ import (
 )
 
 func TestGmXmlHttpRequest(t *testing.T) {
-	iso, _ := NewExecutor()
+	iso, _ := NewExecutor(WithLogger(logrus.StandardLogger().Logf), GmNotification(), GmXmlHttpRequest(nil), Console())
 
-	ctx, _ := NewContext(iso, WithLogger(logrus.StandardLogger().Logf), GmNotification(), GmXmlHttpRequest(nil), Console())
-
-	ret, err := iso.Run(ctx, `
+	ret, err := iso.Run(`
 function app() {
     return new Promise(resolve => {
         GM_xmlhttpRequest({

@@ -94,8 +94,8 @@ func (s *ScriptCat) RunOnce(ctx context.Context, script string, opt ...Option) (
 	return ret, nil
 }
 
-func (s *ScriptCat) runOnce(ctx context.Context, exec *executor.Context, code string) (msg string, err error) {
-	ret, err := exec.RunScript(code, "app.js")
+func (s *ScriptCat) runOnce(ctx context.Context, exec *executor.Executor, code string) (msg string, err error) {
+	ret, err := exec.Run(code)
 	if err != nil {
 		return "", err
 	}
@@ -128,23 +128,19 @@ func (s *ScriptCat) runOnce(ctx context.Context, exec *executor.Context, code st
 	return
 }
 
-func (s *ScriptCat) compile(script string, options *Options) (*executor.Context, map[string][]string, string, error) {
-	exec, err := executor.NewExecutor()
-	if err != nil {
-		return nil, nil, "", err
-	}
+func (s *ScriptCat) compile(script string, options *Options) (*executor.Executor, map[string][]string, string, error) {
 	// 解析script
 	metaJson := ParseMetaToJson(ParseMeta(script))
-	ctx, err := s.buildContext(exec, metaJson, options)
+	exec, err := s.buildExecutor(metaJson, options)
 	if err != nil {
 		return nil, nil, "", err
 	}
 	// TODO: 编译code(require resource等内容)
 
-	return ctx, metaJson, "function app() {\n" + script + "\n}\napp();", nil
+	return exec, metaJson, "function app() {\n" + script + "\n}\napp();", nil
 }
 
-func (s *ScriptCat) buildContext(exec *executor.Executor, meta map[string][]string, opts *Options) (*executor.Context, error) {
+func (s *ScriptCat) buildExecutor(meta map[string][]string, opts *Options) (*executor.Executor, error) {
 	contextOpts := []executor.Option{
 		executor.WithLogger(opts.log),
 		executor.Console(),
@@ -165,9 +161,9 @@ func (s *ScriptCat) buildContext(exec *executor.Executor, meta map[string][]stri
 		}
 	}
 
-	ctx, err := executor.NewContext(exec, contextOpts...)
+	exec, err := executor.NewExecutor(contextOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return ctx, nil
+	return exec, nil
 }

@@ -14,6 +14,12 @@ import (
 	"rogchap.com/v8go"
 )
 
+func GlobalFunc(name string, callback v8go.FunctionCallback) Option {
+	return func(opts *Options) {
+		globalFunc(opts, name, callback)
+	}
+}
+
 func globalFunc(opts *Options, name string, callback v8go.FunctionCallback) {
 	f, err := v8go.NewFunctionTemplate(opts.iso, callback)
 	if err != nil {
