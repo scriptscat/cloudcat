@@ -13,11 +13,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/scriptscat/cloudcat/internal/infrastructure/middleware/token"
+	service3 "github.com/scriptscat/cloudcat/internal/infrastructure/sender"
 	service2 "github.com/scriptscat/cloudcat/internal/service/safe/application"
 	dto2 "github.com/scriptscat/cloudcat/internal/service/safe/domain/dto"
-	service3 "github.com/scriptscat/cloudcat/internal/service/system/application"
 	application2 "github.com/scriptscat/cloudcat/internal/service/user/application"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/vo"
+	"github.com/scriptscat/cloudcat/internal/service/user/interfaces/api/request"
 	"github.com/scriptscat/cloudcat/pkg/cache"
 	"github.com/scriptscat/cloudcat/pkg/errs"
 	"github.com/scriptscat/cloudcat/pkg/httputils"
@@ -423,17 +424,49 @@ func (a *Auth) oauthHandle(ctx *gin.Context, resp *vo.OAuthRespond) interface{} 
 // @Description  往邮箱里发送一个找回密码的链接
 // @ID           forget-password
 // @Tags         user
-// @Param        redirect_uri  query     string  false  "重定向链接"
-// @param        code          formData  string  true   "查询code"
-// @Success      200           {string}  json    "token"
-// @Success      302
+// @Param        email  formData  string  true  "邮箱地址"
+// @Success      200
 // @Failure      400  {object}  errs.JsonRespondError
 // @Failure      404  {object}  errs.JsonRespondError
 // @Router       /account/forgot-password [post]
 func (a *Auth) forgetPassword(c *gin.Context) {
 	httputils.Handle(c, func() interface{} {
+		return a.safe.Rate(&dto2.SafeUserinfo{
+			IP: c.ClientIP(),
+		}, &dto2.SafeRule{
+			Name:        "forget-password",
+			Description: "忘记密码",
+			PeriodCnt:   5,
+			Period:      3 * time.Minute,
+		}, func() error {
+			err := a.RequestForgetPasswordEmail(c.PostForm("email"))
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+	})
+}
 
-		return nil
+// @Summary      重置密码
+// @Description  通过忘记密码的邮件重置密码
+// @ID           reset-password
+// @Tags         user
+// @Param        code        formData  string  true  "重置code"
+// @Param        password    formData  string  true  "输入密码"
+// @Param        repassword  formData  string  true  "再输入一次密码"
+// @Success      200
+// @Failure      400  {object}  errs.JsonRespondError
+// @Failure      404  {object}  errs.JsonRespondError
+// @Router       /account/reset-password [post]
+func (a *Auth) resetPassword(c *gin.Context) {
+	httputils.Handle(c, func() interface{} {
+		req := &request.ResetPasswordRequest{}
+		err := c.ShouldBind(req)
+		if err != nil {
+			return err
+		}
+		return a.User.ResetPassword(req.Code, req.Password)
 	})
 }
 
@@ -444,6 +477,7 @@ func (a *Auth) Register(r *gin.RouterGroup) {
 	rg.POST("/register", a.register)
 	rg.POST("/register/request-email-code", a.requestEmailCode)
 	rg.POST("/forgot-password", a.forgetPassword)
+	rg.POST("/reset-password", a.resetPassword)
 
 	rg = r.Group("/auth")
 	rg.GET("/bbs", a.bbsOAuth)

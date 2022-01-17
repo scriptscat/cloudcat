@@ -2,10 +2,9 @@ package cmd
 
 import (
 	config2 "github.com/scriptscat/cloudcat/internal/infrastructure/config"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/database"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
-	"github.com/scriptscat/cloudcat/internal/service/system/application"
-	service2 "github.com/scriptscat/cloudcat/internal/service/user/application"
+	"github.com/scriptscat/cloudcat/internal/infrastructure/sender"
+	"github.com/scriptscat/cloudcat/internal/pkg/database"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
 	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/spf13/cobra"
@@ -107,34 +106,34 @@ func (m *manageCmd) sender(cmd *cobra.Command, args []string) error {
 	}
 
 	if m.tls {
-		err = config.SetConfig(application.SENDER_EMAIL_TLS, "1")
+		err = config.SetConfig(sender.SENDER_EMAIL_TLS, "1")
 	} else {
-		err = config.SetConfig(application.SENDER_EMAIL_TLS, "0")
+		err = config.SetConfig(sender.SENDER_EMAIL_TLS, "0")
 	}
 
 	return utils.Errs(
 		err,
-		config.SetConfig(application.SENDER_EMAIL_HOST, m.host),
-		config.SetConfig(application.SENDER_EMAIL_USER, m.email),
-		config.SetConfig(application.SENDER_EMAIL_PASSWD, m.passwd),
+		config.SetConfig(sender.SENDER_EMAIL_HOST, m.host),
+		config.SetConfig(sender.SENDER_EMAIL_USER, m.email),
+		config.SetConfig(sender.SENDER_EMAIL_PASSWD, m.passwd),
 	)
 }
 
 func (m *manageCmd) oauth(cmd *cobra.Command, args []string) error {
-	config, err := m.getConfig()
+	cfg, err := m.getConfig()
 	if err != nil {
 		return err
 	}
 	errs := make([]error, 0)
 	switch m.platform {
 	case "wechat":
-		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatAppId, m.appId))
-		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatAppSecret, m.appSecret))
-		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatToken, m.token))
-		errs = append(errs, config.SetConfig(service2.OAuthConfigWechatEncodingaeskey, m.aes))
+		errs = append(errs, cfg.SetConfig(config2.OAuthConfigWechatAppId, m.appId))
+		errs = append(errs, cfg.SetConfig(config2.OAuthConfigWechatAppSecret, m.appSecret))
+		errs = append(errs, cfg.SetConfig(config2.OAuthConfigWechatToken, m.token))
+		errs = append(errs, cfg.SetConfig(config2.OAuthConfigWechatEncodingaeskey, m.aes))
 	case "bbs":
-		errs = append(errs, config.SetConfig(service2.OAuthConfigBbsClientId, m.clientId))
-		errs = append(errs, config.SetConfig(service2.OAuthConfigBbsClientSecret, m.clientSecret))
+		errs = append(errs, cfg.SetConfig(config2.OAuthConfigBbsClientId, m.clientId))
+		errs = append(errs, cfg.SetConfig(config2.OAuthConfigBbsClientSecret, m.clientSecret))
 	}
 	return utils.Errs(errs...)
 }

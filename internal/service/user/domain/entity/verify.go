@@ -9,14 +9,15 @@ import (
 )
 
 type VerifyCode struct {
-	Identifier string
-	Op         string
-	Code       string
-	Expiretime int64
+	ID         int64  `gorm:"primaryKey" json:"id"`
+	Identifier string `gorm:"column:identifier;type:varchar(255);index;NOT NULL" json:"identifier"`
+	Op         string `gorm:"column:op;type:varchar(255);NOT NULL" json:"op"`
+	Code       string `gorm:"column:code;type:varchar(255);uniqueIndex;NOT NULL" json:"code"`
+	Expired    int64  `gorm:"column:expired;type:bigint(255);NOT NULL" json:"expired"`
 }
 
 func (v *VerifyCode) CheckCode(code, op string) error {
-	if time.Now().Unix() > v.Expiretime {
+	if time.Now().Unix() > v.Expired {
 		return errs.NewBadRequestError(1000, "验证码过期")
 	}
 	if v.Code == "" {

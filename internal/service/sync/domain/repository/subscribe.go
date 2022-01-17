@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/sync/domain/dto"
 	"github.com/scriptscat/cloudcat/internal/service/sync/domain/entity"
 	"github.com/scriptscat/cloudcat/pkg/utils"

@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/config"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	config2 "github.com/scriptscat/cloudcat/internal/infrastructure/config"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	entity2 "github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/repository"
@@ -45,19 +45,6 @@ type OAuth interface {
 	Unbind(uid int64, platform string) error
 }
 
-const (
-	HomeUrl = "home_url"
-
-	OAuthConfigBbsClientId     = "oauth_config_bbs_client_id"
-	OAuthConfigBbsClientSecret = "oauth_config_bbs_client_secret"
-
-	OAuthConfigWechatAppId          = "oauth_config_wechat_app_id"
-	OAuthConfigWechatAppSecret      = "oauth_config_wechat_app_secret"
-	OAuthConfigWechatToken          = "oauth_config_wechat_token"
-	OAuthConfigWechatEncodingaeskey = "oauth_config_wechat_encoding_aes_key"
-	OAuthConfigWechatReverseProxy   = "oauth_config_wechat_reverse_proxy"
-)
-
 type WechatConfig struct {
 	Officialaccount *officialaccount.OfficialAccount
 	ReverseProxy    string
@@ -67,7 +54,7 @@ type oauth struct {
 	sync.RWMutex
 	userSvc         User
 	kv              kvdb.KvDb
-	config          config.SystemConfig
+	config          config2.SystemConfig
 	bbsOAuthRepo    repository.BBSOAuth
 	wechatOAuthRepo repository.WechatOAuth
 	tx              *gorm.DB
@@ -77,7 +64,7 @@ type oauth struct {
 	officialaccount *officialaccount.OfficialAccount
 }
 
-func NewOAuth(config config.SystemConfig, kv kvdb.KvDb, tx *gorm.DB, userSvc User, bbs repository.BBSOAuth, wc repository.WechatOAuth) OAuth {
+func NewOAuth(config config2.SystemConfig, kv kvdb.KvDb, tx *gorm.DB, userSvc User, bbs repository.BBSOAuth, wc repository.WechatOAuth) OAuth {
 	return &oauth{
 		config:          config,
 		bbsOAuthRepo:    bbs,
@@ -89,7 +76,7 @@ func NewOAuth(config config.SystemConfig, kv kvdb.KvDb, tx *gorm.DB, userSvc Use
 }
 
 func (o *oauth) RedirectOAuth(redirectUrl, platform string) (string, error) {
-	homeUrl, _ := o.config.GetConfig(HomeUrl)
+	homeUrl, _ := o.config.GetConfig(config2.HomeUrl)
 	redirectUrl = homeUrl + redirectUrl
 	switch platform {
 	case "bbs":
@@ -213,19 +200,19 @@ func (o *oauth) getWechatClient() (*officialaccount.OfficialAccount, error) {
 		o.Lock()
 		defer o.Unlock()
 		wc := wechat.NewWechat()
-		appId, err := o.getOAuthConfig(OAuthConfigWechatAppId)
+		appId, err := o.getOAuthConfig(config2.OAuthConfigWechatAppId)
 		if err != nil {
 			return nil, err
 		}
-		appSecret, err := o.getOAuthConfig(OAuthConfigWechatAppSecret)
+		appSecret, err := o.getOAuthConfig(config2.OAuthConfigWechatAppSecret)
 		if err != nil {
 			return nil, err
 		}
-		token, err := o.getOAuthConfig(OAuthConfigWechatToken)
+		token, err := o.getOAuthConfig(config2.OAuthConfigWechatToken)
 		if err != nil {
 			return nil, err
 		}
-		encodingAESKey, err := o.getOAuthConfig(OAuthConfigWechatEncodingaeskey)
+		encodingAESKey, err := o.getOAuthConfig(config2.OAuthConfigWechatEncodingaeskey)
 		if err != nil {
 			return nil, err
 		}
@@ -245,7 +232,7 @@ func (o *oauth) getWechatClient() (*officialaccount.OfficialAccount, error) {
 }
 
 func (o *oauth) GetWechat() (*WechatConfig, error) {
-	reverseProxy, err := o.getOAuthConfig(OAuthConfigWechatReverseProxy)
+	reverseProxy, err := o.getOAuthConfig(config2.OAuthConfigWechatReverseProxy)
 	if err != nil {
 		return nil, err
 	}
@@ -390,11 +377,11 @@ func (o *oauth) getBbsClient() (*bbs.Client, error) {
 		o.RUnlock()
 		o.Lock()
 		defer o.Unlock()
-		clientid, err := o.getOAuthConfig(OAuthConfigBbsClientId)
+		clientid, err := o.getOAuthConfig(config2.OAuthConfigBbsClientId)
 		if err != nil {
 			return nil, err
 		}
-		clientSecret, err := o.getOAuthConfig(OAuthConfigBbsClientSecret)
+		clientSecret, err := o.getOAuthConfig(config2.OAuthConfigBbsClientSecret)
 		if err != nil {
 			return nil, err
 		}

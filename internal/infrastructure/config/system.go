@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 )
 
 type SystemConfig interface {

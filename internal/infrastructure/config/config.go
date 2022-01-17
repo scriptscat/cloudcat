@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/database"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/database"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/pkg/cache"
 	"gopkg.in/yaml.v2"
 )

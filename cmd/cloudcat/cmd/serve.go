@@ -5,10 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	_ "github.com/scriptscat/cloudcat/docs"
 	"github.com/scriptscat/cloudcat/internal/infrastructure/config"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/database"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	logs2 "github.com/scriptscat/cloudcat/internal/infrastructure/logs"
+	"github.com/scriptscat/cloudcat/internal/infrastructure/persistence"
 	v1 "github.com/scriptscat/cloudcat/internal/interfaces/api"
+	"github.com/scriptscat/cloudcat/internal/pkg/database"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/migrations"
 	cache2 "github.com/scriptscat/cloudcat/pkg/cache"
 	pkgValidator "github.com/scriptscat/cloudcat/pkg/utils/validator"
@@ -49,7 +52,8 @@ func (s *serveCmd) serve(cmd *cobra.Command, args []string) error {
 }
 
 func (s *serveCmd) run(cfg *config.Config) error {
-	db, err := database.NewDatabase(cfg.Database, cfg.Mode == "debug")
+	logs2.InitLogs(cfg.Mode == gin.DebugMode)
+	db, err := database.NewDatabase(cfg.Database, cfg.Mode == gin.DebugMode)
 	if err != nil {
 		return err
 	}
@@ -61,6 +65,11 @@ func (s *serveCmd) run(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+	repo := persistence.NewRepositories(db.DB)
+	if err := repo.AutoMigrate(); err != nil {
+		return err
+	}
+
 	if err := migrations.RunMigrations(db); err != nil {
 		return err
 	}
@@ -68,14 +77,15 @@ func (s *serveCmd) run(cfg *config.Config) error {
 	binding.Validator = pkgValidator.NewValidator()
 
 	gin.SetMode(cfg.Mode)
-	r := gin.Default()
+	r := gin.New()
+	r.Use(logs2.GinLogger(cfg.Mode == gin.DebugMode)...)
 
 	if cfg.Mode != gin.ReleaseMode {
 		url := ginSwagger.URL("/swagger/doc.json")
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 	}
 
-	if err := v1.NewRouter(r, cfg, db, kv, cache); err != nil {
+	if err := v1.NewRouter(r, db, kv, cache, repo); err != nil {
 		return err
 	}
 

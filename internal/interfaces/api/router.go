@@ -4,20 +4,20 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	config2 "github.com/scriptscat/cloudcat/internal/infrastructure/config"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/database"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/infrastructure/config"
 	"github.com/scriptscat/cloudcat/internal/infrastructure/middleware/token"
+	"github.com/scriptscat/cloudcat/internal/infrastructure/persistence"
+	"github.com/scriptscat/cloudcat/internal/infrastructure/sender"
+	"github.com/scriptscat/cloudcat/internal/pkg/database"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	service3 "github.com/scriptscat/cloudcat/internal/service/safe/application"
 	repository2 "github.com/scriptscat/cloudcat/internal/service/safe/domain/repository"
 	service4 "github.com/scriptscat/cloudcat/internal/service/sync/application"
 	repository3 "github.com/scriptscat/cloudcat/internal/service/sync/domain/repository"
 	api2 "github.com/scriptscat/cloudcat/internal/service/sync/interfaces/api"
-	service2 "github.com/scriptscat/cloudcat/internal/service/system/application"
 	"github.com/scriptscat/cloudcat/internal/service/system/interfaces/api"
 	application2 "github.com/scriptscat/cloudcat/internal/service/user/application"
 	repository5 "github.com/scriptscat/cloudcat/internal/service/user/domain/repository"
-	"github.com/scriptscat/cloudcat/internal/service/user/infrastructure/persistence"
 	api3 "github.com/scriptscat/cloudcat/internal/service/user/interfaces/api"
 	"github.com/scriptscat/cloudcat/pkg/cache"
 	"github.com/scriptscat/cloudcat/pkg/httputils"
@@ -42,7 +42,7 @@ func register(r *gin.RouterGroup, register ...Register) {
 // @in                          header
 // @name                        Authorization
 // @BasePath                    /api/v1
-func NewRouter(r *gin.Engine, cfg *config2.Config, db *database.Database, kv kvdb.KvDb, cache cache.Cache) error {
+func NewRouter(r *gin.Engine, db *database.Database, kv kvdb.KvDb, cache cache.Cache, repo *persistence.Repositories) error {
 	disableAuth := os.Getenv("DISABLE_AUTH") == "true"
 	token.TokenAuth = func(enforce bool) func(ctx *gin.Context) {
 		if disableAuth {
@@ -56,10 +56,10 @@ func NewRouter(r *gin.Engine, cfg *config2.Config, db *database.Database, kv kvd
 	}
 
 	v1 := r.Group("/api/v1")
-	systemConfig := config2.NewSystemConfig(kv)
-	userSvc := application2.NewUser(systemConfig, kv, persistence.NewUser(db.DB), repository5.NewVerifyCode(kv))
+	systemConfig := config.NewSystemConfig(kv)
+	senderSvc := sender.NewSender(systemConfig)
+	userSvc := application2.NewUser(systemConfig, kv, repo.User.User, repo.User.VerifyCode, senderSvc)
 	oauthSvc := application2.NewOAuth(systemConfig, kv, db.DB, userSvc, repository5.NewBbsOAuth(db.DB), repository5.NewWechatOAuth(db.DB, kv))
-	senderSvc := service2.NewSender(systemConfig)
 	safeSvc := service3.NewSafe(repository2.NewSafe(kv))
 	syncSvc := service4.NewSync(repository3.NewDevice(db.DB), repository3.NewScript(db.DB, kv), repository3.NewSubscribe(db.DB, kv))
 

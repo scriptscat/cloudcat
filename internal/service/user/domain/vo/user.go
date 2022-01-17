@@ -1,30 +1,10 @@
 package vo
 
-import (
-	"github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
-)
-
 type UserInfo struct {
-	ID         int64  `json:"id"` // 用户id
-	Username   string `json:"username"`
-	Avatar     string `json:"avatar"`
-	Role       string `json:"role"`
-	Createtime int64  `json:"createtime"`
-	Updatetime int64  `json:"updatetime"`
-}
-
-func ToUserInfo(user *entity.User) *UserInfo {
-	ret := &UserInfo{
-		ID:         user.ID,
-		Username:   user.Username,
-		Role:       user.Role,
-		Createtime: user.Createtime,
-		Updatetime: user.Updatetime,
-	}
-	if user.Avatar != "" {
-		ret.Avatar = "/api/v1/user/avatar"
-	}
-	return ret
+	ID       int64  `json:"id"` // 用户id
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+	Role     string `json:"role"`
 }
 
 type OAuthRespond struct {

@@ -26,29 +26,6 @@ definitions:
       url:
         type: string
     type: object
-  dto.UserInfo:
-    properties:
-      avatar:
-        type: string
-      createtime:
-        type: integer
-      id:
-        description: 用户id
-        type: integer
-      role:
-        type: string
-      updatetime:
-        type: integer
-      username:
-        type: string
-    type: object
-  dto.WechatScan:
-    properties:
-      code:
-        type: string
-      url:
-        type: string
-    type: object
   entity.SyncDevice:
     properties:
       createtime:
@@ -134,11 +111,54 @@ definitions:
       version:
         type: string
     type: object
+  vo.UserInfo:
+    properties:
+      avatar:
+        type: string
+      id:
+        description: 用户id
+        type: integer
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  vo.WechatScan:
+    properties:
+      code:
+        type: string
+      url:
+        type: string
+    type: object
 info:
   contact: {}
   title: 云猫api文档
   version: "1.0"
 paths:
+  /account/forgot-password:
+    post:
+      description: 往邮箱里发送一个找回密码的链接
+      operationId: forget-password
+      parameters:
+      - description: 邮箱地址
+        in: formData
+        name: email
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 忘记密码
+      tags:
+      - user
   /account/login:
     post:
       consumes:
@@ -261,6 +281,40 @@ paths:
       summary: 用户
       tags:
       - user
+  /account/reset-password:
+    post:
+      description: 通过忘记密码的邮件重置密码
+      operationId: reset-password
+      parameters:
+      - description: 重置code
+        in: formData
+        name: code
+        required: true
+        type: string
+      - description: 输入密码
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: 再输入一次密码
+        in: formData
+        name: repassword
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 重置密码
+      tags:
+      - user
   /auth/bbs:
     get:
       description: 论坛oauth2.0登录
@@ -283,7 +337,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.WechatScan'
+            $ref: '#/definitions/vo.WechatScan'
         "400":
           description: Bad Request
           schema:
@@ -313,7 +367,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.WechatScan'
+            $ref: '#/definitions/vo.WechatScan'
         "400":
           description: Bad Request
           schema:
@@ -569,7 +623,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UserInfo'
+            $ref: '#/definitions/vo.UserInfo'
         "403":
           description: ""
       security:

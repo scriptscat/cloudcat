@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
+	"github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/repository"
 	"gorm.io/gorm"
 )
@@ -16,7 +17,7 @@ func NewUser(db *gorm.DB) repository.User {
 	}
 }
 
-func (u *user) Save(user *entity.User) error {
+func (u *user) SaveUser(user *entity.User) error {
 	return u.db.Save(user).Error
 }
 
@@ -28,7 +29,7 @@ func (u *user) FindById(id int64) (*entity.User, error) {
 	ret := &entity.User{ID: id}
 	err := u.db.First(ret).Error
 	if err == gorm.ErrRecordNotFound {
-		return nil, nil
+		return nil, errs.ErrUserNotFound
 	}
 	return ret, err
 }
@@ -37,7 +38,7 @@ func (u *user) FindByName(name string) (*entity.User, error) {
 	ret := &entity.User{}
 	err := u.db.Where("username=?", name).First(ret).Error
 	if err == gorm.ErrRecordNotFound {
-		return nil, nil
+		return nil, errs.ErrUserNotFound
 	}
 	return ret, err
 }
@@ -46,7 +47,7 @@ func (u *user) FindByEmail(email string) (*entity.User, error) {
 	ret := &entity.User{}
 	err := u.db.Where("email=?", email).First(ret).Error
 	if err == gorm.ErrRecordNotFound {
-		return nil, nil
+		return nil, errs.ErrUserNotFound
 	}
 	return ret, err
 }
@@ -55,7 +56,7 @@ func (u *user) FindByMobile(mobile string) (*entity.User, error) {
 	ret := &entity.User{}
 	err := u.db.Where("mobile=?", mobile).First(ret).Error
 	if err == gorm.ErrRecordNotFound {
-		return nil, nil
+		return nil, errs.ErrUserNotFound
 	}
 	return ret, err
 }

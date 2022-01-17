@@ -23,6 +23,42 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/account/forgot-password": {
+            "post": {
+                "description": "往邮箱里发送一个找回密码的链接",
+                "tags": [
+                    "user"
+                ],
+                "summary": "忘记密码",
+                "operationId": "forget-password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱地址",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
         "/account/login": {
             "post": {
                 "description": "用户登录",
@@ -204,6 +240,56 @@ var doc = `{
                 }
             }
         },
+        "/account/reset-password": {
+            "post": {
+                "description": "通过忘记密码的邮件重置密码",
+                "tags": [
+                    "user"
+                ],
+                "summary": "重置密码",
+                "operationId": "reset-password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "重置code",
+                        "name": "code",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "输入密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "再输入一次密码",
+                        "name": "repassword",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/bbs": {
             "get": {
                 "description": "论坛oauth2.0登录",
@@ -237,7 +323,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.WechatScan"
+                            "$ref": "#/definitions/vo.WechatScan"
                         }
                     },
                     "400": {
@@ -282,7 +368,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.WechatScan"
+                            "$ref": "#/definitions/vo.WechatScan"
                         }
                     },
                     "400": {
@@ -682,7 +768,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.UserInfo"
+                            "$ref": "#/definitions/vo.UserInfo"
                         }
                     },
                     "403": {
@@ -943,41 +1029,6 @@ var doc = `{
                 }
             }
         },
-        "dto.UserInfo": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "createtime": {
-                    "type": "integer"
-                },
-                "id": {
-                    "description": "用户id",
-                    "type": "integer"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "updatetime": {
-                    "type": "integer"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.WechatScan": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
         "entity.SyncDevice": {
             "type": "object",
             "properties": {
@@ -1104,6 +1155,35 @@ var doc = `{
                     "type": "string"
                 },
                 "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.UserInfo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "用户id",
+                    "type": "integer"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.WechatScan": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }

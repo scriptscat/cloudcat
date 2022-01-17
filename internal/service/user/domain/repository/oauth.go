@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
 	"github.com/scriptscat/cloudcat/pkg/cnt"
 	"gorm.io/gorm"

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
+	"github.com/scriptscat/cloudcat/internal/service/user/domain/vo"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,4 +32,13 @@ func (u *User) CheckPassword(password string) error {
 		return errs.ErrWrongPassword
 	}
 	return nil
+}
+
+func (u *User) PublicUser() *vo.UserInfo {
+	return &vo.UserInfo{
+		ID:       u.ID,
+		Username: u.Username,
+		Avatar:   u.Avatar,
+		Role:     u.Role,
+	}
 }

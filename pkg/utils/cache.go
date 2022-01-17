@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/silenceper/wechat/v2/cache"
 )
 

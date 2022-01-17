@@ -5,7 +5,7 @@ import (
 )
 
 type User interface {
-	Save(user *entity.User) error
+	SaveUser(user *entity.User) error
 	SaveUserAvatar(id int64, avatar string) error
 	FindById(id int64) (*entity.User, error)
 	FindByName(name string) (*entity.User, error)

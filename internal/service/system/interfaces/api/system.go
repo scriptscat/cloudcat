@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/system/application"
 	"github.com/scriptscat/cloudcat/internal/service/system/infrastructure/persistence"
 	"github.com/scriptscat/cloudcat/pkg/httputils"

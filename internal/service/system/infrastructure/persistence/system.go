@@ -3,7 +3,7 @@ package persistence
 import (
 	"context"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/system/domain/repository"
 )
 

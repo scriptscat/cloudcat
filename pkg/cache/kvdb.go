@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 )
 
 type kvdbCache struct {

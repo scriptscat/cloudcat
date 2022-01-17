@@ -8,9 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/scriptscat/cloudcat/internal/infrastructure/middleware/token"
+	service3 "github.com/scriptscat/cloudcat/internal/infrastructure/sender"
 	service2 "github.com/scriptscat/cloudcat/internal/service/safe/application"
 	dto2 "github.com/scriptscat/cloudcat/internal/service/safe/domain/dto"
-	service3 "github.com/scriptscat/cloudcat/internal/service/system/application"
 	application2 "github.com/scriptscat/cloudcat/internal/service/user/application"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/vo"
 	"github.com/scriptscat/cloudcat/pkg/errs"

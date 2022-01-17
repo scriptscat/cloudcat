@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/scriptscat/cloudcat/internal/infrastructure/config"
-	"github.com/scriptscat/cloudcat/internal/infrastructure/kvdb"
+	config2 "github.com/scriptscat/cloudcat/internal/infrastructure/config"
+	"github.com/scriptscat/cloudcat/internal/infrastructure/sender"
+	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	entity2 "github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
 	repository2 "github.com/scriptscat/cloudcat/internal/service/user/domain/repository"
@@ -31,6 +32,8 @@ type User interface {
 	CheckUsername(username string) error
 	UpdateUserInfo(uid int64, req *vo.UpdateUserInfo) error
 	UpdatePassword(uid int64, req *vo.UpdatePassword) error
+	RequestForgetPasswordEmail(email string) error
+	ResetPassword(code, password string) error
 }
 
 const (
@@ -42,20 +45,22 @@ const (
 )
 
 type user struct {
-	config      config.SystemConfig
+	config      config2.SystemConfig
 	kv          kvdb.KvDb
 	userRepo    repository2.User
 	verifyRepo  repository2.VerifyCode
 	resourceDir string
+	sender      sender.Sender
 }
 
-func NewUser(config config.SystemConfig, kv kvdb.KvDb, userRepo repository2.User, verifyRepo repository2.VerifyCode) User {
+func NewUser(config config2.SystemConfig, kv kvdb.KvDb, userRepo repository2.User, verifyRepo repository2.VerifyCode, sender sender.Sender) User {
 	return &user{
 		config:      config,
 		userRepo:    userRepo,
 		verifyRepo:  verifyRepo,
 		kv:          kv,
 		resourceDir: "./resource/user",
+		sender:      sender,
 	}
 }
 
@@ -64,14 +69,7 @@ func (u *user) UserInfo(uid int64) (*vo.UserInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	return u.toUserInfo(user)
-}
-
-func (u *user) toUserInfo(user *entity2.User) (*vo.UserInfo, error) {
-	if user == nil {
-		return nil, errs.ErrUserNotFound
-	}
-	return vo.ToUserInfo(user), nil
+	return user.PublicUser(), nil
 }
 
 func (u *user) Login(login *vo.Login) (*vo.UserInfo, error) {
@@ -85,7 +83,7 @@ func (u *user) Login(login *vo.Login) (*vo.UserInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	info, err := u.toUserInfo(user)
+	info := user.PublicUser()
 	if err != nil {
 		return nil, err
 	}
@@ -138,10 +136,10 @@ func (u *user) Register(register *vo.Register) (*vo.UserInfo, error) {
 	if err := user.SetPassword(register.Password); err != nil {
 		return nil, err
 	}
-	if err := u.userRepo.Save(user); err != nil {
+	if err := u.userRepo.SaveUser(user); err != nil {
 		return nil, err
 	}
-	return vo.ToUserInfo(user), nil
+	return user.PublicUser(), nil
 }
 
 func (u *user) checkMobile(mobile string) error {
@@ -202,9 +200,9 @@ func (u *user) RequestEmailCode(email, op string) (*entity2.VerifyCode, error) {
 		Identifier: email,
 		Op:         op,
 		Code:       strings.ToUpper(utils.RandString(6, 0)),
-		Expiretime: time.Now().Add(time.Minute * 5).Unix(),
+		Expired:    time.Now().Add(time.Minute * 5).Unix(),
 	}
-	if err := u.verifyRepo.Save(v); err != nil {
+	if err := u.verifyRepo.SaveVerifyCode(v); err != nil {
 		return nil, err
 	}
 	return v, nil
@@ -255,7 +253,7 @@ func (u *user) getDir(b []byte, suffix string) (string, string) {
 //NOTE: 有点丑陋,先简单实现了
 func (u *user) oauthRegister(tx *gorm.DB, user *entity2.User) (int64, error) {
 	userRepo := persistence2.NewUser(tx)
-	if err := userRepo.Save(user); err != nil {
+	if err := userRepo.SaveUser(user); err != nil {
 		return 0, nil
 	}
 	return user.ID, nil
@@ -289,7 +287,7 @@ func (u *user) UpdateUserInfo(uid int64, req *vo.UpdateUserInfo) error {
 		}
 		user.Email = req.Email
 	}
-	return u.userRepo.Save(user)
+	return u.userRepo.SaveUser(user)
 }
 
 func (u *user) UpdatePassword(uid int64, req *vo.UpdatePassword) error {
@@ -303,5 +301,44 @@ func (u *user) UpdatePassword(uid int64, req *vo.UpdatePassword) error {
 	if err := user.SetPassword(req.Password); err != nil {
 		return err
 	}
-	return u.userRepo.Save(user)
+	return u.userRepo.SaveUser(user)
+}
+
+func (u *user) RequestForgetPasswordEmail(email string) error {
+	user, err := u.userRepo.FindByEmail(email)
+	if err != nil {
+		return err
+	}
+	vcode := &entity2.VerifyCode{
+		Identifier: user.Email,
+		Op:         "forget-password",
+		Code:       utils.RandString(6, 2),
+		Expired:    time.Now().Add(time.Minute * 30).Unix(),
+	}
+	if err := u.verifyRepo.SaveVerifyCode(vcode); err != nil {
+		return err
+	}
+	url, err := u.config.GetConfig(config2.HomeUrl)
+	if err != nil {
+		return err
+	}
+	return u.sender.SendEmail(user.Email, "找回密码", "请点击链接<a href=\""+url+"\">找回密码</a> 请在30分钟内使用", "text/html")
+}
+
+func (u *user) ResetPassword(code, password string) error {
+	vcode, err := u.verifyRepo.FindByCode(code)
+	if err != nil {
+		return err
+	}
+	if err := vcode.CheckCode(code, "forget-password"); err != nil {
+		return err
+	}
+	user, err := u.userRepo.FindByEmail(vcode.Identifier)
+	if err != nil {
+		return err
+	}
+	if err := user.SetPassword(password); err != nil {
+		return err
+	}
+	return u.userRepo.SaveUser(user)
 }

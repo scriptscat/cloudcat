@@ -11,8 +11,8 @@ ifeq ($(GOOS),windows)
 endif
 
 swagger:
-	swag fmt -g interfaces/api/router.go
-	swag init -g interfaces/api/router.go
+	swag fmt -g internal/interfaces/api/router.go
+	swag init -g internal/interfaces/api/router.go
 
 test:
 	GOOS=$(GOOS) go test -v ./...
@@ -35,3 +35,7 @@ docker-test:
 docker-push: docker
 	docker tag cloudcat $(REMOTE_REPO)
 	docker push $(REMOTE_REPO)
+
+dependence:
+	go install github.com/golang/mock/mockgen@v1.6.0
+	go install github.com/swaggo/swag/cmd/swag@latest

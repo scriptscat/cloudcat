@@ -13,3 +13,5 @@ cloudcat.db
 /cloudcat*/
 
 resource/
+
+/runtime/*

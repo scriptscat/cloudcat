@@ -1,4 +1,4 @@
-package application
+package sender
 
 import (
 	"crypto/tls"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/scriptscat/cloudcat/internal/infrastructure/config"
+	"github.com/scriptscat/cloudcat/internal/service/system/application"
 	"gopkg.in/gomail.v2"
 )
 
@@ -50,7 +51,7 @@ func (s *sender) SendEmail(to, title, content, contextType string) error {
 		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	mark, err := s.config.GetConfig(SYSTEM_SITE_NAME)
+	mark, err := s.config.GetConfig(application.SYSTEM_SITE_NAME)
 	if err != nil {
 		return err
 	}
