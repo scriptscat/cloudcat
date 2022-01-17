@@ -48,7 +48,7 @@ func NewAuth(cache cache.Cache, svc application2.User, oauthSvc application2.OAu
 // @Param        password    formData  string  true   "登录密码"
 // @Param        auto_login  formData  bool    false  "自动登录"
 // @Success      200
-// @Failure      400  {object}  errs.JsonRespondError
+// @Failure      400   {object}  errs.JsonRespondError
 // @Router       /account/login [post]
 func (a *Auth) login(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
@@ -264,7 +264,7 @@ func (a *Auth) wechatBindRequest(ctx *gin.Context) {
 // @Success      200           {string}  json    "token"
 // @Success      302
 // @Failure      400  {object}  errs.JsonRespondError
-// @Failure      404  {object}  errs.JsonRespondError
+// @Failure      404   {object}  errs.JsonRespondError
 // @Router       /auth/wechat/status [post]
 func (a *Auth) wechatStatus(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
@@ -448,6 +448,25 @@ func (a *Auth) forgetPassword(c *gin.Context) {
 	})
 }
 
+// @Summary      校验重置密码
+// @Description  校验重置密码的code
+// @ID           valid-reset-password
+// @Tags         user
+// @Param        code  query  string  true  "重置code"
+// @Success      200   {object}  vo.UserInfo
+// @Failure      400  {object}  errs.JsonRespondError
+// @Failure      404  {object}  errs.JsonRespondError
+// @Router       /account/reset-password [get]
+func (a *Auth) validResetPassword(c *gin.Context) {
+	httputils.Handle(c, func() interface{} {
+		user, err := a.User.ValidResetPassword(c.Query("code"))
+		if err != nil {
+			return err
+		}
+		return user
+	})
+}
+
 // @Summary      重置密码
 // @Description  通过忘记密码的邮件重置密码
 // @ID           reset-password
@@ -477,6 +496,7 @@ func (a *Auth) Register(r *gin.RouterGroup) {
 	rg.POST("/register", a.register)
 	rg.POST("/register/request-email-code", a.requestEmailCode)
 	rg.POST("/forgot-password", a.forgetPassword)
+	rg.GET("/reset-password", a.validResetPassword)
 	rg.POST("/reset-password", a.resetPassword)
 
 	rg = r.Group("/auth")

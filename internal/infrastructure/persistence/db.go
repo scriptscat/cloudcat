@@ -1,23 +1,23 @@
 package persistence
 
 import (
+	"github.com/scriptscat/cloudcat/internal/infrastructure/persistence/migrations"
+	"github.com/scriptscat/cloudcat/internal/pkg/database"
 	"github.com/scriptscat/cloudcat/internal/service/user/infrastructure/persistence"
-	"github.com/scriptscat/cloudcat/pkg/utils"
-	"gorm.io/gorm"
 )
 
 type Repositories struct {
+	db   *database.Database
 	User *persistence.Repositories
 }
 
-func NewRepositories(db *gorm.DB) *Repositories {
+func NewRepositories(db *database.Database) *Repositories {
 	return &Repositories{
-		User: persistence.NewRepositories(db),
+		db:   db,
+		User: persistence.NewRepositories(db.DB),
 	}
 }
 
-func (r *Repositories) AutoMigrate() error {
-	return utils.Errs(
-		r.User.AutoMigrate(),
-	)
+func (r *Repositories) Migrations() error {
+	return migrations.RunMigrations(r.db)
 }

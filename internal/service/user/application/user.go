@@ -33,6 +33,7 @@ type User interface {
 	UpdateUserInfo(uid int64, req *vo.UpdateUserInfo) error
 	UpdatePassword(uid int64, req *vo.UpdatePassword) error
 	RequestForgetPasswordEmail(email string) error
+	ValidResetPassword(code string) (*vo.UserInfo, error)
 	ResetPassword(code, password string) error
 }
 
@@ -123,6 +124,9 @@ func (u *user) Register(register *vo.Register) (*vo.UserInfo, error) {
 			return nil, errs.ErrEmailVCodeNotFound
 		}
 		if err := vcode.CheckCode(register.EmailVerifyCode, "register"); err != nil {
+			return nil, err
+		}
+		if err := u.verifyRepo.InvalidCode(vcode); err != nil {
 			return nil, err
 		}
 	}
@@ -285,6 +289,9 @@ func (u *user) UpdateUserInfo(uid int64, req *vo.UpdateUserInfo) error {
 		if err := vcode.CheckCode(req.EmailVerifyCode, "change-user-info"); err != nil {
 			return err
 		}
+		if err := u.verifyRepo.InvalidCode(vcode); err != nil {
+			return err
+		}
 		user.Email = req.Email
 	}
 	return u.userRepo.SaveUser(user)
@@ -312,7 +319,7 @@ func (u *user) RequestForgetPasswordEmail(email string) error {
 	vcode := &entity2.VerifyCode{
 		Identifier: user.Email,
 		Op:         "forget-password",
-		Code:       utils.RandString(6, 2),
+		Code:       utils.RandString(32, 2),
 		Expired:    time.Now().Add(time.Minute * 30).Unix(),
 	}
 	if err := u.verifyRepo.SaveVerifyCode(vcode); err != nil {
@@ -325,12 +332,30 @@ func (u *user) RequestForgetPasswordEmail(email string) error {
 	return u.sender.SendEmail(user.Email, "找回密码", "请点击链接<a href=\""+url+"\">找回密码</a> 请在30分钟内使用", "text/html")
 }
 
+func (u *user) ValidResetPassword(code string) (*vo.UserInfo, error) {
+	vcode, err := u.verifyRepo.FindByCode(code)
+	if err != nil {
+		return nil, err
+	}
+	if err := vcode.CheckCode(code, "forget-password"); err != nil {
+		return nil, err
+	}
+	user, err := u.userRepo.FindByEmail(vcode.Identifier)
+	if err != nil {
+		return nil, err
+	}
+	return user.PublicUser(), nil
+}
+
 func (u *user) ResetPassword(code, password string) error {
 	vcode, err := u.verifyRepo.FindByCode(code)
 	if err != nil {
 		return err
 	}
 	if err := vcode.CheckCode(code, "forget-password"); err != nil {
+		return err
+	}
+	if err := u.verifyRepo.InvalidCode(vcode); err != nil {
 		return err
 	}
 	user, err := u.userRepo.FindByEmail(vcode.Identifier)

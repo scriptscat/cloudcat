@@ -7,14 +7,13 @@ import (
 
 func RunMigrations(db *database.Database) error {
 	return run(db,
-		T1631263155,
-		T1631861288,
-		T1633674691,
+		T1631263156,
+		T1631861289,
 	)
 }
 
 func run(db *database.Database, fs ...func() *gormigrate.Migration) error {
-	ms := []*gormigrate.Migration{}
+	var ms []*gormigrate.Migration
 	for _, f := range fs {
 		ms = append(ms, f())
 	}

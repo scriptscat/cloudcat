@@ -2,7 +2,6 @@ package entity
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/scriptscat/cloudcat/pkg/errs"
@@ -23,7 +22,7 @@ func (v *VerifyCode) CheckCode(code, op string) error {
 	if v.Code == "" {
 		return errors.New("验证码怎么会为空")
 	}
-	if v.Code != strings.ToUpper(code) {
+	if v.Code != code {
 		return errs.NewBadRequestError(1001, "验证码错误")
 	}
 	if op != v.Op {

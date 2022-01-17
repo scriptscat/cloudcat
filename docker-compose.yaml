@@ -1,2 +1,23 @@
+version: '3'
 
+services:
+
+    redis:
+      image: redis
+      container_name: cloudcat_redis
+      ports:
+          - 6379:6379
+      volumes:
+        - ./runtime/docker/redis:/data
+
+    mysql:
+      image: mysql:5.7
+      container_name: cloudcat_mysql
+      environment:
+          - MYSQL_ROOT_PASSWORD=password
+          - MYSQL_DATABASE=cloudcat
+      ports:
+          - 3306:3306
+      volumes:
+        - ./runtime/docker/mysql:/var/lib/mysql
 

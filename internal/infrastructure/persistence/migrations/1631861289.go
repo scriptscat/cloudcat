@@ -7,9 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func T1631861288() *gormigrate.Migration {
+func T1631861289() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "1631861288",
+		ID: "1631861289",
 		Migrate: func(db *gorm.DB) error {
 			return utils.Errs(
 				db.AutoMigrate(&entity2.SyncScript{}),

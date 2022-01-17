@@ -12,7 +12,6 @@ import (
 	v1 "github.com/scriptscat/cloudcat/internal/interfaces/api"
 	"github.com/scriptscat/cloudcat/internal/pkg/database"
 	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
-	"github.com/scriptscat/cloudcat/migrations"
 	cache2 "github.com/scriptscat/cloudcat/pkg/cache"
 	pkgValidator "github.com/scriptscat/cloudcat/pkg/utils/validator"
 	"github.com/spf13/cobra"
@@ -65,12 +64,8 @@ func (s *serveCmd) run(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	repo := persistence.NewRepositories(db.DB)
-	if err := repo.AutoMigrate(); err != nil {
-		return err
-	}
-
-	if err := migrations.RunMigrations(db); err != nil {
+	repo := persistence.NewRepositories(db)
+	if err := repo.Migrations(); err != nil {
 		return err
 	}
 

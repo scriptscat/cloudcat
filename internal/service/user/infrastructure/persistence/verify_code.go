@@ -20,6 +20,10 @@ func NewVerifyCode(db *gorm.DB) repository.VerifyCode {
 }
 
 func (v *verifyCode) SaveVerifyCode(vcode *entity.VerifyCode) error {
+	// 删除原来的
+	if err := v.db.Delete(vcode, "identifier=?", vcode.Identifier).Error; err != nil {
+		return err
+	}
 	return v.db.Save(vcode).Error
 }
 
@@ -43,4 +47,8 @@ func (v *verifyCode) FindByCode(code string) (*entity.VerifyCode, error) {
 		return nil, err
 	}
 	return ret, nil
+}
+
+func (v *verifyCode) InvalidCode(vcode *entity.VerifyCode) error {
+	return v.db.Delete(vcode, "id=?", vcode.ID).Error
 }
