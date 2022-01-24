@@ -147,25 +147,25 @@ func (u *user) Register(register *vo.Register) (*vo.UserInfo, error) {
 }
 
 func (u *user) checkMobile(mobile string) error {
-	user, err := u.userRepo.FindByMobile(mobile)
+	_, err := u.userRepo.FindByMobile(mobile)
 	if err != nil {
+		if err == errs.ErrUserNotFound {
+			return nil
+		}
 		return err
 	}
-	if user != nil {
-		return errs.ErrMobileExist
-	}
-	return nil
+	return errs.ErrMobileExist
 }
 
 func (u *user) CheckUsername(username string) error {
-	user, err := u.userRepo.FindByName(username)
+	_, err := u.userRepo.FindByName(username)
 	if err != nil {
+		if err == errs.ErrUserNotFound {
+			return nil
+		}
 		return err
 	}
-	if user != nil {
-		return errs.ErrUsernameExist
-	}
-	return nil
+	return errs.ErrUsernameExist
 }
 
 func (u *user) checkEmail(email string) error {
@@ -186,14 +186,14 @@ func (u *user) checkEmail(email string) error {
 			return errs.ErrEmailSuffixNotAllow
 		}
 	}
-	user, err := u.userRepo.FindByEmail(email)
+	_, err = u.userRepo.FindByEmail(email)
 	if err != nil {
+		if err == errs.ErrUserNotFound {
+			return nil
+		}
 		return err
 	}
-	if user != nil {
-		return errs.ErrEmailExist
-	}
-	return nil
+	return errs.ErrEmailExist
 }
 
 func (u *user) RequestEmailCode(email, op string) (*entity2.VerifyCode, error) {
@@ -270,9 +270,11 @@ func (u *user) UpdateUserInfo(uid int64, req *vo.UpdateUserInfo) error {
 	}
 	if req.Username != user.Username {
 		// 更新用户名
-		if u, err := u.userRepo.FindByName(req.Username); err != nil {
-			return err
-		} else if u != nil {
+		if _, err := u.userRepo.FindByName(req.Username); err != nil {
+			if err != errs.ErrUserNotFound {
+				return err
+			}
+		} else {
 			return errs.ErrUsernameExist
 		}
 		user.Username = req.Username
