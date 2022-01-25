@@ -8,8 +8,8 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/scriptscat/cloudcat/internal/service/sync/domain/dto"
-	"github.com/scriptscat/cloudcat/internal/service/sync/domain/entity"
+	dto "github.com/scriptscat/cloudcat/internal/service/sync/domain/dto"
+	entity "github.com/scriptscat/cloudcat/internal/service/sync/domain/entity"
 )
 
 // MockSubscribe is a mock of Subscribe interface.

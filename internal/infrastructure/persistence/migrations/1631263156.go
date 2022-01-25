@@ -1,6 +1,8 @@
 package migrations
 
 import (
+	"time"
+
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
 	"github.com/scriptscat/cloudcat/pkg/utils"
@@ -16,6 +18,19 @@ func T1631263156() *gormigrate.Migration {
 				db.AutoMigrate(&entity.VerifyCode{}),
 				db.AutoMigrate(&entity.BbsOauthUser{}),
 				db.AutoMigrate(&entity.WechatOauthUser{}),
+				func() error {
+					user := &entity.User{
+						Username:   "admin",
+						Email:      "admin@admin.com",
+						Role:       "admin",
+						Createtime: time.Now().Unix(),
+						Updatetime: 0,
+					}
+					if err := user.SetPassword("admin"); err != nil {
+						return err
+					}
+					return db.Save(user).Error
+				}(),
 			)
 		},
 		Rollback: func(db *gorm.DB) error {

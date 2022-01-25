@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	goRedis "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -47,7 +48,7 @@ func (s *sqlite) Get(ctx context.Context, key string) (string, error) {
 	m := &kvTable{}
 	if err := s.db.Where("key=?", key).First(m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return "", nil
+			return "", goRedis.Nil
 		}
 		return "", err
 	}

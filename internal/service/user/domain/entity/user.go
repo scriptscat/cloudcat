@@ -35,10 +35,13 @@ func (u *User) CheckPassword(password string) error {
 }
 
 func (u *User) PublicUser() *vo.UserInfo {
-	return &vo.UserInfo{
+	info := &vo.UserInfo{
 		ID:       u.ID,
 		Username: u.Username,
-		Avatar:   u.Avatar,
 		Role:     u.Role,
 	}
+	if u.Avatar != "" {
+		info.Avatar = "/api/v1/user/avatar"
+	}
+	return info
 }

@@ -21,9 +21,6 @@ func (w *WxCache) Get(key string) interface{} {
 	if err != nil {
 		return nil
 	}
-	if ret == "" {
-		return nil
-	}
 	return ret
 }
 

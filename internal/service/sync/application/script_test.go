@@ -20,7 +20,7 @@ func Test_sync_PushScript(t *testing.T) {
 		scripts []*dto.SyncScript
 	}
 	success := func(mockctl *gomock.Controller, args args) repository.Script {
-		mock := mock_repository.mock_repository.NewMockScript(mockctl)
+		mock := mock_repository.NewMockScript(mockctl)
 		mock.EXPECT().LatestVersion(args.user, args.device).Return(args.version, nil).Times(1)
 
 		l := 0
@@ -54,7 +54,7 @@ func Test_sync_PushScript(t *testing.T) {
 		wantErr bool
 	}{
 		{"版本号不等错误", func(mockctl *gomock.Controller, args args) repository.Script {
-			mock := mock_repository.mock_repository.NewMockScript(mockctl)
+			mock := mock_repository.NewMockScript(mockctl)
 			mock.EXPECT().LatestVersion(args.user, args.device).Return(args.version+1, nil)
 			return mock
 		}, args{
@@ -178,8 +178,17 @@ func Test_sync_PullScript(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockctl := gomock.NewController(t)
 			defer mockctl.Finish()
+			mockDevice := mock_repository.NewMockDevice(mockctl)
+			mockDevice.EXPECT().FindById(gomock.Any()).Return(&entity2.SyncDevice{
+				ID:     tt.args.device,
+				UserID: tt.args.user,
+			}, nil).AnyTimes()
+			mockSubscribe := mock_repository.NewMockSubscribe(mockctl)
+			mockSubscribe.EXPECT().LatestVersion(gomock.Any(), gomock.Any()).Return(int64(0), nil).AnyTimes()
 			s := &sync{
-				script: tt.fields(mockctl, tt.args),
+				device:    mockDevice,
+				subscribe: mockSubscribe,
+				script:    tt.fields(mockctl, tt.args),
 			}
 			got, got1, err := s.PullScript(tt.args.user, tt.args.device, tt.args.version)
 			if (err != nil) != tt.wantErr {

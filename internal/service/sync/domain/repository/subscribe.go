@@ -46,6 +46,9 @@ func NewSubscribe(db *gorm.DB, kv kvdb.KvDb) Subscribe {
 func (s *subscribe) LatestVersion(user, device int64) (int64, error) {
 	result, err := s.kv.Get(context.Background(), s.key(user, device)+":version")
 	if err != nil {
+		if err == redis.Nil {
+			return 0, nil
+		}
 		return 0, err
 	}
 	return utils.StringToInt64(result), nil

@@ -22,9 +22,6 @@ func (r *redis) Set(ctx context.Context, key string, value string, expiration ti
 func (r *redis) Get(ctx context.Context, key string) (string, error) {
 	ret, err := r.cli.Get(ctx, key).Result()
 	if err != nil {
-		if err == goRedis.Nil {
-			return "", nil
-		}
 		return "", err
 	}
 	return ret, nil

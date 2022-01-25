@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/system/domain/repository"
 )
@@ -18,17 +19,19 @@ func NewRepo(kv kvdb.KvDb) repository.System {
 }
 
 func (r *repo) GetScriptCatInfo() (*repository.ScriptCatInfo, error) {
-	v, err := r.kv.Get(context.Background(), "cloudcat:scriptcat:info:version")
+	ret := &repository.ScriptCatInfo{}
+	var err error
+	ret.Version, err = r.kv.Get(context.Background(), "cloudcat:scriptcat:info:version")
 	if err != nil {
-		return nil, err
+		if err != redis.Nil {
+			return nil, err
+		}
 	}
-	n, err := r.kv.Get(context.Background(), "cloudcat:scriptcat:info:notice")
+	ret.Notice, err = r.kv.Get(context.Background(), "cloudcat:scriptcat:info:notice")
 	if err != nil {
-		return nil, err
-	}
-	ret := &repository.ScriptCatInfo{
-		Version: v,
-		Notice:  n,
+		if err != redis.Nil {
+			return nil, err
+		}
 	}
 	return ret, nil
 }

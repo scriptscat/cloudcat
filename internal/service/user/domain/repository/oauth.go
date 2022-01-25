@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
+	"github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
 	"github.com/scriptscat/cloudcat/pkg/cnt"
 	"gorm.io/gorm"
 )
@@ -32,7 +34,7 @@ func (b *bbsOAuth) FindByOpenid(openid string) (*entity.BbsOauthUser, error) {
 	ret := &entity.BbsOauthUser{}
 	if err := b.db.First(ret, "openid=? and status=?", openid, cnt.ACTIVE).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, errs.ErrOpenidNotFound
 		}
 		return nil, err
 	}
@@ -43,7 +45,7 @@ func (b *bbsOAuth) FindByUid(uid int64) (*entity.BbsOauthUser, error) {
 	ret := &entity.BbsOauthUser{}
 	if err := b.db.First(ret, "user_id=? and status=?", uid, cnt.ACTIVE).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, errs.ErrUserNotFound
 		}
 		return nil, err
 	}
@@ -93,7 +95,7 @@ func (w *wechatOAuth) FindByUid(uid int64) (*entity.WechatOauthUser, error) {
 	ret := &entity.WechatOauthUser{}
 	if err := w.db.First(ret, "user_id=? and status=?", uid, cnt.ACTIVE).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, errs.ErrUserNotFound
 		}
 		return nil, err
 	}
@@ -104,7 +106,7 @@ func (w *wechatOAuth) FindByOpenid(openid string) (*entity.WechatOauthUser, erro
 	ret := &entity.WechatOauthUser{}
 	if err := w.db.First(ret, "openid=? and status=?", openid, cnt.ACTIVE).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, errs.ErrOpenidNotFound
 		}
 		return nil, err
 	}
@@ -118,10 +120,10 @@ func (w *wechatOAuth) BindCodeUid(code string, uid int64) error {
 func (w *wechatOAuth) FindCodeUid(code string) (int64, error) {
 	result, err := w.kv.Get(context.Background(), w.key(code))
 	if err != nil {
+		if err == redis.Nil {
+			return 0, errs.ErrRecordNotFound
+		}
 		return 0, err
-	}
-	if result == "" {
-		return 0, nil
 	}
 	if err := w.kv.Del(context.Background(), w.key(code)); err != nil {
 		return 0, err

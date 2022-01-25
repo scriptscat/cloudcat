@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 )
 
@@ -24,6 +25,9 @@ func (s *systemConfig) GetConfig(key string) (string, error) {
 	key = s.key(key)
 	v, err := s.kv.Get(context.Background(), key)
 	if err != nil {
+		if err == redis.Nil {
+			return "", nil
+		}
 		return "", err
 	}
 	return v, nil

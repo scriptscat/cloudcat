@@ -282,6 +282,31 @@ paths:
       tags:
       - user
   /account/reset-password:
+    get:
+      description: 校验重置密码的code
+      operationId: valid-reset-password
+      parameters:
+      - description: 重置code
+        in: query
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vo.UserInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 校验重置密码
+      tags:
+      - user
     post:
       description: 通过忘记密码的邮件重置密码
       operationId: reset-password

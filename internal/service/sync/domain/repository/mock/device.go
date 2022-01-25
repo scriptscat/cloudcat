@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/scriptscat/cloudcat/internal/service/sync/domain/entity"
+	entity "github.com/scriptscat/cloudcat/internal/service/sync/domain/entity"
 )
 
 // MockDevice is a mock of Device interface.

@@ -452,7 +452,7 @@ func (a *Auth) forgetPassword(c *gin.Context) {
 // @Description  校验重置密码的code
 // @ID           valid-reset-password
 // @Tags         user
-// @Param        code  query  string  true  "重置code"
+// @Param        code  query     string  true  "重置code"
 // @Success      200   {object}  vo.UserInfo
 // @Failure      400  {object}  errs.JsonRespondError
 // @Failure      404  {object}  errs.JsonRespondError

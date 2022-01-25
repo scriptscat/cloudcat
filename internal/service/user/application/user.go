@@ -331,7 +331,8 @@ func (u *user) RequestForgetPasswordEmail(email string) error {
 	if err != nil {
 		return err
 	}
-	return u.sender.SendEmail(user.Email, "找回密码", "请点击链接<a href=\""+url+"\">找回密码</a> 请在30分钟内使用", "text/html")
+	url += "/user/reset-password?code=" + vcode.Code
+	return u.sender.SendEmail(user.Email, "找回密码", "请点击链接<a href=\""+url+"\">找回密码</a>或者复制链接: "+url+" 进行访问 链接有效期30分钟,请在30分钟内使用", "text/html")
 }
 
 func (u *user) ValidResetPassword(code string) (*vo.UserInfo, error) {

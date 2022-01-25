@@ -31,6 +31,9 @@ func NewSafe(kv kvdb.KvDb) Safe {
 func (s *safe) GetLastOpTime(user, op string) (int64, error) {
 	ret, err := s.kv.Get(context.Background(), s.key(user, op))
 	if err != nil {
+		if err == redis.Nil {
+			return 0, nil
+		}
 		return 0, err
 	}
 	return utils.StringToInt64(ret), nil

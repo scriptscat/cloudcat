@@ -176,12 +176,6 @@ func (o *oauth) WechatAuthLogin(code string) (*vo.OAuthRespond, error) {
 	if err != nil {
 		return nil, err
 	}
-	if wechat == nil {
-		// 需要绑定账号登录
-		return &vo.OAuthRespond{
-			IsBind: false,
-		}, nil
-	}
 	user, err := o.userSvc.UserInfo(wechat.UserID)
 	if err != nil {
 		return nil, err
@@ -358,9 +352,6 @@ func (o *oauth) WechatScanLoginStatus(code string) (*vo.OAuthRespond, error) {
 	if err != nil {
 		return nil, err
 	}
-	if uid == 0 {
-		return nil, errs.ErrRecordNotFound
-	}
 	user, err := o.userSvc.UserInfo(uid)
 	if err != nil {
 		return nil, err
@@ -407,18 +398,24 @@ func (o *oauth) getOAuthConfig(key string) (string, error) {
 }
 
 func (o *oauth) OAuthPlatform(uid int64) (*vo.OpenPlatform, error) {
-	bbs, err := o.bbsOAuthRepo.FindByUid(uid)
-	if err != nil {
-		return nil, err
+	ret := &vo.OpenPlatform{
+		Bbs: true, Wechat: true,
 	}
-	wechat, err := o.wechatOAuthRepo.FindByUid(uid)
+	_, err := o.bbsOAuthRepo.FindByUid(uid)
 	if err != nil {
-		return nil, err
+		if err != errs.ErrUserNotFound {
+			return nil, err
+		}
+		ret.Bbs = false
 	}
-	return &vo.OpenPlatform{
-		Bbs:    bbs != nil,
-		Wechat: wechat != nil,
-	}, nil
+	_, err = o.wechatOAuthRepo.FindByUid(uid)
+	if err != nil {
+		if err != errs.ErrUserNotFound {
+			return nil, err
+		}
+		ret.Bbs = false
+	}
+	return ret, nil
 }
 
 // NOTE:code的利用方法和登录相反
@@ -435,19 +432,11 @@ func (o *oauth) WechatScanBind(openid, code string) error {
 	if userinfo.Subscribe == 0 {
 		return errors.New("没有关注公众号")
 	}
-	wechat, err := o.wechatOAuthRepo.FindByOpenid(openid)
-	if err != nil {
-		return err
-	}
-	// 消费掉这个code
-	uid, err := o.wechatOAuthRepo.FindCodeUid(code)
-	if err != nil {
-		return err
-	}
-	if uid == 0 {
-		return errs.ErrRecordNotFound
-	}
-	if wechat != nil {
+	if _, err := o.wechatOAuthRepo.FindByOpenid(openid); err != nil {
+		if err != errs.ErrOpenidNotFound {
+			return err
+		}
+	} else {
 		return client.GetCustomerMessageManager().Send(&message.CustomerMessage{
 			ToUser:  openid,
 			Msgtype: "text",
@@ -456,11 +445,17 @@ func (o *oauth) WechatScanBind(openid, code string) error {
 			},
 		})
 	}
-	w, err := o.wechatOAuthRepo.FindByUid(uid)
+	// 消费掉这个code
+	uid, err := o.wechatOAuthRepo.FindCodeUid(code)
 	if err != nil {
 		return err
 	}
-	if w != nil {
+
+	if _, err := o.wechatOAuthRepo.FindByUid(uid); err != nil {
+		if err != errs.ErrUserNotFound {
+			return err
+		}
+	} else {
 		return client.GetCustomerMessageManager().Send(&message.CustomerMessage{
 			ToUser:  openid,
 			Msgtype: "text",
@@ -503,16 +498,18 @@ func (o *oauth) BindBbs(uid int64, code string) error {
 	if err != nil {
 		return err
 	}
-	bbs, err := o.bbsOAuthRepo.FindByOpenid(userResp.User.Uid)
-	if err != nil {
-		return err
-	}
-	if bbs != nil {
+	if _, err := o.bbsOAuthRepo.FindByOpenid(userResp.User.Uid); err != nil {
+		if err != errs.ErrOpenidNotFound {
+			return err
+		}
+	} else {
 		return errs.ErrBindOtherUser
 	}
-	if u, err := o.bbsOAuthRepo.FindByUid(uid); err != nil {
-		return err
-	} else if u != nil {
+	if _, err := o.bbsOAuthRepo.FindByUid(uid); err != nil {
+		if err != errs.ErrRecordNotFound {
+			return err
+		}
+	} else {
 		return errs.ErrBindOtherOAuth
 	}
 	return o.bbsOAuthRepo.Save(&entity2.BbsOauthUser{

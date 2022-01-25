@@ -241,6 +241,43 @@ var doc = `{
             }
         },
         "/account/reset-password": {
+            "get": {
+                "description": "校验重置密码的code",
+                "tags": [
+                    "user"
+                ],
+                "summary": "校验重置密码",
+                "operationId": "valid-reset-password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "重置code",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/vo.UserInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "通过忘记密码的邮件重置密码",
                 "tags": [
