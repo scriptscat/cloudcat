@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/vo"
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +21,39 @@ type User struct {
 	Updatetime   int64  `gorm:"column:updatetime;type:bigint(20)" json:"updatetime"`
 }
 
+func (u *User) CheckPassword(password string) error {
+	if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
+		return errs.ErrWrongPassword
+	}
+	return nil
+}
+
+func (u *User) Register(password string) error {
+	if err := u.SetPassword(password); err != nil {
+		return err
+	}
+	u.Createtime = time.Now().Unix()
+	return nil
+}
+
+func (u *User) ResetPassword(vcode *VerifyCode, code, password string) error {
+	if err := vcode.CheckCode(code, "forget-password"); err != nil {
+		return err
+	}
+	if err := u.SetPassword(password); err != nil {
+		return err
+	}
+	u.Updatetime = time.Now().Unix()
+	return nil
+}
+
+func (u *User) UpdatePassword(oldpassword, password string) error {
+	if err := u.CheckPassword(oldpassword); err != nil {
+		return err
+	}
+	return u.SetPassword(password)
+}
+
 func (u *User) SetPassword(password string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -27,21 +63,24 @@ func (u *User) SetPassword(password string) error {
 	return nil
 }
 
-func (u *User) CheckPassword(password string) error {
-	if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
-		return errs.ErrWrongPassword
-	}
-	return nil
-}
-
 func (u *User) PublicUser() *vo.UserInfo {
 	info := &vo.UserInfo{
 		ID:       u.ID,
 		Username: u.Username,
+		Email:    u.Email,
 		Role:     u.Role,
 	}
 	if u.Avatar != "" {
-		info.Avatar = "/api/v1/user/avatar"
+		info.Avatar = fmt.Sprintf("/api/v1/user/%d/avatar", u.ID)
 	}
 	return info
+}
+
+func (u *User) UpdateEmail(vcode *VerifyCode, code string, email string) error {
+	if err := vcode.CheckCode(code, "change-user-email"); err != nil {
+		return err
+	}
+	u.Email = email
+	u.Updatetime = time.Now().Unix()
+	return nil
 }

@@ -31,7 +31,7 @@ func (v *verifyCode) FindById(id string) (*entity.VerifyCode, error) {
 	ret := &entity.VerifyCode{}
 	if err := v.db.First(ret, "id=?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewError(http.StatusOK, 1000, "未找到")
+			return nil, errs.NewError(http.StatusOK, 1000, "验证码错误")
 		}
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (v *verifyCode) FindByCode(code string) (*entity.VerifyCode, error) {
 	ret := &entity.VerifyCode{}
 	if err := v.db.First(ret, "code=?", code).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewError(http.StatusOK, 1000, "未找到")
+			return nil, errs.NewError(http.StatusOK, 1001, "验证码错误")
 		}
 		return nil, err
 	}

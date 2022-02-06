@@ -35,6 +35,7 @@ type User interface {
 	RequestForgetPasswordEmail(email string) error
 	ValidResetPassword(code string) (*vo.UserInfo, error)
 	ResetPassword(code, password string) error
+	UpdateEmail(uid int64, req *vo.UpdateEmail) error
 }
 
 const (
@@ -137,7 +138,7 @@ func (u *user) Register(register *vo.Register) (*vo.UserInfo, error) {
 		Createtime: time.Now().Unix(),
 		Updatetime: 0,
 	}
-	if err := user.SetPassword(register.Password); err != nil {
+	if err := user.Register(register.Password); err != nil {
 		return nil, err
 	}
 	if err := u.userRepo.SaveUser(user); err != nil {
@@ -176,8 +177,12 @@ func (u *user) checkEmail(email string) error {
 	if emailSuffix != "" {
 		suffixs := strings.Split(emailSuffix, ",")
 		flag := false
+		s := strings.Split(email, "@")
+		if len(s) != 2 {
+			return errs.ErrEmailExist
+		}
 		for _, v := range suffixs {
-			if strings.HasSuffix(email, v) {
+			if s[1] == v {
 				flag = true
 				break
 			}
@@ -268,34 +273,10 @@ func (u *user) UpdateUserInfo(uid int64, req *vo.UpdateUserInfo) error {
 	if err != nil {
 		return err
 	}
-	if req.Username != user.Username {
-		// 更新用户名
-		if _, err := u.userRepo.FindByName(req.Username); err != nil {
-			if err != errs.ErrUserNotFound {
-				return err
-			}
-		} else {
-			return errs.ErrUsernameExist
-		}
-		user.Username = req.Username
+	if err := u.CheckUsername(req.Username); err != nil {
+		return err
 	}
-	if req.Email != req.Email {
-		// 更新邮箱
-		vcode, err := u.verifyRepo.FindById(req.Email)
-		if err != nil {
-			return err
-		}
-		if vcode == nil {
-			return errs.ErrEmailVCodeNotFound
-		}
-		if err := vcode.CheckCode(req.EmailVerifyCode, "change-user-info"); err != nil {
-			return err
-		}
-		if err := u.verifyRepo.InvalidCode(vcode); err != nil {
-			return err
-		}
-		user.Email = req.Email
-	}
+	user.Username = req.Username
 	return u.userRepo.SaveUser(user)
 }
 
@@ -304,10 +285,7 @@ func (u *user) UpdatePassword(uid int64, req *vo.UpdatePassword) error {
 	if err != nil {
 		return err
 	}
-	if err := user.CheckPassword(req.Password); err != nil {
-		return err
-	}
-	if err := user.SetPassword(req.Password); err != nil {
+	if err := user.UpdatePassword(req.OldPassword, req.Password); err != nil {
 		return err
 	}
 	return u.userRepo.SaveUser(user)
@@ -355,18 +333,41 @@ func (u *user) ResetPassword(code, password string) error {
 	if err != nil {
 		return err
 	}
-	if err := vcode.CheckCode(code, "forget-password"); err != nil {
+	user, err := u.userRepo.FindByEmail(vcode.Identifier)
+	if err != nil {
+		return err
+	}
+	if err := user.ResetPassword(vcode, code, password); err != nil {
 		return err
 	}
 	if err := u.verifyRepo.InvalidCode(vcode); err != nil {
 		return err
 	}
-	user, err := u.userRepo.FindByEmail(vcode.Identifier)
+	return u.userRepo.SaveUser(user)
+}
+
+func (u *user) UpdateEmail(uid int64, req *vo.UpdateEmail) error {
+	user, err := u.userRepo.FindById(uid)
 	if err != nil {
 		return err
 	}
-	if err := user.SetPassword(password); err != nil {
-		return err
+	if req.Email != user.Email {
+		if err := u.checkEmail(req.Email); err != nil {
+			return err
+		}
+		vcode, err := u.verifyRepo.FindById(req.Email)
+		if err != nil {
+			return err
+		}
+		// 更新邮箱
+		if err := user.UpdateEmail(vcode, req.EmailVerifyCode, req.Email); err != nil {
+			return err
+		}
+		if err := u.verifyRepo.InvalidCode(vcode); err != nil {
+			return err
+		}
+	} else {
+		return errs.ErrEmailExist
 	}
 	return u.userRepo.SaveUser(user)
 }

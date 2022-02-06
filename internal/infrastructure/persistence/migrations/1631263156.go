@@ -26,7 +26,7 @@ func T1631263156() *gormigrate.Migration {
 						Createtime: time.Now().Unix(),
 						Updatetime: 0,
 					}
-					if err := user.SetPassword("admin"); err != nil {
+					if err := user.Register("admin"); err != nil {
 						return err
 					}
 					return db.Save(user).Error

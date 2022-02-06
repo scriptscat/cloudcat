@@ -7,6 +7,7 @@ import (
 	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 )
 
+//go:generate mockgen -source ./system.go -destination ./mock/system.go
 type SystemConfig interface {
 	GetConfig(key string) (string, error)
 	SetConfig(key, value string) error

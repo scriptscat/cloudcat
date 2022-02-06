@@ -85,7 +85,7 @@ func (u *User) setting(ctx *gin.Context) {
 func (u *User) requestChangeEmailCode(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		email := ctx.PostForm("email")
-		code, err := u.RequestEmailCode(email, "change-user-info")
+		code, err := u.RequestEmailCode(email, "change-user-email")
 		if err != nil {
 			return err
 		}
@@ -99,8 +99,6 @@ func (u *User) requestChangeEmailCode(ctx *gin.Context) {
 // @Tags         user
 // @Security     BearerAuth
 // @Param        username  formData  string  true  "用户名"
-// @Param        email     formData  string  true  "邮箱"
-// @Param        code      formData  string  true  "邮箱验证码"
 // @Success      200
 // @Failure      403
 // @Router       /user [put]
@@ -112,6 +110,27 @@ func (u *User) update(ctx *gin.Context) {
 			return err
 		}
 		return u.UpdateUserInfo(uid, req)
+	})
+}
+
+// @Summary      用户
+// @Description  修改登录邮箱信息
+// @ID           user-update-email
+// @Tags         user
+// @Security     BearerAuth
+// @Param        email     formData  string  true  "邮箱"
+// @Param        code      formData  string  true  "邮箱验证码"
+// @Success      200
+// @Failure      403
+// @Router       /user/email [put]
+func (u *User) updateEmail(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		uid, _ := token.UserId(ctx)
+		req := &vo.UpdateEmail{}
+		if err := ctx.ShouldBind(req); err != nil {
+			return err
+		}
+		return u.UpdateEmail(uid, req)
 	})
 }
 
@@ -135,13 +154,14 @@ func (u *User) password(ctx *gin.Context) {
 }
 
 // @Summary      用户
-// @Description  当前用户头像
+// @Description  获取用户头像
 // @ID           user-avatar
 // @Tags         user
 // @Security     BearerAuth
+// @Param        uid path string true "用户id"
 // @Success      200
 // @Failure      403
-// @Router       /user/avatar [get]
+// @Router       /user/{uid}/avatar [get]
 func (u *User) avatar(ctx *gin.Context) {
 	uid, _ := token.UserId(ctx)
 	b, err := u.Avatar(uid)
@@ -199,7 +219,7 @@ func (u *User) updateAvatar(ctx *gin.Context) {
 // @ID           user-delete-oauth
 // @Tags         user
 // @Security     BearerAuth
-// @Param        platform  formData  string  true  "普通:bbs|wechat"
+// @Param        platform  formData  string  true  "平台:bbs|wechat"
 // @Success      200
 // @Failure      403
 // @Router       /user/oauth [delete]
@@ -218,7 +238,7 @@ func (u *User) Register(r *gin.RouterGroup) {
 	rg.GET("/setting", u.setting)
 	rg.POST("/request-change-email-code", u.requestChangeEmailCode)
 	rg.PUT("/password", u.password)
-	rg.GET("/avatar", u.avatar)
+	rg.GET("/:uid/avatar", u.avatar)
 	rg.PUT("/avatar", u.updateAvatar)
 	rg.DELETE("/oauth", u.deleteOAuth)
 }
