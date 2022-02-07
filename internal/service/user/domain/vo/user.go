@@ -50,11 +50,15 @@ type UpdatePassword struct {
 }
 
 type UpdateEmail struct {
-	Email           string `form:"email" binding:"required,min=3,max=32,email" label:"邮箱"`
-	EmailVerifyCode string `form:"email_verify_code" binding:"len=6,alphanum" label:"邮箱验证码"`
+	Email string `form:"email" binding:"required,min=3,max=32,email" label:"邮箱"`
+	Code  string `form:"code" binding:"len=6,alphanum" label:"邮箱验证码"`
 }
 
 type OpenPlatform struct {
 	Bbs    bool `json:"bbs"`
 	Wechat bool `json:"wechat"`
+}
+
+type EmailCodeRequest struct {
+	Email string `form:"email" binding:"required,min=3,max=32,email" label:"邮箱"`
 }

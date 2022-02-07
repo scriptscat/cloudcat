@@ -96,8 +96,8 @@ func Test_user_UpdateEmail(t *testing.T) {
 			u.EXPECT().SaveUser(gomock.Any()).Times(1)
 			return s, u, v
 		}, args{uid: 1, req: &vo.UpdateEmail{
-			Email:           "admin@admin.com",
-			EmailVerifyCode: "vcode1",
+			Email: "admin@admin.com",
+			Code:  "vcode1",
 		}}, false},
 		{"邮箱相等", func(mockctl *gomock.Controller, args args) (config.SystemConfig, repository.User, repository.VerifyCode) {
 			s := mock_config.NewMockSystemConfig(mockctl)
@@ -106,8 +106,8 @@ func Test_user_UpdateEmail(t *testing.T) {
 			u.EXPECT().FindById(args.uid).Return(&entity.User{ID: 1, Email: args.req.Email}, nil)
 			return s, u, v
 		}, args{uid: 1, req: &vo.UpdateEmail{
-			Email:           "admin@admin.com",
-			EmailVerifyCode: "vcode1",
+			Email: "admin@admin.com",
+			Code:  "vcode1",
 		}}, true},
 		{"邮箱存在", func(mockctl *gomock.Controller, args args) (config.SystemConfig, repository.User, repository.VerifyCode) {
 			s := mock_config.NewMockSystemConfig(mockctl)
@@ -118,8 +118,8 @@ func Test_user_UpdateEmail(t *testing.T) {
 			u.EXPECT().FindByEmail(args.req.Email).Return(&entity.User{ID: 2}, nil)
 			return s, u, v
 		}, args{uid: 1, req: &vo.UpdateEmail{
-			Email:           "admin@admin.com",
-			EmailVerifyCode: "vcode1",
+			Email: "admin@admin.com",
+			Code:  "vcode1",
 		}}, true},
 		{"后缀不允许", func(mockctl *gomock.Controller, args args) (config.SystemConfig, repository.User, repository.VerifyCode) {
 			s := mock_config.NewMockSystemConfig(mockctl)
@@ -129,8 +129,8 @@ func Test_user_UpdateEmail(t *testing.T) {
 			u.EXPECT().FindById(args.uid).Return(&entity.User{ID: 1}, nil)
 			return s, u, v
 		}, args{uid: 1, req: &vo.UpdateEmail{
-			Email:           "admin@hadmin.com",
-			EmailVerifyCode: "vcode1",
+			Email: "admin@hadmin.com",
+			Code:  "vcode1",
 		}}, true},
 	}
 	for _, tt := range tests {

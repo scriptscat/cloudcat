@@ -360,7 +360,7 @@ func (u *user) UpdateEmail(uid int64, req *vo.UpdateEmail) error {
 			return err
 		}
 		// 更新邮箱
-		if err := user.UpdateEmail(vcode, req.EmailVerifyCode, req.Email); err != nil {
+		if err := user.UpdateEmail(vcode, req.Code, req.Email); err != nil {
 			return err
 		}
 		if err := u.verifyRepo.InvalidCode(vcode); err != nil {

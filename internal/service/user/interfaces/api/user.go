@@ -66,6 +66,9 @@ func (u *User) setting(ctx *gin.Context) {
 			return err
 		}
 		open, err := u.oauthSvc.OAuthPlatform(uid)
+		if err != nil {
+			return err
+		}
 		return gin.H{
 			"info": info,
 			"open": open,
@@ -81,15 +84,27 @@ func (u *User) setting(ctx *gin.Context) {
 // @Param        email  formData  string  true  "邮箱"
 // @Success      200
 // @Failure      403
-// @Router       /user/request-change-email-code [put]
-func (u *User) requestChangeEmailCode(ctx *gin.Context) {
+// @Router       /user/email/code [post]
+func (u *User) requestEmailCode(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
-		email := ctx.PostForm("email")
-		code, err := u.RequestEmailCode(email, "change-user-email")
-		if err != nil {
-			return err
-		}
-		return u.sender.SendEmail(email, "注册验证码", "您的验证码为:"+code.Code+" 请于5分钟内输入", "text/html")
+		return u.safe.Rate(&dto2.SafeUserinfo{
+			IP: ctx.ClientIP(),
+		}, &dto2.SafeRule{
+			Name:        "reset-email",
+			Description: "修改邮箱",
+			PeriodCnt:   5,
+			Period:      3 * time.Minute,
+		}, func() error {
+			req := &vo.EmailCodeRequest{}
+			if err := ctx.ShouldBind(req); err != nil {
+				return err
+			}
+			code, err := u.RequestEmailCode(req.Email, "change-user-email")
+			if err != nil {
+				return err
+			}
+			return u.sender.SendEmail(req.Email, "修改邮箱", "您的验证码为:"+code.Code+" 请于5分钟内输入", "text/html")
+		})
 	})
 }
 
@@ -219,14 +234,14 @@ func (u *User) updateAvatar(ctx *gin.Context) {
 // @ID           user-delete-oauth
 // @Tags         user
 // @Security     BearerAuth
-// @Param        platform  formData  string  true  "平台:bbs|wechat"
+// @Param        platform  query  string  true  "平台:bbs|wechat"
 // @Success      200
 // @Failure      403
 // @Router       /user/oauth [delete]
 func (u *User) deleteOAuth(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {
 		uid, _ := token.UserId(ctx)
-		platform := ctx.PostForm("platform")
+		platform := ctx.Query("platform")
 		return u.oauthSvc.Unbind(uid, platform)
 	})
 }
@@ -236,7 +251,8 @@ func (u *User) Register(r *gin.RouterGroup) {
 	rg.GET("", u.get)
 	rg.PUT("", u.update)
 	rg.GET("/setting", u.setting)
-	rg.POST("/request-change-email-code", u.requestChangeEmailCode)
+	rg.PUT("/email", u.updateEmail)
+	rg.POST("/email/code", u.requestEmailCode)
 	rg.PUT("/password", u.password)
 	rg.GET("/:uid/avatar", u.avatar)
 	rg.PUT("/avatar", u.updateAvatar)

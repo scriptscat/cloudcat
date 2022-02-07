@@ -4,7 +4,6 @@ import (
 	config2 "github.com/scriptscat/cloudcat/internal/infrastructure/config"
 	"github.com/scriptscat/cloudcat/internal/infrastructure/sender"
 	"github.com/scriptscat/cloudcat/internal/pkg/database"
-	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/entity"
 	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/spf13/cobra"
@@ -144,13 +143,12 @@ func (m *manageCmd) getConfig() (config2.SystemConfig, error) {
 		return nil, err
 	}
 
-	kv, err := kvdb.NewKvDb(cfg.KvDB)
+	db, err := database.NewDatabase(cfg.Database, false)
 	if err != nil {
 		return nil, err
 	}
 
-	config := config2.NewSystemConfig(kv)
-	return config, nil
+	return config2.NewSystemConfig(db.DB)
 }
 
 func (m *manageCmd) getValue(value, defVal string) string {

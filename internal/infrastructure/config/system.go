@@ -1,10 +1,7 @@
 package config
 
 import (
-	"context"
-
-	"github.com/go-redis/redis/v8"
-	"github.com/scriptscat/cloudcat/internal/pkg/kvdb"
+	"gorm.io/gorm"
 )
 
 //go:generate mockgen -source ./system.go -destination ./mock/system.go
@@ -15,40 +12,48 @@ type SystemConfig interface {
 }
 
 type systemConfig struct {
-	kv kvdb.KvDb
+	db *gorm.DB
 }
 
-func NewSystemConfig(kv kvdb.KvDb) SystemConfig {
-	return &systemConfig{kv: kv}
+type SystemConfigTable struct {
+	ID    int64  `gorm:"primaryKey" json:"-"`
+	Key   string `gorm:"column:key;unique;type:varchar(255)" json:"key" form:"key"`
+	Value string `gorm:"column:value;type:text" json:"value" form:"value"`
+}
+
+// NewSystemConfig TODO: 增加缓存
+func NewSystemConfig(db *gorm.DB) (SystemConfig, error) {
+	if err := db.AutoMigrate(&SystemConfigTable{}); err != nil {
+		return nil, err
+	}
+	return &systemConfig{db: db}, nil
 }
 
 func (s *systemConfig) GetConfig(key string) (string, error) {
-	key = s.key(key)
-	v, err := s.kv.Get(context.Background(), key)
-	if err != nil {
-		if err == redis.Nil {
+	m := &SystemConfigTable{}
+	if err := s.db.First(m, "`key`=?", key).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
 			return "", nil
 		}
 		return "", err
 	}
-	return v, nil
+	return m.Value, nil
 }
 
 func (s *systemConfig) SetConfig(key, value string) error {
-	key = s.key(key)
-	if err := s.kv.Set(context.Background(), key, value, 0); err != nil {
-		return err
-	}
-	return nil
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		m := &SystemConfigTable{}
+		if err := tx.First(m, "`key`=?", key).Error; err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return err
+			}
+		}
+		m.Key = key
+		m.Value = value
+		return tx.Save(m).Error
+	})
 }
 
 func (s *systemConfig) DelConfig(key string) error {
-	if err := s.kv.Del(context.Background(), key); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *systemConfig) key(key string) string {
-	return "system:config:" + key
+	return s.db.Delete("`key`=?", key).Error
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/repository"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/vo"
+	"github.com/scriptscat/cloudcat/internal/service/user/infrastructure/persistence"
 	"github.com/scriptscat/cloudcat/pkg/cnt"
 	"github.com/scriptscat/cloudcat/pkg/oauth/bbs"
 	"github.com/scriptscat/cloudcat/pkg/utils"
@@ -132,7 +133,7 @@ func (o *oauth) BBSOAuthLogin(code string) (*vo.OAuthRespond, error) {
 			if err != nil {
 				return err
 			}
-			return repository.NewBbsOAuth(tx).Save(&entity2.BbsOauthUser{
+			return persistence.NewBbsOAuth(tx).Save(&entity2.BbsOauthUser{
 				Openid:     userResp.User.Uid,
 				UserID:     uid,
 				Status:     cnt.ACTIVE,
@@ -309,7 +310,7 @@ func (o *oauth) WechatScanLogin(openid, code string) error {
 			if err != nil {
 				return err
 			}
-			return repository.NewWechatOAuth(tx, o.kv).Save(&entity2.WechatOauthUser{
+			return persistence.NewWechatOAuth(tx, o.kv).Save(&entity2.WechatOauthUser{
 				Openid:     openid,
 				Unionid:    userinfo.UnionID,
 				UserID:     uid,
@@ -401,19 +402,14 @@ func (o *oauth) OAuthPlatform(uid int64) (*vo.OpenPlatform, error) {
 	ret := &vo.OpenPlatform{
 		Bbs: true, Wechat: true,
 	}
-	_, err := o.bbsOAuthRepo.FindByUid(uid)
+	var err error
+	ret.Bbs, err = o.IsBind(uid, "bbs")
 	if err != nil {
-		if err != errs.ErrUserNotFound {
-			return nil, err
-		}
-		ret.Bbs = false
+		return nil, err
 	}
-	_, err = o.wechatOAuthRepo.FindByUid(uid)
+	ret.Wechat, err = o.IsBind(uid, "wechat")
 	if err != nil {
-		if err != errs.ErrUserNotFound {
-			return nil, err
-		}
-		ret.Bbs = false
+		return nil, err
 	}
 	return ret, nil
 }
@@ -520,6 +516,25 @@ func (o *oauth) BindBbs(uid int64, code string) error {
 	})
 }
 
+func (o *oauth) IsBind(uid int64, platform string) (bool, error) {
+	var err error
+	switch platform {
+	case "bbs":
+		_, err = o.bbsOAuthRepo.FindByUid(uid)
+	case "wechat":
+		_, err = o.wechatOAuthRepo.FindByUid(uid)
+	default:
+		return false, errs.ErrOAuthPlatformNotSupport
+	}
+	if err != nil {
+		if err == errs.ErrUserNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func (o *oauth) Unbind(uid int64, platform string) error {
 	switch platform {
 	case "bbs":
@@ -540,6 +555,8 @@ func (o *oauth) Unbind(uid int64, platform string) error {
 			return errs.ErrNotUnbind
 		}
 		return o.wechatOAuthRepo.Delete(wechat.ID)
+	default:
+		return errs.ErrOAuthPlatformNotSupport
 	}
 	return nil
 }

@@ -17,7 +17,7 @@ import (
 	api2 "github.com/scriptscat/cloudcat/internal/service/sync/interfaces/api"
 	"github.com/scriptscat/cloudcat/internal/service/system/interfaces/api"
 	application2 "github.com/scriptscat/cloudcat/internal/service/user/application"
-	repository5 "github.com/scriptscat/cloudcat/internal/service/user/domain/repository"
+	persistence2 "github.com/scriptscat/cloudcat/internal/service/user/infrastructure/persistence"
 	api3 "github.com/scriptscat/cloudcat/internal/service/user/interfaces/api"
 	"github.com/scriptscat/cloudcat/pkg/cache"
 	"github.com/scriptscat/cloudcat/pkg/httputils"
@@ -56,10 +56,13 @@ func NewRouter(r *gin.Engine, db *database.Database, kv kvdb.KvDb, cache cache.C
 	}
 
 	v1 := r.Group("/api/v1")
-	systemConfig := config.NewSystemConfig(kv)
+	systemConfig, err := config.NewSystemConfig(db.DB)
+	if err != nil {
+		return err
+	}
 	senderSvc := sender.NewSender(systemConfig)
 	userSvc := application2.NewUser(systemConfig, kv, repo.User.User, repo.User.VerifyCode, senderSvc)
-	oauthSvc := application2.NewOAuth(systemConfig, kv, db.DB, userSvc, repository5.NewBbsOAuth(db.DB), repository5.NewWechatOAuth(db.DB, kv))
+	oauthSvc := application2.NewOAuth(systemConfig, kv, db.DB, userSvc, persistence2.NewBbsOAuth(db.DB), persistence2.NewWechatOAuth(db.DB, kv))
 	safeSvc := service3.NewSafe(repository2.NewSafe(kv))
 	syncSvc := service4.NewSync(repository3.NewDevice(db.DB), repository3.NewScript(db.DB, kv), repository3.NewSubscribe(db.DB, kv))
 

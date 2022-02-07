@@ -29,7 +29,7 @@ func (v *verifyCode) SaveVerifyCode(vcode *entity.VerifyCode) error {
 
 func (v *verifyCode) FindById(id string) (*entity.VerifyCode, error) {
 	ret := &entity.VerifyCode{}
-	if err := v.db.First(ret, "id=?", id).Error; err != nil {
+	if err := v.db.First(ret, "identifier=?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errs.NewError(http.StatusOK, 1000, "验证码错误")
 		}
