@@ -260,8 +260,8 @@ func (a *Auth) wechatBindRequest(ctx *gin.Context) {
 // @Description  查询微信扫码状态
 // @ID           wechat-status
 // @Tags         user
-// @param        code          formData  string  true   "查询code"
-// @Success      200           {string}  json    "token"
+// @param        code  formData  string  true  "查询code"
+// @Success      200   {string}  json    "token"
 // @Success      302
 // @Failure      400  {object}  errs.JsonRespondError
 // @Failure      404   {object}  errs.JsonRespondError
@@ -282,13 +282,13 @@ func (a *Auth) wechatStatus(ctx *gin.Context) {
 
 // @Summary      用户
 // @Description  查询微信绑定扫码状态
-// @ID           wechat-status
+// @ID           wechat-bind-status
 // @Tags         user
-// @param        code          formData  string  true   "查询code"
+// @param        code  formData  string  true  "查询code"
 // @Success      200
 // @Success      302
 // @Failure      400  {object}  errs.JsonRespondError
-// @Failure      404   {object}  errs.JsonRespondError
+// @Failure      404  {object}  errs.JsonRespondError
 // @Router       /auth/bind/wechat/status [post]
 func (a *Auth) wechatBindStatus(ctx *gin.Context) {
 	httputils.Handle(ctx, func() interface{} {

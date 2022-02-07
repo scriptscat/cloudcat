@@ -115,6 +115,8 @@ definitions:
     properties:
       avatar:
         type: string
+      email:
+        type: string
       id:
         description: 用户id
         type: integer
@@ -370,6 +372,32 @@ paths:
       summary: 用户
       tags:
       - user
+  /auth/bind/wechat/status:
+    post:
+      description: 查询微信绑定扫码状态
+      operationId: wechat-bind-status
+      parameters:
+      - description: 查询code
+        in: formData
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "302":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errs.JsonRespondError'
+      summary: 用户
+      tags:
+      - user
   /auth/wechat:
     post:
       description: 微信oauth2.0登录
@@ -405,10 +433,6 @@ paths:
       description: 查询微信扫码状态
       operationId: wechat-status
       parameters:
-      - description: 重定向链接
-        in: query
-        name: redirect_uri
-        type: string
       - description: 查询code
         in: formData
         name: code
@@ -665,14 +689,24 @@ paths:
         name: username
         required: true
         type: string
-      - description: 邮箱
-        in: formData
-        name: email
-        required: true
-        type: string
-      - description: 邮箱验证码
-        in: formData
-        name: code
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+  /user/{uid}/avatar:
+    get:
+      description: 获取用户头像
+      operationId: user-avatar
+      parameters:
+      - description: 用户id
+        in: path
+        name: uid
         required: true
         type: string
       responses:
@@ -686,19 +720,6 @@ paths:
       tags:
       - user
   /user/avatar:
-    get:
-      description: 当前用户头像
-      operationId: user-avatar
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
-      tags:
-      - user
     put:
       consumes:
       - multipart/form-data
@@ -720,13 +741,58 @@ paths:
       summary: 用户
       tags:
       - user
+  /user/email:
+    put:
+      description: 修改登录邮箱信息
+      operationId: user-update-email
+      parameters:
+      - description: 邮箱
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: 邮箱验证码
+        in: formData
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
+  /user/email/code:
+    post:
+      description: 请求邮箱修改验证码
+      operationId: change-email-code
+      parameters:
+      - description: 邮箱
+        in: formData
+        name: email
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "403":
+          description: ""
+      security:
+      - BearerAuth: []
+      summary: 用户
+      tags:
+      - user
   /user/oauth:
     delete:
       description: 解绑三方登录
       operationId: user-delete-oauth
       parameters:
-      - description: 普通:bbs|wechat
-        in: formData
+      - description: 平台:bbs|wechat
+        in: query
         name: platform
         required: true
         type: string
@@ -744,26 +810,6 @@ paths:
     put:
       description: 修改用户密码
       operationId: user-update-password
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
-      tags:
-      - user
-  /user/request-change-email-code:
-    put:
-      description: 请求邮箱修改验证码
-      operationId: change-email-code
-      parameters:
-      - description: 邮箱
-        in: formData
-        name: email
-        required: true
-        type: string
       responses:
         "200":
           description: ""

@@ -129,6 +129,20 @@ func (mr *MockWechatOAuthMockRecorder) BindCodeUid(code, uid interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BindCodeUid", reflect.TypeOf((*MockWechatOAuth)(nil).BindCodeUid), code, uid)
 }
 
+// DelCode mocks base method.
+func (m *MockWechatOAuth) DelCode(code string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DelCode", code)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DelCode indicates an expected call of DelCode.
+func (mr *MockWechatOAuthMockRecorder) DelCode(code interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DelCode", reflect.TypeOf((*MockWechatOAuth)(nil).DelCode), code)
+}
+
 // Delete mocks base method.
 func (m *MockWechatOAuth) Delete(id int64) error {
 	m.ctrl.T.Helper()

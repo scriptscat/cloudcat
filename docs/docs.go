@@ -372,6 +372,45 @@ var doc = `{
                 }
             }
         },
+        "/auth/bind/wechat/status": {
+            "post": {
+                "description": "查询微信绑定扫码状态",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "wechat-bind-status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "查询code",
+                        "name": "code",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "302": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errs.JsonRespondError"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/wechat": {
             "post": {
                 "description": "微信oauth2.0登录",
@@ -426,12 +465,6 @@ var doc = `{
                 "summary": "用户",
                 "operationId": "wechat-status",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "重定向链接",
-                        "name": "redirect_uri",
-                        "in": "query"
-                    },
                     {
                         "type": "string",
                         "description": "查询code",
@@ -832,20 +865,6 @@ var doc = `{
                         "name": "username",
                         "in": "formData",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "邮箱",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "邮箱验证码",
-                        "name": "code",
-                        "in": "formData",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -859,27 +878,6 @@ var doc = `{
             }
         },
         "/user/avatar": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "当前用户头像",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-avatar",
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            },
             "put": {
                 "security": [
                     {
@@ -914,6 +912,77 @@ var doc = `{
                 }
             }
         },
+        "/user/email": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "修改登录邮箱信息",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-update-email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮箱验证码",
+                        "name": "code",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/user/email/code": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "请求邮箱修改验证码",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "change-email-code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/user/oauth": {
             "delete": {
                 "security": [
@@ -930,9 +999,9 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "普通:bbs|wechat",
+                        "description": "平台:bbs|wechat",
                         "name": "platform",
-                        "in": "formData",
+                        "in": "query",
                         "required": true
                     }
                 ],
@@ -969,38 +1038,6 @@ var doc = `{
                 }
             }
         },
-        "/user/request-change-email-code": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "请求邮箱修改验证码",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "change-email-code",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "邮箱",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/user/setting": {
             "get": {
                 "security": [
@@ -1014,6 +1051,38 @@ var doc = `{
                 ],
                 "summary": "用户",
                 "operationId": "user-setting-info",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/user/{uid}/avatar": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取用户头像",
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户",
+                "operationId": "user-avatar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户id",
+                        "name": "uid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": ""
@@ -1200,6 +1269,9 @@ var doc = `{
             "type": "object",
             "properties": {
                 "avatar": {
+                    "type": "string"
+                },
+                "email": {
                     "type": "string"
                 },
                 "id": {

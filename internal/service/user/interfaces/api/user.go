@@ -133,8 +133,8 @@ func (u *User) update(ctx *gin.Context) {
 // @ID           user-update-email
 // @Tags         user
 // @Security     BearerAuth
-// @Param        email     formData  string  true  "邮箱"
-// @Param        code      formData  string  true  "邮箱验证码"
+// @Param        email  formData  string  true  "邮箱"
+// @Param        code   formData  string  true  "邮箱验证码"
 // @Success      200
 // @Failure      403
 // @Router       /user/email [put]
@@ -173,7 +173,7 @@ func (u *User) password(ctx *gin.Context) {
 // @ID           user-avatar
 // @Tags         user
 // @Security     BearerAuth
-// @Param        uid path string true "用户id"
+// @Param        uid  path  string  true  "用户id"
 // @Success      200
 // @Failure      403
 // @Router       /user/{uid}/avatar [get]

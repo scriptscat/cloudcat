@@ -15,9 +15,9 @@ swagger:
 	swag init -g internal/interfaces/api/router.go
 
 test:
-	GOOS=$(GOOS) go test -v ./...
+	go test -v ./...
 
-generate:
+generate: swagger
 	go generate ./... -x
 
 build: swagger generate
