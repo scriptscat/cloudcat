@@ -41,6 +41,7 @@ type OAuth interface {
 
 	WechatScanBind(openid, code string) error
 	WechatScanBindCode(uid int64, code string) error
+	WechatScanBindStatus(code string) (bool, error)
 
 	BindBbs(uid int64, code string) error
 	Unbind(uid int64, platform string) error
@@ -353,6 +354,9 @@ func (o *oauth) WechatScanLoginStatus(code string) (*vo.OAuthRespond, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := o.wechatOAuthRepo.DelCode(code); err != nil {
+		return nil, err
+	}
 	user, err := o.userSvc.UserInfo(uid)
 	if err != nil {
 		return nil, err
@@ -421,13 +425,6 @@ func (o *oauth) WechatScanBind(openid, code string) error {
 	if err != nil {
 		return err
 	}
-	userinfo, err := client.GetUser().GetUserInfo(openid)
-	if err != nil {
-		return err
-	}
-	if userinfo.Subscribe == 0 {
-		return errors.New("没有关注公众号")
-	}
 	if _, err := o.wechatOAuthRepo.FindByOpenid(openid); err != nil {
 		if err != errs.ErrOpenidNotFound {
 			return err
@@ -446,7 +443,9 @@ func (o *oauth) WechatScanBind(openid, code string) error {
 	if err != nil {
 		return err
 	}
-
+	if err := o.wechatOAuthRepo.DelCode(code); err != nil {
+		return err
+	}
 	if _, err := o.wechatOAuthRepo.FindByUid(uid); err != nil {
 		if err != errs.ErrUserNotFound {
 			return err
@@ -502,7 +501,7 @@ func (o *oauth) BindBbs(uid int64, code string) error {
 		return errs.ErrBindOtherUser
 	}
 	if _, err := o.bbsOAuthRepo.FindByUid(uid); err != nil {
-		if err != errs.ErrRecordNotFound {
+		if err != errs.ErrUserNotFound {
 			return err
 		}
 	} else {
@@ -559,4 +558,12 @@ func (o *oauth) Unbind(uid int64, platform string) error {
 		return errs.ErrOAuthPlatformNotSupport
 	}
 	return nil
+}
+
+func (o *oauth) WechatScanBindStatus(code string) (bool, error) {
+	_, err := o.wechatOAuthRepo.FindCodeUid(code)
+	if err == errs.ErrRecordNotFound {
+		return true, nil
+	}
+	return false, err
 }

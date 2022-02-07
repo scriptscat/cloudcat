@@ -19,6 +19,7 @@ type WechatOAuth interface {
 	BindCodeUid(code string, uid int64) error
 	FindCodeUid(code string) (int64, error)
 	//NOTE:软删除比较好
+	DelCode(code string) error
 
 	Delete(id int64) error
 }

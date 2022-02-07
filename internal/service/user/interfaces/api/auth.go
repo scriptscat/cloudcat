@@ -17,6 +17,7 @@ import (
 	service2 "github.com/scriptscat/cloudcat/internal/service/safe/application"
 	dto2 "github.com/scriptscat/cloudcat/internal/service/safe/domain/dto"
 	application2 "github.com/scriptscat/cloudcat/internal/service/user/application"
+	errs2 "github.com/scriptscat/cloudcat/internal/service/user/domain/errs"
 	"github.com/scriptscat/cloudcat/internal/service/user/domain/vo"
 	"github.com/scriptscat/cloudcat/internal/service/user/interfaces/api/request"
 	"github.com/scriptscat/cloudcat/pkg/cache"
@@ -259,7 +260,6 @@ func (a *Auth) wechatBindRequest(ctx *gin.Context) {
 // @Description  查询微信扫码状态
 // @ID           wechat-status
 // @Tags         user
-// @Param        redirect_uri  query     string  false  "重定向链接"
 // @param        code          formData  string  true   "查询code"
 // @Success      200           {string}  json    "token"
 // @Success      302
@@ -277,6 +277,30 @@ func (a *Auth) wechatStatus(ctx *gin.Context) {
 			return err
 		}
 		return a.oauthHandle(ctx, ret)
+	})
+}
+
+// @Summary      用户
+// @Description  查询微信绑定扫码状态
+// @ID           wechat-status
+// @Tags         user
+// @param        code          formData  string  true   "查询code"
+// @Success      200
+// @Success      302
+// @Failure      400  {object}  errs.JsonRespondError
+// @Failure      404   {object}  errs.JsonRespondError
+// @Router       /auth/bind/wechat/status [post]
+func (a *Auth) wechatBindStatus(ctx *gin.Context) {
+	httputils.Handle(ctx, func() interface{} {
+		code := ctx.PostForm("code")
+		ok, err := a.oauthSvc.WechatScanBindStatus(code)
+		if err != nil {
+			return err
+		}
+		if ok {
+			return nil
+		}
+		return errs2.ErrRecordNotFound
 	})
 }
 
@@ -509,6 +533,6 @@ func (a *Auth) Register(r *gin.RouterGroup) {
 	rg.Any("/wechat/handle", a.wechatHandle)
 
 	rg = r.Group("/auth/bind", token.UserAuth(true))
-	rg.GET("/wechat/request", a.wechatBindRequest)
-
+	rg.POST("/wechat/request", a.wechatBindRequest)
+	rg.POST("/wechat/status", a.wechatBindStatus)
 }

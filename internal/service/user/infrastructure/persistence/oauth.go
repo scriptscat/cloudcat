@@ -108,10 +108,11 @@ func (w *wechatOAuth) FindCodeUid(code string) (int64, error) {
 		}
 		return 0, err
 	}
-	if err := w.kv.Del(context.Background(), w.key(code)); err != nil {
-		return 0, err
-	}
 	return strconv.ParseInt(result, 10, 64)
+}
+
+func (w *wechatOAuth) DelCode(code string) error {
+	return w.kv.Del(context.Background(), w.key(code))
 }
 
 func (w *wechatOAuth) key(code string) string {
