@@ -2,6 +2,7 @@ package application
 
 import (
 	"crypto/sha1"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -133,7 +134,7 @@ func (u *user) Register(register *vo.Register) (*vo.UserInfo, error) {
 	}
 	user := &entity2.User{
 		Username:   register.Username,
-		Email:      register.Email,
+		Email:      sql.NullString{String: register.Email, Valid: true},
 		Role:       "user",
 		Createtime: time.Now().Unix(),
 		Updatetime: 0,
@@ -297,7 +298,7 @@ func (u *user) RequestForgetPasswordEmail(email string) error {
 		return err
 	}
 	vcode := &entity2.VerifyCode{
-		Identifier: user.Email,
+		Identifier: user.Email.String,
 		Op:         "forget-password",
 		Code:       utils.RandString(32, 2),
 		Expired:    time.Now().Add(time.Minute * 30).Unix(),
@@ -310,7 +311,7 @@ func (u *user) RequestForgetPasswordEmail(email string) error {
 		return err
 	}
 	url += "/user/reset-password?code=" + vcode.Code
-	return u.sender.SendEmail(user.Email, "找回密码", "请点击链接<a href=\""+url+"\">找回密码</a>或者复制链接: "+url+" 进行访问 链接有效期30分钟,请在30分钟内使用", "text/html")
+	return u.sender.SendEmail(user.Email.String, "找回密码", "请点击链接<a href=\""+url+"\">找回密码</a>或者复制链接: "+url+" 进行访问 链接有效期30分钟,请在30分钟内使用", "text/html")
 }
 
 func (u *user) ValidResetPassword(code string) (*vo.UserInfo, error) {
@@ -351,7 +352,7 @@ func (u *user) UpdateEmail(uid int64, req *vo.UpdateEmail) error {
 	if err != nil {
 		return err
 	}
-	if req.Email != user.Email {
+	if req.Email != user.Email.String {
 		if err := u.checkEmail(req.Email); err != nil {
 			return err
 		}

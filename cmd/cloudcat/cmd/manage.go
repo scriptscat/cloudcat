@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	config2 "github.com/scriptscat/cloudcat/internal/infrastructure/config"
 	"github.com/scriptscat/cloudcat/internal/infrastructure/sender"
 	"github.com/scriptscat/cloudcat/internal/pkg/database"
@@ -74,6 +76,7 @@ func (m *manageCmd) Commands() []*cobra.Command {
 	return []*cobra.Command{ret}
 }
 
+// 重置admin用户信息
 func (m *manageCmd) admin(cmd *cobra.Command, args []string) error {
 	cfg, err := config2.Init(m.config)
 	if err != nil {
@@ -94,7 +97,8 @@ func (m *manageCmd) admin(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	user.Email = m.getValue(m.email, user.Email)
+	user.Role = "admin"
+	user.Email = sql.NullString{String: m.getValue(m.email, user.Email.String), Valid: true}
 	return db.Save(user).Error
 }
 

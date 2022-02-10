@@ -1,6 +1,7 @@
 package application
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -99,16 +100,16 @@ func Test_user_UpdateEmail(t *testing.T) {
 			Email: "admin@admin.com",
 			Code:  "vcode1",
 		}}, false},
-		{"邮箱相等", func(mockctl *gomock.Controller, args args) (config.SystemConfig, repository.User, repository.VerifyCode) {
+		{name: "邮箱相等", fields: func(mockctl *gomock.Controller, args args) (config.SystemConfig, repository.User, repository.VerifyCode) {
 			s := mock_config.NewMockSystemConfig(mockctl)
 			u := mock_repository.NewMockUser(mockctl)
 			v := mock_repository.NewMockVerifyCode(mockctl)
-			u.EXPECT().FindById(args.uid).Return(&entity.User{ID: 1, Email: args.req.Email}, nil)
+			u.EXPECT().FindById(args.uid).Return(&entity.User{ID: 1, Email: sql.NullString{String: args.req.Email, Valid: true}}, nil)
 			return s, u, v
-		}, args{uid: 1, req: &vo.UpdateEmail{
+		}, args: args{uid: 1, req: &vo.UpdateEmail{
 			Email: "admin@admin.com",
 			Code:  "vcode1",
-		}}, true},
+		}}, wantErr: true},
 		{"邮箱存在", func(mockctl *gomock.Controller, args args) (config.SystemConfig, repository.User, repository.VerifyCode) {
 			s := mock_config.NewMockSystemConfig(mockctl)
 			u := mock_repository.NewMockUser(mockctl)

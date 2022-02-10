@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -20,8 +21,11 @@ func T1631263156() *gormigrate.Migration {
 				db.AutoMigrate(&entity.WechatOauthUser{}),
 				func() error {
 					user := &entity.User{
-						Username:   "admin",
-						Email:      "admin@admin.com",
+						Username: "admin",
+						Email: sql.NullString{
+							String: "admin@admin.com",
+							Valid:  true,
+						},
 						Role:       "admin",
 						Createtime: time.Now().Unix(),
 						Updatetime: 0,
