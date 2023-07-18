@@ -1,54 +1,40 @@
 package utils
 
 import (
-	"math/rand"
-	"strconv"
-	"time"
-	"unsafe"
+	"os"
+	"reflect"
+
+	"github.com/olekukonko/tablewriter"
 )
 
-func Errs(err ...error) error {
-	for _, v := range err {
-		if v != nil {
-			return v
-		}
-	}
-	return nil
+func Table(header []string, data [][]string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(header)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetHeaderLine(false)
+	table.SetBorder(false)
+	table.SetTablePadding("  ") // pad with tabs
+	table.SetNoWhiteSpace(true)
+	table.AppendBulk(data) // Add Bulk Data
+	return table
 }
 
-func StringToInt64(s string) int64 {
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return 0
+func DealTable(header []string, data interface{}, deal func(interface{}) []string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(header)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetHeaderLine(false)
+	table.SetBorder(false)
+	table.SetTablePadding("  ") // pad with tabs
+	table.SetNoWhiteSpace(true)
+	reflectionRow := reflect.ValueOf(data)
+	if reflectionRow.Kind() != reflect.Slice || reflectionRow.Kind() != reflect.Array {
+		return nil
 	}
-	return i
-}
-
-const letterBytes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-const (
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-)
-
-var src = rand.NewSource(time.Now().UnixNano())
-
-func RandString(n int, stype int) string {
-	b := make([]byte, n)
-	l := 10 + (stype * 24)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < l {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
+	for i := 0; i < reflectionRow.Len(); i++ {
+		table.Append(deal(reflectionRow.Index(i).Interface()))
 	}
-
-	return *(*string)(unsafe.Pointer(&b))
+	return table
 }

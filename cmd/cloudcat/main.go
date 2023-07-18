@@ -1,25 +1,23 @@
 package main
 
 import (
-	cmd2 "github.com/scriptscat/cloudcat/cmd/cloudcat/cmd"
-	"github.com/sirupsen/logrus"
+	"log"
+
+	"github.com/scriptscat/cloudcat/cmd/cloudcat/server"
 	"github.com/spf13/cobra"
 )
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use: "cloudcat",
+		Use:   "cloudcat",
+		Short: "cloudcat service.",
 	}
+	config := rootCmd.PersistentFlags().StringP("config", "c", "./configs/config.yaml", "config file")
 
-	execCmd := cmd2.NewExecCmd()
-	serveCmd := cmd2.NewServeCmd()
-	manageCmd := cmd2.NewManageCmd()
-
-	rootCmd.AddCommand(execCmd.Commands()...)
-	rootCmd.AddCommand(serveCmd.Commands()...)
-	rootCmd.AddCommand(manageCmd.Commands()...)
+	serverCmd := server.NewServer()
+	rootCmd.AddCommand(serverCmd.Command(config)...)
 
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Fatalln(err)
+		log.Fatalf("execute err: %v", err)
 	}
 }

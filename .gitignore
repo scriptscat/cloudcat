@@ -1,17 +1,25 @@
-
-.*
-
-config.yaml
-
-*.zip
+# Binaries for programs and plugins
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
-/cloudcat
+# Test binary, built with `go test -c`
+*.test
 
-cloudcat.db
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
 
-/cloudcat*/
+# Dependency directories (remove the comment below to include it)
+# vendor/
 
-resource/
+.idea
+.vscode
+.docker
 
-/runtime/*
+/configs/config.yaml
+/docs
+/runtime
+/bin
+/data

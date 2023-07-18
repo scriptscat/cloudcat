@@ -1,842 +1,391 @@
 basePath: /api/v1
 definitions:
-  dto.SyncScript:
+  BadRequest:
     properties:
-      action:
-        type: string
-      actiontime:
+      code:
+        description: 错误码
+        format: int32
         type: integer
       msg:
+        description: 错误信息
         type: string
+    type: object
+  cookie.Cookie:
+    type: object
+  script_entity.Metadata:
+    additionalProperties:
+      items:
+        type: string
+      type: array
+    type: object
+  script_entity.ScriptState:
+    description: |-
+      ScriptState enum type:
+      - ScriptStateEnable: enable
+      - ScriptStateDisable: disable
+      - RuntimeScriptCat: scriptcat
+    enum:
+    - enable
+    - disable
+    - scriptcat
+    type: string
+  script_entity.Status:
+    additionalProperties:
+      type: string
+    type: object
+  scripts.Cookie:
+    properties:
+      cookie_space:
+        type: string
+      cookies:
+        items:
+          $ref: '#/definitions/cookie.Cookie'
+        type: array
+      created_at:
+        type: integer
+      url:
+        type: string
+    type: object
+  scripts.CookieListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/scripts.Cookie'
+        type: array
+    type: object
+  scripts.DeleteRequest:
+    properties:
+      scriptId:
+        type: string
+    type: object
+  scripts.DeleteResponse:
+    type: object
+  scripts.GetResponse:
+    properties:
       script:
-        $ref: '#/definitions/entity.SyncScript'
-      uuid:
-        type: string
+        $ref: '#/definitions/scripts.Script'
     type: object
-  dto.SyncSubscribe:
-    properties:
-      action:
-        type: string
-      actiontime:
-        type: integer
-      msg:
-        type: string
-      subscribe:
-        $ref: '#/definitions/entity.SyncSubscribe'
-      url:
-        type: string
-    type: object
-  entity.SyncDevice:
-    properties:
-      createtime:
-        type: integer
-      name:
-        type: string
-      remark:
-        type: string
-      setting:
-        type: string
-      settingtime:
-        type: integer
-      user_id:
-        type: integer
-    type: object
-  entity.SyncScript:
+  scripts.InstallRequest:
     properties:
       code:
         type: string
-      createtime:
-        type: integer
-      device_id:
-        type: integer
-      meta_json:
-        type: string
-      name:
-        type: string
-      origin:
-        type: string
-      self_meta:
-        type: string
-      sort:
-        type: integer
-      status:
-        type: integer
-      subscribe_url:
-        type: string
-      type:
-        type: integer
-      updatetime:
-        type: integer
-      user_id:
-        type: integer
-      uuid:
-        type: string
     type: object
-  entity.SyncSubscribe:
+  scripts.InstallResponse:
     properties:
-      code:
-        type: string
-      createtime:
-        type: integer
-      device_id:
-        type: integer
-      meta_json:
-        type: string
-      name:
-        type: string
       scripts:
-        type: string
-      status:
-        type: integer
-      updatetime:
-        type: integer
-      url:
-        type: string
-      url_hash:
-        type: string
-      user_id:
-        type: integer
+        items:
+          $ref: '#/definitions/scripts.Script'
+        type: array
     type: object
-  errs.JsonRespondError:
+  scripts.ListResponse:
     properties:
-      code:
-        type: integer
-      msg:
-        type: string
+      list:
+        items:
+          $ref: '#/definitions/scripts.Script'
+        type: array
     type: object
-  repository.ScriptCatInfo:
+  scripts.Script:
     properties:
-      notice:
+      code,omitempty:
         type: string
-      version:
-        type: string
-    type: object
-  vo.UserInfo:
-    properties:
-      avatar:
-        type: string
-      email:
-        type: string
+      created_time:
+        $ref: '#/definitions/time.Time'
       id:
-        description: 用户id
-        type: integer
-      role:
         type: string
-      username:
+      metadata:
+        $ref: '#/definitions/script_entity.Metadata'
+      name:
         type: string
+      self_metadata:
+        $ref: '#/definitions/script_entity.Metadata'
+      state:
+        $ref: '#/definitions/script_entity.ScriptState'
+      status:
+        $ref: '#/definitions/script_entity.Status'
+      updated_time:
+        $ref: '#/definitions/time.Time'
     type: object
-  vo.WechatScan:
+  scripts.Storage:
     properties:
-      code:
-        type: string
-      url:
+      link_script_id:
+        items:
+          type: string
+        type: array
+      name:
         type: string
     type: object
+  scripts.StorageListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/scripts.Storage'
+        type: array
+    type: object
+  scripts.UpdateRequest:
+    properties:
+      script:
+        $ref: '#/definitions/scripts.Script'
+      scriptId:
+        type: string
+    type: object
+  scripts.UpdateResponse:
+    type: object
+  scripts.Value:
+    properties:
+      created_time:
+        $ref: '#/definitions/time.Time'
+      key:
+        type: string
+      storage_name:
+        type: string
+      value:
+        type: string
+    type: object
+  scripts.ValueListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/scripts.Value'
+        type: array
+    type: object
+  time.Time:
+    type: string
 info:
-  contact: {}
-  title: 云猫api文档
-  version: "1.0"
+  title: 云猫 API 文档
+  version: 1.0.0
 paths:
-  /account/forgot-password:
-    post:
-      description: 往邮箱里发送一个找回密码的链接
-      operationId: forget-password
-      parameters:
-      - description: 邮箱地址
-        in: formData
-        name: email
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 忘记密码
-      tags:
-      - user
-  /account/login:
-    post:
-      consumes:
-      - application/x-www-form-urlencoded
-      description: 用户登录
-      operationId: login
-      parameters:
-      - description: 用户名/邮箱
-        in: formData
-        name: username
-        required: true
-        type: string
-      - description: 登录密码
-        in: formData
-        name: password
-        required: true
-        type: string
-      - description: 自动登录
-        in: formData
-        name: auto_login
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /account/logout:
-    post:
-      consumes:
-      - application/x-www-form-urlencoded
-      description: 登出
-      operationId: logout
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /account/register:
-    post:
-      consumes:
-      - application/x-www-form-urlencoded
-      description: 用户注册
-      operationId: register
-      parameters:
-      - description: 用户名
-        in: formData
-        name: username
-        required: true
-        type: string
-      - description: 邮箱
-        in: formData
-        name: email
-        required: true
-        type: string
-      - description: 登录密码
-        in: formData
-        name: password
-        required: true
-        type: string
-      - description: 再输入一次登录密码
-        in: formData
-        name: repassword
-        required: true
-        type: string
-      - description: 邮箱验证码
-        in: formData
-        name: email_verify_code
-        type: string
-      - description: 邀请码
-        in: formData
-        name: inv_code
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /account/register/request-email-code:
-    post:
-      consumes:
-      - application/x-www-form-urlencoded
-      description: 请求邮箱验证码
-      operationId: request-email-code
-      parameters:
-      - description: 邮箱
-        in: formData
-        name: email
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /account/reset-password:
-    get:
-      description: 校验重置密码的code
-      operationId: valid-reset-password
-      parameters:
-      - description: 重置code
-        in: query
-        name: code
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/vo.UserInfo'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 校验重置密码
-      tags:
-      - user
-    post:
-      description: 通过忘记密码的邮件重置密码
-      operationId: reset-password
-      parameters:
-      - description: 重置code
-        in: formData
-        name: code
-        required: true
-        type: string
-      - description: 输入密码
-        in: formData
-        name: password
-        required: true
-        type: string
-      - description: 再输入一次密码
-        in: formData
-        name: repassword
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 重置密码
-      tags:
-      - user
-  /auth/bbs:
-    get:
-      description: 论坛oauth2.0登录
-      operationId: bbs-login
-      responses:
-        "302":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /auth/bind/wechat/request:
-    post:
-      description: 绑定微信
-      operationId: wechat-bind-request
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/vo.WechatScan'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /auth/bind/wechat/status:
-    post:
-      description: 查询微信绑定扫码状态
-      operationId: wechat-bind-status
-      parameters:
-      - description: 查询code
-        in: formData
-        name: code
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "302":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /auth/wechat:
-    post:
-      description: 微信oauth2.0登录
-      operationId: wechat-login
-      responses:
-        "302":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /auth/wechat/request:
-    post:
-      description: 请求微信登录二维码
-      operationId: wechat-request
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/vo.WechatScan'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /auth/wechat/status:
-    post:
-      description: 查询微信扫码状态
-      operationId: wechat-status
-      parameters:
-      - description: 查询code
-        in: formData
-        name: code
-        required: true
-        type: string
-      responses:
-        "200":
-          description: token
-          schema:
-            type: string
-        "302":
-          description: ""
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 用户
-      tags:
-      - user
-  /sync/{device}/script/pull/{version}:
+  /cookies:
     get:
       consumes:
       - application/json
-      description: 拉取脚本变更
-      operationId: sync-pull-script
-      parameters:
-      - description: 设备id
-        in: path
-        name: device
-        required: true
-        type: integer
-      - description: 版本号
-        in: path
-        name: version
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.SyncScript'
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 同步
-      tags:
-      - sync
-  /sync/{device}/script/push/{version}:
-    put:
-      consumes:
-      - application/json
-      description: 推送脚本变更,需要先拉取获得版本号
-      operationId: sync-push-script
-      parameters:
-      - description: 设备id
-        in: path
-        name: device
-        required: true
-        type: integer
-      - description: 版本号
-        in: path
-        name: version
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.SyncScript'
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 同步
-      tags:
-      - sync
-  /sync/{device}/setting/pull:
-    get:
-      consumes:
-      - application/json
-      description: 拉取设置变更
-      operationId: sync-pull-setting
-      parameters:
-      - description: 设备id
-        in: path
-        name: device
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 同步
-      tags:
-      - sync
-  /sync/{device}/setting/push:
-    put:
-      consumes:
-      - application/json
-      description: 推送设置变更
-      operationId: sync-push-setting
-      parameters:
-      - description: 设备id
-        in: path
-        name: device
-        required: true
-        type: integer
-      - description: 设置json字符串
-        in: formData
-        name: setting
-        required: true
-        type: string
-      - description: 设置更新时间
-        in: formData
-        name: settingtime
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 同步
-      tags:
-      - sync
-  /sync/{device}/subscribe/pull/{version}:
-    get:
-      consumes:
-      - application/json
-      description: 拉取订阅变更
-      operationId: sync-pull-subscribe
-      parameters:
-      - description: 设备id
-        in: path
-        name: device
-        required: true
-        type: integer
-      - description: 版本号
-        in: path
-        name: version
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.SyncSubscribe'
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 同步
-      tags:
-      - sync
-  /sync/{device}/subscribe/push/{version}:
-    put:
-      consumes:
-      - application/json
-      description: 推送订阅变更,需要先拉取获得版本号
-      operationId: sync-push-subscribe
-      parameters:
-      - description: 设备id
-        in: path
-        name: device
-        required: true
-        type: integer
-      - description: 版本号
-        in: path
-        name: version
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.SyncSubscribe'
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 同步
-      tags:
-      - sync
-  /sync/device:
-    get:
-      consumes:
-      - application/json
-      description: 获取设备列表
-      operationId: sync-device-list
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/entity.SyncDevice'
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 同步
-      tags:
-      - sync
-  /system/version:
-    get:
-      consumes:
-      - application/json
-      description: 获取系统环境变量
-      operationId: env
+      description: 脚本cookie列表
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/repository.ScriptCatInfo'
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.CookieListResponse'
+              msg:
+                type: string
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/errs.JsonRespondError'
-      summary: 系统环境
+            $ref: '#/definitions/BadRequest'
+      summary: 脚本cookie列表
       tags:
-      - system
-  /user:
+      - scripts
+  /scripts:
     get:
-      description: 用户信息
-      operationId: user-info
+      consumes:
+      - application/json
+      description: 脚本列表
+      parameters:
+      - in: query
+        name: scriptId
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/vo.UserInfo'
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.ListResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 脚本列表
       tags:
-      - user
-    put:
-      description: 修改用户信息
-      operationId: user-update-info
-      parameters:
-      - description: 用户名
-        in: formData
-        name: username
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
-      tags:
-      - user
-  /user/{uid}/avatar:
-    get:
-      description: 获取用户头像
-      operationId: user-avatar
-      parameters:
-      - description: 用户id
-        in: path
-        name: uid
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
-      tags:
-      - user
-  /user/avatar:
-    put:
-      consumes:
-      - multipart/form-data
-      description: 更新用户头像
-      operationId: user-update-avatar
-      parameters:
-      - description: 头像
-        in: formData
-        name: avatar
-        required: true
-        type: file
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
-      tags:
-      - user
-  /user/email:
-    put:
-      description: 修改登录邮箱信息
-      operationId: user-update-email
-      parameters:
-      - description: 邮箱
-        in: formData
-        name: email
-        required: true
-        type: string
-      - description: 邮箱验证码
-        in: formData
-        name: code
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
-      tags:
-      - user
-  /user/email/code:
+      - scripts
     post:
-      description: 请求邮箱修改验证码
-      operationId: change-email-code
+      consumes:
+      - application/json
+      description: 创建脚本
       parameters:
-      - description: 邮箱
-        in: formData
-        name: email
-        required: true
-        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/scripts.InstallRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.InstallResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 创建脚本
       tags:
-      - user
-  /user/oauth:
+      - scripts
+  /scripts/{scriptId}:
     delete:
-      description: 解绑三方登录
-      operationId: user-delete-oauth
+      consumes:
+      - application/json
+      description: 删除脚本
       parameters:
-      - description: 平台:bbs|wechat
-        in: query
-        name: platform
+      - in: path
+        name: scriptId
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/scripts.DeleteRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.DeleteResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 删除脚本
       tags:
-      - user
-  /user/password:
-    put:
-      description: 修改用户密码
-      operationId: user-update-password
-      responses:
-        "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
-      tags:
-      - user
-  /user/setting:
+      - scripts
     get:
-      description: 用户设置信息
-      operationId: user-setting-info
+      consumes:
+      - application/json
+      description: 获取脚本
+      parameters:
+      - in: path
+        name: scriptId
+        required: true
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          description: ""
-        "403":
-          description: ""
-      security:
-      - BearerAuth: []
-      summary: 用户
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.GetResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 获取脚本
       tags:
-      - user
-securityDefinitions:
-  BearerAuth:
-    in: header
-    name: Authorization
-    type: apiKey
+      - scripts
+    put:
+      consumes:
+      - application/json
+      description: 更新脚本
+      parameters:
+      - in: path
+        name: scriptId
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/scripts.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.UpdateResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 更新脚本
+      tags:
+      - scripts
+  /values:
+    get:
+      consumes:
+      - application/json
+      description: 值储存空间列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.StorageListResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 值储存空间列表
+      tags:
+      - scripts
+  /values/{storageName}:
+    get:
+      consumes:
+      - application/json
+      description: 脚本值列表
+      parameters:
+      - in: path
+        name: storageName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.ValueListResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 脚本值列表
+      tags:
+      - scripts
 swagger: "2.0"

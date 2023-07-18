@@ -1,28 +1,32 @@
 package scriptcat
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParseMetaToJson(t *testing.T) {
-	ret := ParseMetaToJson(`// ==UserScript==
-// @name         bilibili自动签到
-// @namespace    wyz
-// @version      1.1.2
-// @author       wyz
-// @crontab * * once * *
-// @debug
-// @grant GM_xmlhttpRequest
-// @grant GM_notification
-// @connect api.bilibili.com
-// @connect api.live.bilibili.com
-// @cloudCat
-// @exportCookie domain=api.bilibili.com
-// @exportCookie domain=api.live.bilibili.com
-// ==/UserScript==`)
-
-	assert.Equal(t, 2, len(ret["grant"]))
-
+func TestConvCron(t *testing.T) {
+	type args struct {
+		cron string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{"case1", args{"* * * * *"}, "0 * * * * *", assert.NoError},
+		{"case2", args{"* 10-23 once * *"}, "0 0 10 * * *", assert.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ConvCron(tt.args.cron)
+			if !tt.wantErr(t, err, fmt.Sprintf("ConvCron(%v)", tt.args.cron)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "ConvCron(%v)", tt.args.cron)
+		})
+	}
 }

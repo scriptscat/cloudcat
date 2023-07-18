@@ -1,1292 +1,603 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "云猫api文档",
-        "contact": {},
-        "version": "1.0"
+      "title": "云猫 API 文档",
+      "version": "1.0.0"
     },
     "basePath": "/api/v1",
-    "paths": {
-        "/account/forgot-password": {
-            "post": {
-                "description": "往邮箱里发送一个找回密码的链接",
-                "tags": [
-                    "user"
-                ],
-                "summary": "忘记密码",
-                "operationId": "forget-password",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "邮箱地址",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
+  "paths": {
+    "/cookies": {
+      "get": {
+        "description": "脚本cookie列表",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "脚本cookie列表",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.CookieListResponse"
+                },
+                "msg": {
+                  "type": "string"
                 }
+              }
             }
-        },
-        "/account/login": {
-            "post": {
-                "description": "用户登录",
-                "consumes": [
-                    "application/x-www-form-urlencoded"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "login",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "用户名/邮箱",
-                        "name": "username",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "登录密码",
-                        "name": "password",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "自动登录",
-                        "name": "auto_login",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
             }
-        },
-        "/account/logout": {
-            "post": {
-                "description": "登出",
-                "consumes": [
-                    "application/x-www-form-urlencoded"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "logout",
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/account/register": {
-            "post": {
-                "description": "用户注册",
-                "consumes": [
-                    "application/x-www-form-urlencoded"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "register",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "用户名",
-                        "name": "username",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "邮箱",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "登录密码",
-                        "name": "password",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "再输入一次登录密码",
-                        "name": "repassword",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "邮箱验证码",
-                        "name": "email_verify_code",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "邀请码",
-                        "name": "inv_code",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/account/register/request-email-code": {
-            "post": {
-                "description": "请求邮箱验证码",
-                "consumes": [
-                    "application/x-www-form-urlencoded"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "request-email-code",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "邮箱",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/account/reset-password": {
-            "get": {
-                "description": "校验重置密码的code",
-                "tags": [
-                    "user"
-                ],
-                "summary": "校验重置密码",
-                "operationId": "valid-reset-password",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "重置code",
-                        "name": "code",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/vo.UserInfo"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "通过忘记密码的邮件重置密码",
-                "tags": [
-                    "user"
-                ],
-                "summary": "重置密码",
-                "operationId": "reset-password",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "重置code",
-                        "name": "code",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "输入密码",
-                        "name": "password",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "再输入一次密码",
-                        "name": "repassword",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/bbs": {
-            "get": {
-                "description": "论坛oauth2.0登录",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "bbs-login",
-                "responses": {
-                    "302": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/bind/wechat/request": {
-            "post": {
-                "description": "绑定微信",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "wechat-bind-request",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/vo.WechatScan"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/bind/wechat/status": {
-            "post": {
-                "description": "查询微信绑定扫码状态",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "wechat-bind-status",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "查询code",
-                        "name": "code",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "302": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/wechat": {
-            "post": {
-                "description": "微信oauth2.0登录",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "wechat-login",
-                "responses": {
-                    "302": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/wechat/request": {
-            "post": {
-                "description": "请求微信登录二维码",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "wechat-request",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/vo.WechatScan"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/wechat/status": {
-            "post": {
-                "description": "查询微信扫码状态",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "wechat-status",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "查询code",
-                        "name": "code",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "token",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "302": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/sync/device": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "获取设备列表",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sync"
-                ],
-                "summary": "同步",
-                "operationId": "sync-device-list",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/entity.SyncDevice"
-                        }
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/sync/{device}/script/pull/{version}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "拉取脚本变更",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sync"
-                ],
-                "summary": "同步",
-                "operationId": "sync-pull-script",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "设备id",
-                        "name": "device",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "版本号",
-                        "name": "version",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.SyncScript"
-                        }
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/sync/{device}/script/push/{version}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "推送脚本变更,需要先拉取获得版本号",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sync"
-                ],
-                "summary": "同步",
-                "operationId": "sync-push-script",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "设备id",
-                        "name": "device",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "版本号",
-                        "name": "version",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.SyncScript"
-                        }
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/sync/{device}/setting/pull": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "拉取设置变更",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sync"
-                ],
-                "summary": "同步",
-                "operationId": "sync-pull-setting",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "设备id",
-                        "name": "device",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/sync/{device}/setting/push": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "推送设置变更",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sync"
-                ],
-                "summary": "同步",
-                "operationId": "sync-push-setting",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "设备id",
-                        "name": "device",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "设置json字符串",
-                        "name": "setting",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "设置更新时间",
-                        "name": "settingtime",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/sync/{device}/subscribe/pull/{version}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "拉取订阅变更",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sync"
-                ],
-                "summary": "同步",
-                "operationId": "sync-pull-subscribe",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "设备id",
-                        "name": "device",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "版本号",
-                        "name": "version",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.SyncSubscribe"
-                        }
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/sync/{device}/subscribe/push/{version}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "推送订阅变更,需要先拉取获得版本号",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sync"
-                ],
-                "summary": "同步",
-                "operationId": "sync-push-subscribe",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "设备id",
-                        "name": "device",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "版本号",
-                        "name": "version",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.SyncSubscribe"
-                        }
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/system/version": {
-            "get": {
-                "description": "获取系统环境变量",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "system"
-                ],
-                "summary": "系统环境",
-                "operationId": "env",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/repository.ScriptCatInfo"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errs.JsonRespondError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "用户信息",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-info",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/vo.UserInfo"
-                        }
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "修改用户信息",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-update-info",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "用户名",
-                        "name": "username",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/user/avatar": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "更新用户头像",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-update-avatar",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "头像",
-                        "name": "avatar",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/user/email": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "修改登录邮箱信息",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-update-email",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "邮箱",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "邮箱验证码",
-                        "name": "code",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/user/email/code": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "请求邮箱修改验证码",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "change-email-code",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "邮箱",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/user/oauth": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "解绑三方登录",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-delete-oauth",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "平台:bbs|wechat",
-                        "name": "platform",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/user/password": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "修改用户密码",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-update-password",
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/user/setting": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "用户设置信息",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-setting-info",
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/user/{uid}/avatar": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "获取用户头像",
-                "tags": [
-                    "user"
-                ],
-                "summary": "用户",
-                "operationId": "user-avatar",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "用户id",
-                        "name": "uid",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                }
-            }
+          }
         }
+      }
     },
+    "/scripts": {
+      "get": {
+        "description": "脚本列表",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "脚本列表",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "scriptId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.ListResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "创建脚本",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "创建脚本",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.InstallRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.InstallResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    },
+    "/scripts/{scriptId}": {
+      "get": {
+        "description": "获取脚本",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "获取脚本",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "scriptId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.GetResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "更新脚本",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "更新脚本",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "scriptId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.UpdateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.UpdateResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "删除脚本",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "删除脚本",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "scriptId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.DeleteRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.DeleteResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    },
+    "/values": {
+      "get": {
+        "description": "值储存空间列表",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "值储存空间列表",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.StorageListResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    },
+    "/values/{storageName}": {
+      "get": {
+        "description": "脚本值列表",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "脚本值列表",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "storageName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.ValueListResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    }
+  },
     "definitions": {
-        "dto.SyncScript": {
+      "BadRequest": {
             "type": "object",
             "properties": {
-                "action": {
-                    "type": "string"
-                },
-                "actiontime": {
-                    "type": "integer"
+                "code": {
+                  "description": "错误码",
+                  "type": "integer",
+                  "format": "int32"
                 },
                 "msg": {
-                    "type": "string"
-                },
-                "script": {
-                    "$ref": "#/definitions/entity.SyncScript"
-                },
-                "uuid": {
+                  "description": "错误信息",
                     "type": "string"
                 }
             }
-        },
-        "dto.SyncSubscribe": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "type": "string"
-                },
-                "actiontime": {
-                    "type": "integer"
-                },
-                "msg": {
-                    "type": "string"
-                },
-                "subscribe": {
-                    "$ref": "#/definitions/entity.SyncSubscribe"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.SyncDevice": {
-            "type": "object",
-            "properties": {
-                "createtime": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "remark": {
-                    "type": "string"
-                },
-                "setting": {
-                    "type": "string"
-                },
-                "settingtime": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "entity.SyncScript": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "createtime": {
-                    "type": "integer"
-                },
-                "device_id": {
-                    "type": "integer"
-                },
-                "meta_json": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "origin": {
-                    "type": "string"
-                },
-                "self_meta": {
-                    "type": "string"
-                },
-                "sort": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "subscribe_url": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                },
-                "updatetime": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "integer"
-                },
-                "uuid": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.SyncSubscribe": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "createtime": {
-                    "type": "integer"
-                },
-                "device_id": {
-                    "type": "integer"
-                },
-                "meta_json": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "scripts": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "updatetime": {
-                    "type": "integer"
-                },
-                "url": {
-                    "type": "string"
-                },
-                "url_hash": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "errs.JsonRespondError": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
-        "repository.ScriptCatInfo": {
-            "type": "object",
-            "properties": {
-                "notice": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "vo.UserInfo": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "description": "用户id",
-                    "type": "integer"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "vo.WechatScan": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
+      },
+      "cookie.Cookie": {
+        "type": "object"
+      },
+      "script_entity.Metadata": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
+      },
+      "script_entity.ScriptState": {
+        "description": "ScriptState enum type:\n- ScriptStateEnable: enable\n- ScriptStateDisable: disable\n- RuntimeScriptCat: scriptcat",
+        "type": "string",
+        "enum": [
+          "enable",
+          "disable",
+          "scriptcat"
+        ]
+      },
+      "script_entity.Status": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "scripts.Cookie": {
+        "type": "object",
+        "properties": {
+          "cookie_space": {
+            "type": "string"
+          },
+          "cookies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/cookie.Cookie"
+            }
+          },
+          "created_at": {
+            "type": "integer"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.CookieListResponse": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/scripts.Cookie"
+            }
+          }
+        }
+      },
+      "scripts.DeleteRequest": {
+        "type": "object",
+        "properties": {
+          "scriptId": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.DeleteResponse": {
+        "type": "object"
+      },
+      "scripts.GetResponse": {
+        "type": "object",
+        "properties": {
+          "script": {
+            "$ref": "#/definitions/scripts.Script"
+          }
+        }
+      },
+      "scripts.InstallRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.InstallResponse": {
+        "type": "object",
+        "properties": {
+          "scripts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/scripts.Script"
+            }
+          }
+        }
+      },
+      "scripts.ListResponse": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/scripts.Script"
+            }
+          }
+        }
+      },
+      "scripts.Script": {
+        "type": "object",
+        "properties": {
+          "code,omitempty": {
+            "type": "string"
+          },
+          "created_time": {
+            "$ref": "#/definitions/time.Time"
+          },
+          "id": {
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/definitions/script_entity.Metadata"
+          },
+          "name": {
+            "type": "string"
+          },
+          "self_metadata": {
+            "$ref": "#/definitions/script_entity.Metadata"
+          },
+          "state": {
+            "$ref": "#/definitions/script_entity.ScriptState"
+          },
+          "status": {
+            "$ref": "#/definitions/script_entity.Status"
+          },
+          "updated_time": {
+            "$ref": "#/definitions/time.Time"
+          }
+        }
+      },
+      "scripts.Storage": {
+        "type": "object",
+        "properties": {
+          "link_script_id": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.StorageListResponse": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/scripts.Storage"
+            }
+          }
+        }
+      },
+      "scripts.UpdateRequest": {
+        "type": "object",
+        "properties": {
+          "script": {
+            "$ref": "#/definitions/scripts.Script"
+          },
+          "scriptId": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.UpdateResponse": {
+        "type": "object"
+      },
+      "scripts.Value": {
+        "type": "object",
+        "properties": {
+          "created_time": {
+            "$ref": "#/definitions/time.Time"
+          },
+          "key": {
+            "type": "string"
+          },
+          "storage_name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.ValueListResponse": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/scripts.Value"
+            }
+          }
+        }
+      },
+      "time.Time": {
+        "type": "string"
         }
     }
 }
