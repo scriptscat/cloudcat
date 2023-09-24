@@ -1,6 +1,7 @@
 package command
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"os/exec"
@@ -141,12 +142,15 @@ func (s *Script) Edit() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			data, err = os.ReadFile(file.Name())
+			editData, err := os.ReadFile(file.Name())
 			if err != nil {
 				return err
 			}
+			if bytes.Equal(editData, data) {
+				return nil
+			}
 			script := &scripts.Script{}
-			err = yaml.Unmarshal(data, script)
+			err = yaml.Unmarshal(editData, script)
 			if err != nil {
 				return err
 			}
@@ -180,4 +184,24 @@ func (s *Script) install(cmd *cobra.Command, args []string) error {
 func (s *Script) run(cmd *cobra.Command, args []string) error {
 
 	return nil
+}
+
+func (s *Script) Delete() *cobra.Command {
+	ret := &cobra.Command{
+		Use:   "script [scriptId]",
+		Short: "删除脚本",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			scriptId := args[0]
+			cli := cloudcat_api.NewScript(s.cli)
+			_, err := cli.Delete(context.Background(), &scripts.DeleteRequest{
+				ScriptID: scriptId,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+	return ret
 }

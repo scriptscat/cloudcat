@@ -2,14 +2,14 @@ package scripts
 
 import (
 	"github.com/codfrm/cago/server/mux"
-	"github.com/scriptscat/cloudcat/pkg/scriptcat/cookie"
+	"github.com/scriptscat/cloudcat/internal/model/entity/cookie_entity"
 )
 
 type Cookie struct {
-	StorageName string           `json:"storage_name"`
-	Url         string           `json:"url"`
-	Cookies     []*cookie.Cookie `json:"cookies"`
-	Createtime  int64            `json:"createtime"`
+	StorageName string                      `json:"storage_name"`
+	Url         string                      `json:"url"`
+	Cookies     []*cookie_entity.HttpCookie `json:"cookies"`
+	Createtime  int64                       `json:"createtime"`
 }
 
 // CookieListRequest 脚本cookie列表

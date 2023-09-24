@@ -10,7 +10,91 @@ definitions:
         description: 错误信息
         type: string
     type: object
-  cookie.Cookie:
+  auth.Secret:
+    properties:
+      createtime:
+        type: integer
+      id:
+        type: string
+      secret_key:
+        type: string
+      status:
+        type: integer
+      type:
+        $ref: '#/definitions/secret_entity.SecretType'
+      updatetime:
+        type: integer
+    type: object
+  auth.SecretCreateRequest:
+    type: object
+  auth.SecretCreateResponse:
+    properties:
+      secret:
+        $ref: '#/definitions/auth.Secret'
+    type: object
+  auth.SecretDeleteRequest:
+    type: object
+  auth.SecretDeleteResponse:
+    type: object
+  auth.SecretGetResponse:
+    properties:
+      secret:
+        $ref: '#/definitions/auth.Secret'
+    type: object
+  auth.SecretListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/auth.Secret'
+        type: array
+    type: object
+  auth.SecretUpdateRequest:
+    properties:
+      secret:
+        $ref: '#/definitions/auth.Secret'
+    type: object
+  auth.SecretUpdateResponse:
+    properties:
+      secret:
+        $ref: '#/definitions/auth.Secret'
+    type: object
+  cookie_entity.HttpCookie:
+    properties:
+      domain:
+        description: optional
+        type: string
+      expires:
+        $ref: '#/definitions/time.Time'
+        description: optional
+      http_only:
+        type: boolean
+      max_age:
+        description: |-
+          =0 means no 'Max-Age' attribute specified.
+          MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'
+          MaxAge>0 means Max-Age attribute present and given in seconds
+        type: integer
+      name:
+        type: string
+      path:
+        description: optional
+        type: string
+      raw:
+        type: string
+      raw_expires:
+        description: for reading cookies only
+        type: string
+      same_site:
+        type: integer
+      secure:
+        type: boolean
+      unparsed:
+        description: Raw text of unparsed attribute-value pairs
+        items:
+          type: string
+        type: array
+      value:
+        type: string
     type: object
   script_entity.Metadata:
     additionalProperties:
@@ -35,14 +119,14 @@ definitions:
     type: object
   scripts.Cookie:
     properties:
-      cookie_space:
-        type: string
       cookies:
         items:
-          $ref: '#/definitions/cookie.Cookie'
+          $ref: '#/definitions/cookie_entity.HttpCookie'
         type: array
-      created_at:
+      createtime:
         type: integer
+      storage_name:
+        type: string
       url:
         type: string
     type: object
@@ -88,8 +172,8 @@ definitions:
     properties:
       code,omitempty:
         type: string
-      created_time:
-        $ref: '#/definitions/time.Time'
+      createtime:
+        type: integer
       id:
         type: string
       metadata:
@@ -102,8 +186,8 @@ definitions:
         $ref: '#/definitions/script_entity.ScriptState'
       status:
         $ref: '#/definitions/script_entity.Status'
-      updated_time:
-        $ref: '#/definitions/time.Time'
+      updatetime:
+        type: integer
     type: object
   scripts.Storage:
     properties:
@@ -132,8 +216,8 @@ definitions:
     type: object
   scripts.Value:
     properties:
-      created_time:
-        $ref: '#/definitions/time.Time'
+      createtime:
+        type: integer
       key:
         type: string
       storage_name:
@@ -148,17 +232,29 @@ definitions:
           $ref: '#/definitions/scripts.Value'
         type: array
     type: object
+  secret_entity.SecretType:
+    description: |-
+      SecretType enum type:
+      - AesCbc: aes-cbc
+    enum:
+    - aes-cbc
+    type: string
   time.Time:
     type: string
 info:
   title: 云猫 API 文档
   version: 1.0.0
 paths:
-  /cookies:
+  /cookies/{storageName}:
     get:
       consumes:
       - application/json
       description: 脚本cookie列表
+      parameters:
+      - in: path
+        name: storageName
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -333,7 +429,134 @@ paths:
       summary: 更新脚本
       tags:
       - scripts
-  /values:
+  /secrets:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.SecretListResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auth.SecretCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.SecretCreateResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
+  /secrets/:secretId:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auth.SecretDeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.SecretDeleteResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.SecretGetResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auth.SecretUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.SecretUpdateResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
+  /storages:
     get:
       consumes:
       - application/json

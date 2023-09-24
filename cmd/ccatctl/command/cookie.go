@@ -2,7 +2,7 @@ package command
 
 import (
 	"context"
-	"github.com/scriptscat/cloudcat/pkg/scriptcat/cookie"
+	"net/http"
 	"strings"
 
 	"github.com/codfrm/cago/server/mux"
@@ -48,7 +48,7 @@ func (s *Cookie) Get() *cobra.Command {
 				r := utils.DealTable([]string{
 					"NAME", "VALUE", "DOMAIN", "PATH", "EXPIRES", "HTTPONLY", "SECURE",
 				}, nil, func(i interface{}) []string {
-					v := i.(*cookie.Cookie)
+					v := i.(*http.Cookie)
 					return []string{
 						v.Name, v.Value, v.Domain, v.Path,
 						v.Expires.Format("2006-01-02 15:04:05"),

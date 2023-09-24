@@ -36,7 +36,13 @@ func (c *Basic) Command() []*cobra.Command {
 	}
 	edit.AddCommand(c.script.Edit())
 
-	cmd := []*cobra.Command{get, edit}
+	del := &cobra.Command{
+		Use:   "delete [resource]",
+		Short: "删除资源信息",
+	}
+	del.AddCommand(c.script.Delete())
+
+	cmd := []*cobra.Command{get, edit, del}
 	cmd = append(cmd, c.script.Command()...)
 	cmd = append(cmd, c.value.Command()...)
 	cmd = append(cmd, c.cookie.Command()...)

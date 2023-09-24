@@ -11,8 +11,6 @@ import (
 	"github.com/codfrm/cago/pkg/logger"
 	"go.uber.org/zap"
 
-	"github.com/scriptscat/cloudcat/pkg/scriptcat/cookie"
-
 	"github.com/scriptscat/cloudcat/internal/model/entity/cookie_entity"
 	"github.com/scriptscat/cloudcat/internal/model/entity/value_entity"
 	"github.com/scriptscat/cloudcat/internal/repository/cookie_repo"
@@ -93,9 +91,9 @@ func (c *cookieJar) Save(ctx context.Context) error {
 	defer c.Unlock()
 	for u, v := range c.setUrl {
 		cookies := c.Jar.Cookies(v)
-		saveCookies := make([]*cookie.Cookie, 0)
+		saveCookies := make([]*cookie_entity.HttpCookie, 0)
 		for _, v := range cookies {
-			saveCookies = append(saveCookies, &cookie.Cookie{
+			saveCookies = append(saveCookies, &cookie_entity.HttpCookie{
 				Name:       v.Name,
 				Value:      v.Value,
 				Path:       v.Path,

@@ -48,3 +48,11 @@ func (s *Script) Update(ctx context.Context, req *scripts.UpdateRequest) (*scrip
 	}
 	return resp, nil
 }
+
+func (s *Script) Delete(ctx context.Context, req *scripts.DeleteRequest) (*scripts.DeleteResponse, error) {
+	resp := &scripts.DeleteResponse{}
+	if err := s.cli.Do(ctx, req, resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
