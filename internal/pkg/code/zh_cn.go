@@ -18,4 +18,6 @@ var zhCN = map[int]string{
 	ScriptAlreadyDisable:  "脚本已经禁用",
 	ScriptStateError:      "脚本状态错误",
 	ScriptRunStateError:   "脚本运行状态错误",
+
+	StorageNameNotFound: "存储名称不存在",
 }

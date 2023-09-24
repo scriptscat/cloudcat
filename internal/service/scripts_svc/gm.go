@@ -38,7 +38,7 @@ func (g *GMPluginFunc) SetValue(ctx context.Context, script *scriptcat.Script, k
 			StorageName: script.StorageName(),
 			Key:         key,
 			Value:       value,
-			CreatedTime: time.Now(),
+			Createtime:  time.Now().Unix(),
 		})
 	}
 	model.Value = value
@@ -75,7 +75,7 @@ func (g *GMPluginFunc) DeleteValue(ctx context.Context, script *scriptcat.Script
 type cookieJar struct {
 	sync.Mutex
 	*cookiejar.Jar
-	cookieSpace string
+	storageName string
 	setUrl      map[string]*url.URL
 }
 
@@ -109,25 +109,25 @@ func (c *cookieJar) Save(ctx context.Context) error {
 				Unparsed:   v.Unparsed,
 			})
 		}
-		model, err := cookie_repo.Cookie().Find(ctx, c.cookieSpace, u)
+		model, err := cookie_repo.Cookie().Find(ctx, c.storageName, u)
 		if err != nil {
 			return err
 		}
 		if model == nil {
 			if err := cookie_repo.Cookie().Create(ctx, &cookie_entity.Cookie{
-				CookieSpace: c.cookieSpace,
+				StorageName: c.storageName,
 				Url:         u,
 				Cookies:     saveCookies,
-				CreatedTime: time.Now(),
+				Createtime:  time.Now().Unix(),
 			}); err != nil {
 				return err
 			}
 		} else {
 			if err := cookie_repo.Cookie().Update(ctx, &cookie_entity.Cookie{
-				CookieSpace: c.cookieSpace,
+				StorageName: c.storageName,
 				Url:         u,
 				Cookies:     saveCookies,
-				CreatedTime: model.CreatedTime,
+				Createtime:  model.Createtime,
 			}); err != nil {
 				return err
 			}
@@ -135,14 +135,6 @@ func (c *cookieJar) Save(ctx context.Context) error {
 	}
 	c.setUrl = make(map[string]*url.URL)
 	return nil
-}
-
-func (g *GMPluginFunc) cookieSpace(script *scriptcat.Script) string {
-	cookieSpaces, ok := script.Metadata["cookieSpace"]
-	if !ok {
-		cookieSpaces = []string{"default"}
-	}
-	return cookieSpaces[0]
 }
 
 func (g *GMPluginFunc) Logger(ctx context.Context, script *scriptcat.Script) *zap.Logger {
@@ -155,7 +147,7 @@ func (g *GMPluginFunc) LoadCookieJar(ctx context.Context, script *scriptcat.Scri
 	if err != nil {
 		return nil, err
 	}
-	cookies, _, err := cookie_repo.Cookie().FindPage(ctx, g.cookieSpace(script))
+	cookies, _, err := cookie_repo.Cookie().FindPage(ctx, script.StorageName())
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +176,7 @@ func (g *GMPluginFunc) LoadCookieJar(ctx context.Context, script *scriptcat.Scri
 	}
 	return &cookieJar{
 		Jar:         jar,
-		cookieSpace: g.cookieSpace(script),
+		storageName: script.StorageName(),
 		setUrl:      make(map[string]*url.URL),
 	}, nil
 }

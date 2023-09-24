@@ -33,6 +33,8 @@ type ScriptSvc interface {
 	Update(ctx context.Context, req *api.UpdateRequest) (*api.UpdateResponse, error)
 	// Delete 删除脚本
 	Delete(ctx context.Context, req *api.DeleteRequest) (*api.DeleteResponse, error)
+	// StorageList 值储存空间列表
+	StorageList(ctx context.Context, req *api.StorageListRequest) (*api.StorageListResponse, error)
 }
 
 type scriptSvc struct {
@@ -197,8 +199,8 @@ func (s *scriptSvc) List(ctx context.Context, req *api.ListRequest) (*api.ListRe
 			SelfMetadata: v.SelfMetadata,
 			Status:       v.Status,
 			State:        v.State,
-			CreatedTime:  v.CreatedAt,
-			UpdatedTime:  v.UpdatedAt,
+			Createtime:   v.Createtime,
+			Updatetime:   v.Updatetime,
 		})
 	}
 	return resp, nil
@@ -263,14 +265,14 @@ func (s *scriptSvc) Get(ctx context.Context, req *api.GetRequest) (*api.GetRespo
 	}
 	return &api.GetResponse{
 		Script: &api.Script{
-			ID:          script.ID,
-			Name:        script.Name,
-			Code:        script.Code,
-			Metadata:    script.Metadata,
-			Status:      script.Status,
-			State:       script.State,
-			CreatedTime: script.CreatedAt,
-			UpdatedTime: script.UpdatedAt,
+			ID:         script.ID,
+			Name:       script.Name,
+			Code:       script.Code,
+			Metadata:   script.Metadata,
+			Status:     script.Status,
+			State:      script.State,
+			Createtime: script.Createtime,
+			Updatetime: script.Updatetime,
 		},
 	}, nil
 }
@@ -354,7 +356,7 @@ func (s *scriptSvc) Update(ctx context.Context, req *api.UpdateRequest) (*api.Up
 	if req.Script.State != "" {
 		model.State = req.Script.State
 	}
-	model.UpdatedAt = time.Now()
+	model.Updatetime = time.Now().Unix()
 	if err := script_repo.Script().Update(ctx, model); err != nil {
 		return nil, err
 	}
@@ -382,4 +384,22 @@ func (s *scriptSvc) Delete(ctx context.Context, req *api.DeleteRequest) (*api.De
 		return nil, err
 	}
 	return nil, nil
+}
+
+// StorageList 值储存空间列表
+func (s *scriptSvc) StorageList(ctx context.Context, req *api.StorageListRequest) (*api.StorageListResponse, error) {
+	list, err := script_repo.Script().StorageList(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resp := &api.StorageListResponse{
+		List: make([]*api.Storage, 0),
+	}
+	for _, v := range list {
+		resp.List = append(resp.List, &api.Storage{
+			Name:         v.Name,
+			LinkScriptID: v.LinkScriptID,
+		})
+	}
+	return resp, nil
 }

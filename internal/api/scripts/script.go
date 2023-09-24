@@ -1,8 +1,6 @@
 package scripts
 
 import (
-	"time"
-
 	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/model/entity/script_entity"
 )
@@ -15,8 +13,8 @@ type Script struct {
 	SelfMetadata script_entity.Metadata    `json:"self_metadata" yaml:"selfMetadata"`
 	Status       script_entity.Status      `json:"status" yaml:"status"`
 	State        script_entity.ScriptState `json:"state" yaml:"state"`
-	CreatedTime  time.Time                 `json:"created_time" yaml:"createdTime"`
-	UpdatedTime  time.Time                 `json:"updated_time" yaml:"updatedTime"`
+	Createtime   int64                     `json:"createtime" yaml:"createtime"`
+	Updatetime   int64                     `json:"updatetime" yaml:"updatetime"`
 }
 
 // ListRequest 脚本列表
@@ -71,4 +69,19 @@ type DeleteRequest struct {
 
 // DeleteResponse 删除脚本
 type DeleteResponse struct {
+}
+
+type Storage struct {
+	Name         string   `json:"name"`
+	LinkScriptID []string `json:"link_script_id"`
+}
+
+// StorageListRequest 值储存空间列表
+type StorageListRequest struct {
+	mux.Meta `path:"/storages" method:"GET"`
+}
+
+// StorageListResponse 值储存空间列表
+type StorageListResponse struct {
+	List []*Storage `json:"list"`
 }

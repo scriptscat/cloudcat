@@ -4,6 +4,9 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"time"
+
+	"github.com/scriptscat/cloudcat/internal/model/entity/script_entity"
 
 	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
@@ -73,13 +76,18 @@ func (s *Script) Get() *cobra.Command {
 				return nil
 			}
 			utils.DealTable([]string{
-				"ID", "NAME", "CREATED_AT",
+				"ID", "NAME", "STORAGE_NAME", "CREATED_AT",
 			}, list.List, func(i interface{}) []string {
 				v := i.(*scripts.Script)
+				sn := script_entity.StorageName(v.ID, v.Metadata)
+				if len(sn) > 7 {
+					sn = sn[:7]
+				}
 				return []string{
 					v.ID[:7],
 					v.Name,
-					v.CreatedTime.Format("2006-01-02 15:04:05"),
+					sn,
+					time.Unix(v.Createtime, 0).Format("2006-01-02 15:04:05"),
 				}
 			}).Render()
 			return nil

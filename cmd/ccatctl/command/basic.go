@@ -10,13 +10,16 @@ type Basic struct {
 	config *string
 	script *Script
 	value  *Value
+	cookie *Cookie
 }
 
-func NewGet(config *string, script *Script) *Basic {
+func NewBasic(config *string) *Basic {
 	return &Basic{
 		cli:    mux.NewClient("http://127.0.0.1:8080/api/v1"),
 		config: config,
-		script: script,
+		script: NewScript(config),
+		value:  NewValue(config),
+		cookie: NewCookie(config),
 	}
 }
 
@@ -25,7 +28,7 @@ func (c *Basic) Command() []*cobra.Command {
 		Use:   "get [resource]",
 		Short: "获取资源信息",
 	}
-	get.AddCommand(c.script.Get(), c.value.Get())
+	get.AddCommand(c.script.Get(), c.value.Get(), c.cookie.Get())
 
 	edit := &cobra.Command{
 		Use:   "edit [resource]",
@@ -33,5 +36,9 @@ func (c *Basic) Command() []*cobra.Command {
 	}
 	edit.AddCommand(c.script.Edit())
 
-	return []*cobra.Command{get, edit}
+	cmd := []*cobra.Command{get, edit}
+	cmd = append(cmd, c.script.Command()...)
+	cmd = append(cmd, c.value.Command()...)
+	cmd = append(cmd, c.cookie.Command()...)
+	return cmd
 }

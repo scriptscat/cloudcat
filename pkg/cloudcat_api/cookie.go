@@ -7,18 +7,18 @@ import (
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
 )
 
-type Value struct {
+type Cookie struct {
 	cli *mux.Client
 }
 
-func NewValue(cli *mux.Client) *Value {
-	return &Value{
+func NewCookie(cli *mux.Client) *Cookie {
+	return &Cookie{
 		cli: cli,
 	}
 }
 
-func (s *Value) ValueList(ctx context.Context, req *scripts.ValueListRequest) (*scripts.ValueListResponse, error) {
-	resp := &scripts.ValueListResponse{}
+func (s *Cookie) CookieList(ctx context.Context, req *scripts.CookieListRequest) (*scripts.CookieListResponse, error) {
+	resp := &scripts.CookieListResponse{}
 	if err := s.cli.Do(ctx, req, resp); err != nil {
 		return resp, err
 	}

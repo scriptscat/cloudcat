@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 
@@ -20,21 +21,60 @@ func Table(header []string, data [][]string) *tablewriter.Table {
 	return table
 }
 
-func DealTable(header []string, data interface{}, deal func(interface{}) []string) *tablewriter.Table {
+type Render interface {
+	WriteLine(data interface{})
+	Render()
+}
+
+type render struct {
+	table *tablewriter.Table
+	deal  func(interface{}) []string
+	line  int
+}
+
+func newRender(header []string, deal func(interface{}) []string) *render {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(header)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetHeaderLine(false)
 	table.SetBorder(false)
 	table.SetTablePadding("  ") // pad with tabs
 	table.SetNoWhiteSpace(true)
+	table.SetHeader(header)
+	return &render{
+		table: table,
+		deal:  deal,
+	}
+}
+
+func (e *render) WriteLine(data interface{}) {
+	e.line += 1
+	e.table.Append(e.deal(data))
+}
+
+func (e *render) Render() {
+	if e.line == 0 {
+		fmt.Println("没有数据")
+	} else {
+		e.table.Render()
+	}
+}
+
+func DealTable(header []string, data interface{}, deal func(interface{}) []string) Render {
+	r := newRender(header, deal)
 	reflectionRow := reflect.ValueOf(data)
-	if reflectionRow.Kind() != reflect.Slice || reflectionRow.Kind() != reflect.Array {
-		return nil
+	if reflectionRow.Kind() != reflect.Slice && reflectionRow.Kind() != reflect.Array {
+		return r
 	}
 	for i := 0; i < reflectionRow.Len(); i++ {
-		table.Append(deal(reflectionRow.Index(i).Interface()))
+		r.WriteLine(reflectionRow.Index(i).Interface())
 	}
-	return table
+	return r
+}
+
+func BoolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }

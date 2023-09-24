@@ -38,8 +38,8 @@ type Script struct {
 	SelfMetadata Metadata    `json:"self_metadata"`
 	Status       Status      `json:"status"`
 	State        ScriptState `json:"state"`
-	CreatedAt    time.Time   `json:"created_time"`
-	UpdatedAt    time.Time   `json:"updated_time"`
+	Createtime   int64       `json:"createtime"`
+	Updatetime   int64       `json:"updatetime"`
 }
 
 func (s *Script) Create(script *scriptcat.Script) error {
@@ -50,7 +50,7 @@ func (s *Script) Create(script *scriptcat.Script) error {
 	s.Metadata = Metadata(script.Metadata)
 	s.Status = nil
 	s.State = ScriptStateEnable
-	s.CreatedAt = time.Now()
+	s.Createtime = time.Now().Unix()
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (s *Script) Update(script *scriptcat.Script) error {
 	s.Code = script.Code
 	s.Runtime = RuntimeScriptCat
 	s.Metadata = Metadata(script.Metadata)
-	s.UpdatedAt = time.Now()
+	s.Updatetime = time.Now().Unix()
 	return nil
 }
 
@@ -72,9 +72,13 @@ func (s *Script) Scriptcat() *scriptcat.Script {
 }
 
 func (s *Script) StorageName() string {
-	storageNames, ok := s.Metadata["storageName"]
+	return StorageName(s.ID, s.Metadata)
+}
+
+func StorageName(id string, m Metadata) string {
+	storageNames, ok := m["storageName"]
 	if !ok {
-		storageNames = []string{s.ID}
+		storageNames = []string{id}
 	}
 	return storageNames[0]
 }

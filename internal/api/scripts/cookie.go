@@ -6,15 +6,16 @@ import (
 )
 
 type Cookie struct {
-	CookieSpace string           `json:"cookie_space"`
+	StorageName string           `json:"storage_name"`
 	Url         string           `json:"url"`
 	Cookies     []*cookie.Cookie `json:"cookies"`
-	CreatedAt   int64            `json:"created_at"`
+	Createtime  int64            `json:"createtime"`
 }
 
 // CookieListRequest 脚本cookie列表
 type CookieListRequest struct {
-	mux.Meta `path:"/cookies" method:"GET"`
+	mux.Meta    `path:"/cookies/:storageName" method:"GET"`
+	StorageName string `uri:"storageName"`
 }
 
 // CookieListResponse 脚本cookie列表

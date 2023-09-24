@@ -133,7 +133,7 @@ func (u *scriptRepo) FindByStorage(ctx context.Context, storageName string) ([]*
 	}
 	ret := make([]*script_entity.Script, 0)
 	for _, v := range list {
-		if v.StorageName() == storageName {
+		if strings.HasPrefix(v.StorageName(), storageName) {
 			ret = append(ret, v)
 		}
 	}

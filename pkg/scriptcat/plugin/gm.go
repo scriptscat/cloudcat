@@ -3,10 +3,11 @@ package plugin
 import (
 	"bytes"
 	"context"
-	"github.com/codfrm/cago/pkg/logger"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/codfrm/cago/pkg/logger"
 
 	"github.com/goccy/go-json"
 	"go.uber.org/zap"
@@ -196,7 +197,9 @@ func (g *GMPlugin) xmlHttpRequest(ctx context.Context, script *scriptcat.Script,
 		}
 
 		go func() {
-			defer cookieJar.Save(context.Background())
+			defer func(cookieJar CookieJar, ctx context.Context) {
+				_ = cookieJar.Save(ctx)
+			}(cookieJar, context.Background())
 			resp, err := cli.Do(req)
 			if err != nil {
 				g.logger.Warn("GMXHR 请求失败", zap.Error(err))

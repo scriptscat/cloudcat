@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"strings"
 
 	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
@@ -30,48 +29,25 @@ func (s *Value) Command() []*cobra.Command {
 
 func (s *Value) Get() *cobra.Command {
 	ret := &cobra.Command{
-		Use:   "value [storageName/scriptId]",
+		Use:   "value [storageName]",
 		Short: "获取值信息",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cli := cloudcat_api.NewValue(s.cli)
-			storageName := ""
-			if len(args) > 0 {
-				storageName = args[0]
-				// 获取值列表
-				list, err := cli.ValueList(context.Background(), &scripts.ValueListRequest{
-					StorageName: storageName,
-				})
-				if err != nil {
-					return err
-				}
-				utils.DealTable([]string{
-					"KEY", "VALUE",
-				}, list.List, func(i interface{}) []string {
-					v := i.(*scripts.Value)
-					return []string{
-						v.Key, v.Value,
-					}
-				}).Render()
-				return nil
-			}
-			list, err := cli.StorageList(context.Background(), &scripts.StorageListRequest{})
+			storageName := args[0]
+			// 获取值列表
+			list, err := cli.ValueList(context.Background(), &scripts.ValueListRequest{
+				StorageName: storageName,
+			})
 			if err != nil {
 				return err
 			}
 			utils.DealTable([]string{
-				"ID", "LINK",
+				"KEY", "VALUE",
 			}, list.List, func(i interface{}) []string {
-				v := i.(*scripts.Storage)
-				name := v.Name
-				if len(name) > 7 {
-					name = name[:7]
-				}
-				link := make([]string, 0)
-				for k := range v.LinkScriptID {
-					link = append(link, k)
-				}
-				return []string{name,
-					v.Name, strings.Join(link, ","),
+				v := i.(*scripts.Value)
+				return []string{
+					v.Key, v.Value,
 				}
 			}).Render()
 			return nil

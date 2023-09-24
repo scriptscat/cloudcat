@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"context"
+
 	"github.com/codfrm/cago/pkg/broker/broker"
 	"github.com/scriptscat/cloudcat/internal/model/entity/script_entity"
 	"github.com/scriptscat/cloudcat/internal/repository/cookie_repo"

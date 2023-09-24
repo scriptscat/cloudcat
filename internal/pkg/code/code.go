@@ -16,4 +16,6 @@ const (
 	ScriptAlreadyDisable
 	ScriptStateError
 	ScriptRunStateError
+
+	StorageNameNotFound
 )

@@ -13,11 +13,8 @@ func main() {
 		Short: "ccatctl controls the cloudcat service.",
 	}
 	config := rootCmd.PersistentFlags().StringP("config", "c", "./configs/config.yaml", "config file")
-
-	script := command.NewScript(config)
-	cmd := command.NewGet(config, script)
+	cmd := command.NewBasic(config)
 	rootCmd.AddCommand(cmd.Command()...)
-	rootCmd.AddCommand(script.Command()...)
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("execute err: %v", err)

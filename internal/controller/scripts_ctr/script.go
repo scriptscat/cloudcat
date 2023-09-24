@@ -38,3 +38,8 @@ func (s *Script) Update(ctx context.Context, req *api.UpdateRequest) (*api.Updat
 func (s *Script) Delete(ctx context.Context, req *api.DeleteRequest) (*api.DeleteResponse, error) {
 	return scripts_svc.Script().Delete(ctx, req)
 }
+
+// StorageList 值储存空间列表
+func (s *Script) StorageList(ctx context.Context, req *api.StorageListRequest) (*api.StorageListResponse, error) {
+	return scripts_svc.Script().StorageList(ctx, req)
+}

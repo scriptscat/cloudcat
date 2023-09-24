@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"github.com/scriptscat/cloudcat/internal/model/entity/cookie_entity"
 	"github.com/scriptscat/cloudcat/pkg/bbolt"
 	bolt "go.etcd.io/bbolt"
 )
 
 type CookieRepo interface {
-	Find(ctx context.Context, cookieStorage, url string) (*cookie_entity.Cookie, error)
-	FindPage(ctx context.Context, cookieStorage string) ([]*cookie_entity.Cookie, int64, error)
+	Find(ctx context.Context, storageName, url string) (*cookie_entity.Cookie, error)
+	FindPage(ctx context.Context, storageName string) ([]*cookie_entity.Cookie, int64, error)
 	Create(ctx context.Context, cookie *cookie_entity.Cookie) error
 	Update(ctx context.Context, cookie *cookie_entity.Cookie) error
-	Delete(ctx context.Context, cookieStorage, url string) error
+	Delete(ctx context.Context, storageName, url string) error
 
 	DeleteByStorage(ctx context.Context, storageName string) error
 }
@@ -36,10 +37,10 @@ func NewCookie() CookieRepo {
 	return &cookieRepo{}
 }
 
-func (u *cookieRepo) Find(ctx context.Context, cookieStorage, url string) (*cookie_entity.Cookie, error) {
+func (u *cookieRepo) Find(ctx context.Context, storageName, url string) (*cookie_entity.Cookie, error) {
 	ret := &cookie_entity.Cookie{}
 	if err := bbolt.Default().Update(func(tx *bolt.Tx) error {
-		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(cookieStorage))
+		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(storageName))
 		if err != nil {
 			return err
 		}
@@ -59,7 +60,7 @@ func (u *cookieRepo) Find(ctx context.Context, cookieStorage, url string) (*cook
 
 func (u *cookieRepo) Create(ctx context.Context, cookie *cookie_entity.Cookie) error {
 	return bbolt.Default().Update(func(tx *bolt.Tx) error {
-		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(cookie.CookieSpace))
+		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(cookie.StorageName))
 		if err != nil {
 			return err
 		}
@@ -73,7 +74,7 @@ func (u *cookieRepo) Create(ctx context.Context, cookie *cookie_entity.Cookie) e
 
 func (u *cookieRepo) Update(ctx context.Context, cookie *cookie_entity.Cookie) error {
 	return bbolt.Default().Update(func(tx *bolt.Tx) error {
-		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(cookie.CookieSpace))
+		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(cookie.StorageName))
 		if err != nil {
 			return err
 		}
@@ -85,9 +86,9 @@ func (u *cookieRepo) Update(ctx context.Context, cookie *cookie_entity.Cookie) e
 	})
 }
 
-func (u *cookieRepo) Delete(ctx context.Context, cookieStorage, url string) error {
+func (u *cookieRepo) Delete(ctx context.Context, storageName, url string) error {
 	return bbolt.Default().Update(func(tx *bolt.Tx) error {
-		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(cookieStorage))
+		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(storageName))
 		if err != nil {
 			return err
 		}
@@ -95,10 +96,10 @@ func (u *cookieRepo) Delete(ctx context.Context, cookieStorage, url string) erro
 	})
 }
 
-func (u *cookieRepo) FindPage(ctx context.Context, cookieStorage string) ([]*cookie_entity.Cookie, int64, error) {
+func (u *cookieRepo) FindPage(ctx context.Context, storageName string) ([]*cookie_entity.Cookie, int64, error) {
 	var list []*cookie_entity.Cookie
 	if err := bbolt.Default().Update(func(tx *bolt.Tx) error {
-		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(cookieStorage))
+		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(storageName))
 		if err != nil {
 			return err
 		}

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/controller/scripts_ctr"
 	"github.com/scriptscat/cloudcat/internal/repository/cookie_repo"
@@ -33,6 +34,18 @@ func Router(ctx context.Context, root *mux.Router) error {
 			script.Update,
 			script.Get,
 			script.Delete,
+		)
+	}
+	{
+		value := scripts_ctr.NewValue()
+		r.Bind(
+			value.ValueList,
+		)
+	}
+	{
+		cookie := scripts_ctr.NewCookie()
+		r.Bind(
+			cookie.CookieList,
 		)
 	}
 

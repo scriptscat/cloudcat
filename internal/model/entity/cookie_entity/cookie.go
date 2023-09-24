@@ -1,14 +1,12 @@
 package cookie_entity
 
 import (
-	"time"
-
 	"github.com/scriptscat/cloudcat/pkg/scriptcat/cookie"
 )
 
 type Cookie struct {
-	CookieSpace string           `json:"cookie_space"`
+	StorageName string           `json:"storage_name"`
 	Url         string           `json:"url"`
 	Cookies     []*cookie.Cookie `json:"cookies"`
-	CreatedTime time.Time        `json:"created_time"`
+	Createtime  int64            `json:"createtime"`
 }
