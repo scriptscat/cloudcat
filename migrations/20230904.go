@@ -16,10 +16,10 @@ func T20230210() *bbolt2.Migration {
 				if _, err := tx.CreateBucketIfNotExists([]byte("script")); err != nil {
 					return err
 				}
-				if _, err := tx.CreateBucketIfNotExists([]byte("storage")); err != nil {
+				if _, err := tx.CreateBucketIfNotExists([]byte("cookie")); err != nil {
 					return err
 				}
-				if _, err := tx.CreateBucketIfNotExists([]byte("cookie")); err != nil {
+				if _, err := tx.CreateBucketIfNotExists([]byte("token")); err != nil {
 					return err
 				}
 				return nil

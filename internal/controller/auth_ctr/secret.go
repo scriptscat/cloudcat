@@ -7,24 +7,24 @@ import (
 	"github.com/scriptscat/cloudcat/internal/service/auth_svc"
 )
 
-type Secret struct {
+type Token struct {
 }
 
-func NewSecret() *Secret {
-	return &Secret{}
+func NewToken() *Token {
+	return &Token{}
 }
 
 // TokenList 获取token列表
-func (s *Secret) TokenList(ctx context.Context, req *api.TokenListRequest) (*api.TokenListResponse, error) {
-	return auth_svc.Secret().TokenList(ctx, req)
+func (t *Token) TokenList(ctx context.Context, req *api.TokenListRequest) (*api.TokenListResponse, error) {
+	return auth_svc.Token().TokenList(ctx, req)
 }
 
 // TokenCreate 创建token
-func (s *Secret) TokenCreate(ctx context.Context, req *api.TokenCreateRequest) (*api.TokenCreateResponse, error) {
-	return auth_svc.Secret().TokenCreate(ctx, req)
+func (t *Token) TokenCreate(ctx context.Context, req *api.TokenCreateRequest) (*api.TokenCreateResponse, error) {
+	return auth_svc.Token().TokenCreate(ctx, req)
 }
 
 // TokenDelete 删除token
-func (s *Secret) TokenDelete(ctx context.Context, req *api.TokenDeleteRequest) (*api.TokenDeleteResponse, error) {
-	return auth_svc.Secret().TokenDelete(ctx, req)
+func (t *Token) TokenDelete(ctx context.Context, req *api.TokenDeleteRequest) (*api.TokenDeleteResponse, error) {
+	return auth_svc.Token().TokenDelete(ctx, req)
 }

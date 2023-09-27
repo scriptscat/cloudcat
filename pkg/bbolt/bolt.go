@@ -23,10 +23,18 @@ func IsNil(err error) bool {
 
 var db *bolt.DB
 
+type Config struct {
+	Path string `yaml:"path"`
+}
+
 func Bolt() cago.FuncComponent {
 	return func(ctx context.Context, cfg *configs.Config) error {
 		var err error
-		db, err = bolt.Open("./data/data.db", 0600, &bolt.Options{
+		config := &Config{}
+		if err := cfg.Scan("db", config); err != nil {
+			return err
+		}
+		db, err = bolt.Open(config.Path, 0600, &bolt.Options{
 			Timeout: 5 * time.Second,
 		})
 		if err != nil {
@@ -56,7 +64,7 @@ const (
 	transactionKey contextKey = iota + 1
 )
 
-func Ctx(ctx context.Context) *bolt.Tx {
+func TxCtx(ctx context.Context) *bolt.Tx {
 	tx, ok := ctx.Value(transactionKey).(*bolt.Tx)
 	if ok {
 		return tx

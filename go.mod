@@ -2,10 +2,13 @@ module github.com/scriptscat/cloudcat
 
 go 1.20
 
+replace github.com/codfrm/cago => ../../cago
+
 require (
 	github.com/codfrm/cago v0.0.0-20230912170140-23342efe92bb
 	github.com/dop251/goja v0.0.0-20230812105242-81d76064690d
 	github.com/goccy/go-json v0.10.2
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.7.0
@@ -37,7 +40,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.15.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
-	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/pprof v0.0.0-20230817174616-7a8ec2ada47b // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

@@ -9,7 +9,6 @@ import (
 
 	"github.com/scriptscat/cloudcat/internal/model/entity/script_entity"
 
-	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
 	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
 	"github.com/scriptscat/cloudcat/pkg/utils"
@@ -18,17 +17,12 @@ import (
 )
 
 type Script struct {
-	cli    *mux.Client
-	config *string
-	file   string
-	out    string
+	file string
+	out  string
 }
 
-func NewScript(config *string) *Script {
-	return &Script{
-		cli:    mux.NewClient("http://127.0.0.1:8080/api/v1"),
-		config: config,
-	}
+func NewScript() *Script {
+	return &Script{}
 }
 
 func (s *Script) Command() []*cobra.Command {
@@ -52,7 +46,7 @@ func (s *Script) Get() *cobra.Command {
 		Use:   "script [scriptId]",
 		Short: "获取脚本信息",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cli := cloudcat_api.NewScript(s.cli)
+			cli := cloudcat_api.NewScript(cloudcat_api.DefaultClient())
 			scriptId := ""
 			if len(args) > 0 {
 				scriptId = args[0]
@@ -110,7 +104,7 @@ func (s *Script) Edit() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			scriptId := args[0]
-			cli := cloudcat_api.NewScript(s.cli)
+			cli := cloudcat_api.NewScript(cloudcat_api.DefaultClient())
 			resp, err := cli.Get(context.Background(), &scripts.GetRequest{
 				ScriptID: scriptId,
 			})
@@ -167,7 +161,7 @@ func (s *Script) Edit() *cobra.Command {
 }
 
 func (s *Script) install(cmd *cobra.Command, args []string) error {
-	cli := cloudcat_api.NewScript(s.cli)
+	cli := cloudcat_api.NewScript(cloudcat_api.DefaultClient())
 	code, err := os.ReadFile(s.file)
 	if err != nil {
 		return err
@@ -193,7 +187,7 @@ func (s *Script) Delete() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			scriptId := args[0]
-			cli := cloudcat_api.NewScript(s.cli)
+			cli := cloudcat_api.NewScript(cloudcat_api.DefaultClient())
 			_, err := cli.Delete(context.Background(), &scripts.DeleteRequest{
 				ScriptID: scriptId,
 			})

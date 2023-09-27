@@ -7,15 +7,14 @@ import (
 type Token struct {
 	ID                string `json:"id"`
 	Token             string `json:"token"`
-	DataEncryptionKey string `json:"data_encryption_key"`
-	Secret            string `json:"secret"`
-	Status            int8   `json:"status"`
+	DataEncryptionKey string `json:"data_encryption_key" yaml:"dataEncryptionKey"`
 	Createtime        int64  `json:"createtime"`
 	Updatetime        int64  `json:"updatetime"`
 }
 
 type TokenListRequest struct {
 	mux.Meta `path:"/tokens" method:"GET"`
+	TokenID  string `form:"token_id"`
 }
 
 type TokenListResponse struct {
@@ -24,6 +23,7 @@ type TokenListResponse struct {
 
 type TokenCreateRequest struct {
 	mux.Meta `path:"/tokens" method:"POST"`
+	TokenID  string `form:"token_id" json:"token_id"`
 }
 
 type TokenCreateResponse struct {

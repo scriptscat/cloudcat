@@ -7,6 +7,11 @@ func init() {
 }
 
 var zhCN = map[int]string{
+	TokenIsEmpty:   "token不能为空",
+	TokenIsInvalid: "token无效",
+	TokenIsExpired: "token已过期",
+	TokenNotFound:  "token不存在",
+
 	ErrResourceNotFound: "资源不存在",
 	ErrResourceMustID:   "必须输入资源id",
 	ErrResourceArgs:     "参数错误",

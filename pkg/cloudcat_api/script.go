@@ -3,15 +3,14 @@ package cloudcat_api
 import (
 	"context"
 
-	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
 )
 
 type Script struct {
-	cli *mux.Client
+	cli *Client
 }
 
-func NewScript(cli *mux.Client) *Script {
+func NewScript(cli *Client) *Script {
 	return &Script{
 		cli: cli,
 	}

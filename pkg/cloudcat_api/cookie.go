@@ -3,15 +3,14 @@ package cloudcat_api
 import (
 	"context"
 
-	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
 )
 
 type Cookie struct {
-	cli *mux.Client
+	cli *Client
 }
 
-func NewCookie(cli *mux.Client) *Cookie {
+func NewCookie(cli *Client) *Cookie {
 	return &Cookie{
 		cli: cli,
 	}

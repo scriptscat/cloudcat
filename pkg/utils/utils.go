@@ -3,7 +3,9 @@ package utils
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -77,4 +79,16 @@ func BoolToString(b bool) string {
 		return "true"
 	}
 	return "false"
+}
+
+// Abs 转绝对路径,处理了"~"
+func Abs(p string) (string, error) {
+	if strings.HasPrefix(p, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Abs(filepath.Join(home, p[1:]))
+	}
+	return filepath.Abs(p)
 }

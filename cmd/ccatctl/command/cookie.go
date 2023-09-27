@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
 	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
 	"github.com/scriptscat/cloudcat/pkg/utils"
@@ -13,15 +12,10 @@ import (
 )
 
 type Cookie struct {
-	cli    *mux.Client
-	config *string
 }
 
-func NewCookie(config *string) *Cookie {
-	return &Cookie{
-		cli:    mux.NewClient("http://127.0.0.1:8080/api/v1"),
-		config: config,
-	}
+func NewCookie() *Cookie {
+	return &Cookie{}
 }
 
 func (s *Cookie) Command() []*cobra.Command {
@@ -35,7 +29,7 @@ func (s *Cookie) Get() *cobra.Command {
 		Short: "获取cookie信息",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cli := cloudcat_api.NewCookie(s.cli)
+			cli := cloudcat_api.NewCookie(cloudcat_api.DefaultClient())
 			storageName := args[0]
 			// 获取值列表
 			list, err := cli.CookieList(context.Background(), &scripts.CookieListRequest{
