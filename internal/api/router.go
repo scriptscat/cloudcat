@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+
 	"github.com/scriptscat/cloudcat/internal/controller/auth_ctr"
+	"github.com/scriptscat/cloudcat/internal/repository/resource_repo"
 	"github.com/scriptscat/cloudcat/internal/repository/token_repo"
 	"github.com/scriptscat/cloudcat/internal/service/auth_svc"
 
@@ -24,6 +26,7 @@ func Router(ctx context.Context, root *mux.Router) error {
 	value_repo.RegisterValue(value_repo.NewValue())
 	cookie_repo.RegisterCookie(cookie_repo.NewCookie())
 	token_repo.RegisterToken(token_repo.NewToken())
+	resource_repo.RegisterResource(resource_repo.NewResource())
 
 	r := root.Group("/api/v1", auth_svc.Token().Middleware())
 
@@ -39,18 +42,23 @@ func Router(ctx context.Context, root *mux.Router) error {
 			script.Update,
 			script.Get,
 			script.Delete,
+			script.Run,
+			script.Stop,
 		)
 	}
 	{
 		value := scripts_ctr.NewValue()
 		r.Bind(
 			value.ValueList,
+			value.SetValue,
 		)
 	}
 	{
 		cookie := scripts_ctr.NewCookie()
 		r.Bind(
 			cookie.CookieList,
+			cookie.DeleteCookie,
+			cookie.SetCookie,
 		)
 	}
 	{

@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/codfrm/cago/pkg/utils/httputils"
 	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/pkg/utils"
-	"io"
-	"net/http"
 )
 
 type ConfigServer struct {

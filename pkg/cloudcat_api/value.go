@@ -23,3 +23,19 @@ func (s *Value) ValueList(ctx context.Context, req *scripts.ValueListRequest) (*
 	}
 	return resp, nil
 }
+
+func (s *Value) SetValue(ctx context.Context, req *scripts.SetValueRequest) (*scripts.SetValueResponse, error) {
+	resp := &scripts.SetValueResponse{}
+	if err := s.cli.Do(ctx, req, resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
+func (s *Value) DeleteValue(ctx context.Context, req *scripts.DeleteValueRequest) (*scripts.DeleteValueResponse, error) {
+	resp := &scripts.DeleteValueResponse{}
+	if err := s.cli.Do(ctx, req, resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}

@@ -2,15 +2,15 @@ package main
 
 import (
 	"errors"
-	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
-	"github.com/scriptscat/cloudcat/pkg/utils"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"runtime"
 
 	"github.com/scriptscat/cloudcat/cmd/ccatctl/command"
+	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
+	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var configFile = "~/.cloudcat/cloudcat.yaml"

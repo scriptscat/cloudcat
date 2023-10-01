@@ -3,18 +3,18 @@ package command
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/scriptscat/cloudcat/internal/api/auth"
 	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
 	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"os"
-	"time"
 )
 
 type Token struct {
-	file string
-	out  string
+	out string
 }
 
 func NewToken() *Token {

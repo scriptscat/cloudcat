@@ -51,6 +51,110 @@
             }
           }
         }
+      },
+      "post": {
+        "description": "设置cookie",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "设置cookie",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "storageName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.SetCookieRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.SetCookieResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "删除cookie",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "删除cookie",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "storageName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.DeleteCookieRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.DeleteCookieResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
       }
     },
     "/scripts": {
@@ -296,43 +400,9 @@
         }
       }
     },
-    "/secrets": {
-      "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "auth"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "properties": {
-                "code": {
-                  "type": "integer"
-                },
-                "data": {
-                  "$ref": "#/definitions/auth.SecretListResponse"
-                },
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "$ref": "#/definitions/BadRequest"
-            }
-          }
-        }
-      },
+    "/scripts/{scriptId}/run": {
       "post": {
+        "description": "运行脚本",
         "consumes": [
           "application/json"
         ],
@@ -340,14 +410,21 @@
           "application/json"
         ],
         "tags": [
-          "auth"
+          "scripts"
         ],
+        "summary": "运行脚本",
         "parameters": [
+          {
+            "type": "string",
+            "name": "scriptId",
+            "in": "path",
+            "required": true
+          },
           {
             "name": "body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/auth.SecretCreateRequest"
+              "$ref": "#/definitions/scripts.RunRequest"
             }
           }
         ],
@@ -360,7 +437,7 @@
                   "type": "integer"
                 },
                 "data": {
-                  "$ref": "#/definitions/auth.SecretCreateResponse"
+                  "$ref": "#/definitions/scripts.RunResponse"
                 },
                 "msg": {
                   "type": "string"
@@ -377,8 +454,63 @@
         }
       }
     },
-    "/secrets/:secretId": {
+    "/scripts/{scriptId}/stop": {
+      "post": {
+        "description": "停止脚本",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "停止脚本",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "scriptId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.StopRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.StopResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    },
+    "/scripts/{scriptId}/watch": {
       "get": {
+        "description": "监听脚本",
         "consumes": [
           "application/json"
         ],
@@ -386,50 +518,15 @@
           "application/json"
         ],
         "tags": [
-          "auth"
+          "scripts"
         ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "properties": {
-                "code": {
-                  "type": "integer"
-                },
-                "data": {
-                  "$ref": "#/definitions/auth.SecretGetResponse"
-                },
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "$ref": "#/definitions/BadRequest"
-            }
-          }
-        }
-      },
-      "put": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "auth"
-        ],
+        "summary": "监听脚本",
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/auth.SecretUpdateRequest"
-            }
+            "type": "string",
+            "name": "scriptId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -441,51 +538,7 @@
                   "type": "integer"
                 },
                 "data": {
-                  "$ref": "#/definitions/auth.SecretUpdateResponse"
-                },
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "$ref": "#/definitions/BadRequest"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "auth"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/auth.SecretDeleteRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "properties": {
-                "code": {
-                  "type": "integer"
-                },
-                "data": {
-                  "$ref": "#/definitions/auth.SecretDeleteResponse"
+                  "$ref": "#/definitions/scripts.WatchResponse"
                 },
                 "msg": {
                   "type": "string"
@@ -525,6 +578,146 @@
                 },
                 "data": {
                   "$ref": "#/definitions/scripts.StorageListResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    },
+    "/tokens": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "parameters": [
+          {
+            "type": "string",
+            "name": "token_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/auth.TokenListResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/auth.TokenCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/auth.TokenCreateResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    },
+    "/tokens/{tokenId}": {
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "parameters": [
+          {
+            "type": "string",
+            "name": "tokenId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/auth.TokenDeleteRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/auth.TokenDeleteResponse"
                 },
                 "msg": {
                   "type": "string"
@@ -586,6 +779,118 @@
             }
           }
         }
+      },
+      "post": {
+        "description": "设置脚本值",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "设置脚本值",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "storageName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.SetValueRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.SetValueResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
+      }
+    },
+    "/values/{storageName}/{key}": {
+      "delete": {
+        "description": "删除脚本值",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "scripts"
+        ],
+        "summary": "删除脚本值",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "storageName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/scripts.DeleteValueRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "data": {
+                  "$ref": "#/definitions/scripts.DeleteValueResponse"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          }
+        }
       }
     }
   },
@@ -604,78 +909,61 @@
                 }
             }
       },
-      "auth.Secret": {
+      "auth.Token": {
         "type": "object",
         "properties": {
           "createtime": {
             "type": "integer"
           },
+          "data_encryption_key": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
-          "secret_key": {
+          "token": {
             "type": "string"
-          },
-          "status": {
-            "type": "integer"
-          },
-          "type": {
-            "$ref": "#/definitions/secret_entity.SecretType"
           },
           "updatetime": {
             "type": "integer"
           }
         }
       },
-      "auth.SecretCreateRequest": {
-        "type": "object"
-      },
-      "auth.SecretCreateResponse": {
+      "auth.TokenCreateRequest": {
         "type": "object",
         "properties": {
-          "secret": {
-            "$ref": "#/definitions/auth.Secret"
+          "token_id": {
+            "type": "string"
           }
         }
       },
-      "auth.SecretDeleteRequest": {
-        "type": "object"
-      },
-      "auth.SecretDeleteResponse": {
-        "type": "object"
-      },
-      "auth.SecretGetResponse": {
+      "auth.TokenCreateResponse": {
         "type": "object",
         "properties": {
-          "secret": {
-            "$ref": "#/definitions/auth.Secret"
+          "token": {
+            "$ref": "#/definitions/auth.Token"
           }
         }
       },
-      "auth.SecretListResponse": {
+      "auth.TokenDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "tokenId": {
+            "type": "string"
+          }
+        }
+      },
+      "auth.TokenDeleteResponse": {
+        "type": "object"
+      },
+      "auth.TokenListResponse": {
         "type": "object",
         "properties": {
           "list": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/auth.Secret"
+              "$ref": "#/definitions/auth.Token"
             }
-          }
-        }
-      },
-      "auth.SecretUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "secret": {
-            "$ref": "#/definitions/auth.Secret"
-          }
-        }
-      },
-      "auth.SecretUpdateResponse": {
-        "type": "object",
-        "properties": {
-          "secret": {
-            "$ref": "#/definitions/auth.Secret"
           }
         }
       },
@@ -685,6 +973,10 @@
           "domain": {
             "description": "optional",
             "type": "string"
+          },
+          "expirationDate,omitempty": {
+            "description": "optional 到期时间戳",
+            "type": "integer"
           },
           "expires": {
             "description": "optional",
@@ -704,25 +996,11 @@
             "description": "optional",
             "type": "string"
           },
-          "raw": {
-            "type": "string"
-          },
-          "raw_expires": {
-            "description": "for reading cookies only",
-            "type": "string"
-          },
           "same_site": {
-            "type": "integer"
+            "type": "string"
           },
           "secure": {
             "type": "boolean"
-          },
-          "unparsed": {
-            "description": "Raw text of unparsed attribute-value pairs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           },
           "value": {
             "type": "string"
@@ -765,10 +1043,10 @@
           "createtime": {
             "type": "integer"
           },
-          "storage_name": {
+          "host": {
             "type": "string"
           },
-          "url": {
+          "storage_name": {
             "type": "string"
           }
         }
@@ -784,6 +1062,20 @@
           }
         }
       },
+      "scripts.DeleteCookieRequest": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "storageName": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.DeleteCookieResponse": {
+        "type": "object"
+      },
       "scripts.DeleteRequest": {
         "type": "object",
         "properties": {
@@ -793,6 +1085,20 @@
         }
       },
       "scripts.DeleteResponse": {
+        "type": "object"
+      },
+      "scripts.DeleteValueRequest": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "storageName": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.DeleteValueResponse": {
         "type": "object"
       },
       "scripts.GetResponse": {
@@ -833,6 +1139,17 @@
           }
         }
       },
+      "scripts.RunRequest": {
+        "type": "object",
+        "properties": {
+          "scriptId": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.RunResponse": {
+        "type": "object"
+      },
       "scripts.Script": {
         "type": "object",
         "properties": {
@@ -864,6 +1181,51 @@
             "type": "integer"
           }
         }
+      },
+      "scripts.SetCookieRequest": {
+        "type": "object",
+        "properties": {
+          "cookies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/cookie_entity.HttpCookie"
+            }
+          },
+          "storageName": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.SetCookieResponse": {
+        "type": "object"
+      },
+      "scripts.SetValueRequest": {
+        "type": "object",
+        "properties": {
+          "storageName": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/scripts.Value"
+            }
+          }
+        }
+      },
+      "scripts.SetValueResponse": {
+        "type": "object"
+      },
+      "scripts.StopRequest": {
+        "type": "object",
+        "properties": {
+          "scriptId": {
+            "type": "string"
+          }
+        }
+      },
+      "scripts.StopResponse": {
+        "type": "object"
       },
       "scripts.Storage": {
         "type": "object",
@@ -917,7 +1279,7 @@
             "type": "string"
           },
           "value": {
-            "type": "string"
+            "$ref": "#/definitions/value_entity.ValueString"
           }
         }
       },
@@ -932,15 +1294,14 @@
           }
         }
       },
-      "secret_entity.SecretType": {
-        "description": "SecretType enum type:\n- AesCbc: aes-cbc",
-        "type": "string",
-        "enum": [
-          "aes-cbc"
-        ]
+      "scripts.WatchResponse": {
+        "type": "object"
       },
       "time.Time": {
         "type": "string"
+      },
+      "value_entity.ValueString": {
+        "type": "object"
         }
     }
 }

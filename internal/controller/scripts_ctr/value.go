@@ -18,3 +18,13 @@ func NewValue() *Value {
 func (v *Value) ValueList(ctx context.Context, req *api.ValueListRequest) (*api.ValueListResponse, error) {
 	return scripts_svc.Value().ValueList(ctx, req)
 }
+
+// SetValue 设置脚本值
+func (v *Value) SetValue(ctx context.Context, req *api.SetValueRequest) (*api.SetValueResponse, error) {
+	return scripts_svc.Value().SetValue(ctx, req)
+}
+
+// DeleteValue 删除脚本值
+func (v *Value) DeleteValue(ctx context.Context, req *api.DeleteValueRequest) (*api.DeleteValueResponse, error) {
+	return scripts_svc.Value().DeleteValue(ctx, req)
+}

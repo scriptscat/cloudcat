@@ -1,12 +1,11 @@
 module github.com/scriptscat/cloudcat
 
-go 1.20
-
-replace github.com/codfrm/cago => ../../cago
+go 1.21
 
 require (
-	github.com/codfrm/cago v0.0.0-20230912170140-23342efe92bb
+	github.com/codfrm/cago v0.0.0-20230926141048-b0784a0a9f69
 	github.com/dop251/goja v0.0.0-20230812105242-81d76064690d
+	github.com/gin-gonic/gin v1.9.1
 	github.com/goccy/go-json v0.10.2
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -15,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/swag v1.8.12
 	go.etcd.io/bbolt v1.3.7
-	go.uber.org/zap v1.25.0
+	go.uber.org/zap v1.26.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -27,9 +26,9 @@ require (
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
+	github.com/dop251/goja_nodejs v0.0.0-20230914102007-198ba9a8b098 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.9.1 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect

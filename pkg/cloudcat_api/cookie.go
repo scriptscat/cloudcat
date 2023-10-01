@@ -23,3 +23,19 @@ func (s *Cookie) CookieList(ctx context.Context, req *scripts.CookieListRequest)
 	}
 	return resp, nil
 }
+
+func (s *Cookie) DeleteCookie(ctx context.Context, req *scripts.DeleteCookieRequest) (*scripts.DeleteCookieResponse, error) {
+	resp := &scripts.DeleteCookieResponse{}
+	if err := s.cli.Do(ctx, req, resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
+func (s *Cookie) SetCookie(ctx context.Context, req *scripts.SetCookieRequest) (*scripts.SetCookieResponse, error) {
+	resp := &scripts.SetCookieResponse{}
+	if err := s.cli.Do(ctx, req, resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}

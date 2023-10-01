@@ -75,6 +75,14 @@ func (s *Script) StorageName() string {
 	return StorageName(s.ID, s.Metadata)
 }
 
+func (s *Script) Crontab() (string, bool) {
+	cron, ok := s.Metadata["crontab"]
+	if ok {
+		return cron[0], true
+	}
+	return "", false
+}
+
 func StorageName(id string, m Metadata) string {
 	storageNames, ok := m["storageName"]
 	if !ok {

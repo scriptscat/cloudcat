@@ -22,6 +22,12 @@ func T20230210() *bbolt2.Migration {
 				if _, err := tx.CreateBucketIfNotExists([]byte("token")); err != nil {
 					return err
 				}
+				if _, err := tx.CreateBucketIfNotExists([]byte("resource")); err != nil {
+					return err
+				}
+				if _, err := tx.CreateBucketIfNotExists([]byte("logger")); err != nil {
+					return err
+				}
 				return nil
 			})
 		},

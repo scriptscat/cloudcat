@@ -1,19 +1,15 @@
 package plugin
 
 import (
-	"bytes"
 	"context"
-	"io"
+	"errors"
 	"net/http"
-	"time"
 
 	"github.com/codfrm/cago/pkg/logger"
-
-	"github.com/goccy/go-json"
-	"go.uber.org/zap"
-
 	"github.com/dop251/goja"
+	"github.com/goccy/go-json"
 	"github.com/scriptscat/cloudcat/pkg/scriptcat"
+	"go.uber.org/zap"
 )
 
 type CookieJar interface {
@@ -22,14 +18,16 @@ type CookieJar interface {
 }
 
 type GMPluginFunc interface {
-	SetValue(ctx context.Context, script *scriptcat.Script, key string, value string) error
-	GetValue(ctx context.Context, script *scriptcat.Script, key string) (string, error)
-	ListValue(ctx context.Context, script *scriptcat.Script) (map[string]string, error)
+	SetValue(ctx context.Context, script *scriptcat.Script, key string, value interface{}) error
+	GetValue(ctx context.Context, script *scriptcat.Script, key string) (interface{}, error)
+	ListValue(ctx context.Context, script *scriptcat.Script) (map[string]interface{}, error)
 	DeleteValue(ctx context.Context, script *scriptcat.Script, key string) error
 
 	Logger(ctx context.Context, script *scriptcat.Script) *zap.Logger
 
 	LoadCookieJar(ctx context.Context, script *scriptcat.Script) (CookieJar, error)
+
+	LoadResource(ctx context.Context, url string) (string, error)
 }
 
 type grantFunc func(ctx context.Context, script *scriptcat.Script, runtime *goja.Runtime) (func(call goja.FunctionCall) goja.Value, error)
@@ -49,7 +47,7 @@ type GMPlugin struct {
 
 func NewGMPlugin(storage GMPluginFunc) scriptcat.Plugin {
 	p := &GMPlugin{
-		logger: logger.NewCtxLogger(logger.Default()),
+		logger: logger.NewCtxLogger(logger.Default()).With(zap.String("plugin", "GMPlugin")),
 		gmFunc: storage,
 		ctxMap: make(map[string]*ctxCancel),
 	}
@@ -58,6 +56,7 @@ func NewGMPlugin(storage GMPluginFunc) scriptcat.Plugin {
 		"GM_setValue":       p.setValue,
 		"GM_getValue":       p.getValue,
 		"GM_log":            p.log,
+		"GM_notification":   p.empty,
 	}
 	return p
 }
@@ -76,6 +75,25 @@ func (g *GMPlugin) BeforeRun(ctx context.Context, script *scriptcat.Script, runt
 	g.ctxMap[script.ID] = &ctxCancel{
 		ctx:    ctx,
 		cancel: cancel,
+	}
+	// 注入require
+	for _, v := range script.Metadata["require"] {
+		s, err := g.gmFunc.LoadResource(ctx, v)
+		if err != nil {
+			logger.Ctx(ctx).Error("load resource error", zap.Error(err))
+		} else {
+			_, err := runtime.RunString(s)
+			if err != nil {
+				var e *goja.Exception
+				if errors.As(err, &e) {
+					logger.Ctx(ctx).Error("run script exception error",
+						zap.String("error", e.Value().String()))
+				} else {
+					logger.Ctx(ctx).Error("run script error", zap.Error(err))
+				}
+				return err
+			}
+		}
 	}
 	// 默认注入GM_log
 	defaultGrant := []string{"GM_log"}
@@ -147,67 +165,9 @@ func (g *GMPlugin) log(ctx context.Context, script *scriptcat.Script, runtime *g
 	}, nil
 }
 
-func (g *GMPlugin) xmlHttpRequest(ctx context.Context, script *scriptcat.Script, runtime *goja.Runtime) (func(call goja.FunctionCall) goja.Value, error) {
-	cookieJar, err := g.gmFunc.LoadCookieJar(ctx, script)
-	if err != nil {
-		return nil, err
-	}
+func (g *GMPlugin) empty(ctx context.Context, script *scriptcat.Script, runtime *goja.Runtime) (func(call goja.FunctionCall) goja.Value, error) {
 	return func(call goja.FunctionCall) goja.Value {
-		// TODO: 实现代理等
-		cli := &http.Client{
-			Transport:     nil,
-			CheckRedirect: nil,
-			Jar:           cookieJar,
-			Timeout:       time.Second * 30,
-		}
-
-		if len(call.Arguments) != 1 {
-			g.logger.Warn("GMXHR 参数数量不正确")
-			return nil
-		}
-		arg, ok := call.Arguments[0].Export().(map[string]interface{})
-		if !ok {
-			g.logger.Warn("GMXHR 参数不是对象")
-			return nil
-		}
-		method, _ := arg["method"].(string)
-		url, _ := arg["url"].(string)
-		if url == "" {
-			g.logger.Warn("GMXHR url不能为空")
-			return nil
-		}
-		var body io.Reader
-		if method != "GET" {
-			data, _ := arg["data"].(string)
-			body = bytes.NewBufferString(data)
-		}
-		req, err := http.NewRequest(method, url, body)
-		if err != nil {
-			g.logger.Warn("GMXHR 创建请求失败", zap.Error(err))
-			return nil
-		}
-		if headers, ok := arg["headers"].(map[string]interface{}); ok {
-			for k, v := range headers {
-				req.Header.Set(k, v.(string))
-			}
-		}
-
-		if timeout, _ := arg["timeout"].(float64); timeout != 0 {
-			cli.Timeout = time.Duration(timeout) * time.Millisecond
-		}
-
-		go func() {
-			defer func(cookieJar CookieJar, ctx context.Context) {
-				_ = cookieJar.Save(ctx)
-			}(cookieJar, context.Background())
-			resp, err := cli.Do(req)
-			if err != nil {
-				g.logger.Warn("GMXHR 请求失败", zap.Error(err))
-				return
-			}
-			defer resp.Body.Close()
-		}()
-
+		logger.Ctx(ctx).Debug("empty function")
 		return goja.Undefined()
 	}, nil
 }

@@ -2,9 +2,10 @@ package utils
 
 import (
 	"bytes"
-	"github.com/codfrm/cago/pkg/utils"
 	"io"
 	"testing"
+
+	"github.com/codfrm/cago/pkg/utils"
 )
 
 func TestAes(t *testing.T) {

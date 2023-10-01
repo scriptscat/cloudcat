@@ -23,3 +23,5 @@
 /runtime
 /bin
 /data
+
+/example/*.json

@@ -35,10 +35,53 @@ func (s *Script) Command() []*cobra.Command {
 	run := &cobra.Command{
 		Use:   "run [script]",
 		Short: "运行脚本",
+		Args:  cobra.ExactArgs(1),
 		RunE:  s.run,
 	}
+	stop := &cobra.Command{
+		Use:   "stop [script]",
+		Short: "停止脚本",
+		Args:  cobra.ExactArgs(1),
+		RunE:  s.stop,
+	}
+	enable := &cobra.Command{
+		Use:   "enable [script]",
+		Short: "启用脚本",
+		Args:  cobra.ExactArgs(1),
+		RunE:  s.enable(true),
+	}
+	disable := &cobra.Command{
+		Use:   "disable [script]",
+		Short: "禁用脚本",
+		Args:  cobra.ExactArgs(1),
+		RunE:  s.enable(false),
+	}
 
-	return []*cobra.Command{install, run}
+	return []*cobra.Command{install, run, stop, enable, disable}
+}
+
+func (s *Script) enable(enable bool) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		cli := cloudcat_api.NewScript(cloudcat_api.DefaultClient())
+		script, err := cli.Get(context.Background(), &scripts.GetRequest{
+			ScriptID: args[0],
+		})
+		if err != nil {
+			return err
+		}
+		if enable {
+			script.Script.State = script_entity.ScriptStateEnable
+		} else {
+			script.Script.State = script_entity.ScriptStateDisable
+		}
+		if _, err := cli.Update(context.Background(), &scripts.UpdateRequest{
+			ScriptID: args[0],
+			Script:   script.Script,
+		}); err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 func (s *Script) Get() *cobra.Command {
@@ -71,17 +114,28 @@ func (s *Script) Get() *cobra.Command {
 				return nil
 			}
 			utils.DealTable([]string{
-				"ID", "NAME", "STORAGE_NAME", "CREATED_AT",
+				"ID", "NAME", "STORAGE_NAME", "RUN_AT", "CREATED_AT",
 			}, list.List, func(i interface{}) []string {
 				v := i.(*scripts.Script)
 				sn := script_entity.StorageName(v.ID, v.Metadata)
 				if len(sn) > 7 {
 					sn = sn[:7]
 				}
+				runAt := ""
+				if v.State == script_entity.ScriptStateDisable {
+					runAt = "DISABLE"
+				} else {
+					if cron, ok := v.Entity().Crontab(); ok {
+						runAt = cron
+					} else {
+						runAt = "BACKGROUND"
+					}
+				}
 				return []string{
 					v.ID[:7],
 					v.Name,
 					sn,
+					runAt,
 					time.Unix(v.Createtime, 0).Format("2006-01-02 15:04:05"),
 				}
 			}).Render()
@@ -176,7 +230,22 @@ func (s *Script) install(cmd *cobra.Command, args []string) error {
 }
 
 func (s *Script) run(cmd *cobra.Command, args []string) error {
+	cli := cloudcat_api.NewScript(cloudcat_api.DefaultClient())
+	if _, err := cli.Run(context.Background(), &scripts.RunRequest{
+		ScriptID: args[0],
+	}); err != nil {
+		return err
+	}
+	return nil
+}
 
+func (s *Script) stop(cmd *cobra.Command, args []string) error {
+	cli := cloudcat_api.NewScript(cloudcat_api.DefaultClient())
+	if _, err := cli.Stop(context.Background(), &scripts.StopRequest{
+		ScriptID: args[0],
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 

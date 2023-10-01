@@ -17,6 +17,20 @@ type Script struct {
 	Updatetime   int64                     `json:"updatetime" yaml:"updatetime"`
 }
 
+func (s *Script) Entity() *script_entity.Script {
+	return &script_entity.Script{
+		ID:           s.ID,
+		Name:         s.Name,
+		Code:         s.Code,
+		Metadata:     s.Metadata,
+		SelfMetadata: s.SelfMetadata,
+		Status:       s.Status,
+		State:        s.State,
+		Createtime:   s.Createtime,
+		Updatetime:   s.Updatetime,
+	}
+}
+
 // ListRequest 脚本列表
 type ListRequest struct {
 	mux.Meta `path:"/scripts" method:"GET"`
@@ -84,4 +98,34 @@ type StorageListRequest struct {
 // StorageListResponse 值储存空间列表
 type StorageListResponse struct {
 	List []*Storage `json:"list"`
+}
+
+// RunRequest 运行脚本
+type RunRequest struct {
+	mux.Meta `path:"/scripts/:scriptId/run" method:"POST"`
+	ScriptID string `uri:"scriptId"`
+}
+
+// RunResponse 运行脚本
+type RunResponse struct {
+}
+
+// StopRequest 停止脚本
+type StopRequest struct {
+	mux.Meta `path:"/scripts/:scriptId/stop" method:"POST"`
+	ScriptID string `uri:"scriptId"`
+}
+
+// StopResponse 停止脚本
+type StopResponse struct {
+}
+
+// WatchRequest 监听脚本
+type WatchRequest struct {
+	mux.Meta `path:"/scripts/:scriptId/watch" method:"GET"`
+	ScriptID string `uri:"scriptId"`
+}
+
+// WatchResponse 监听脚本
+type WatchResponse struct {
 }

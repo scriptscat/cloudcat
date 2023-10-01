@@ -10,59 +10,51 @@ definitions:
         description: 错误信息
         type: string
     type: object
-  auth.Secret:
+  auth.Token:
     properties:
       createtime:
         type: integer
+      data_encryption_key:
+        type: string
       id:
         type: string
-      secret_key:
+      token:
         type: string
-      status:
-        type: integer
-      type:
-        $ref: '#/definitions/secret_entity.SecretType'
       updatetime:
         type: integer
     type: object
-  auth.SecretCreateRequest:
-    type: object
-  auth.SecretCreateResponse:
+  auth.TokenCreateRequest:
     properties:
-      secret:
-        $ref: '#/definitions/auth.Secret'
+      token_id:
+        type: string
     type: object
-  auth.SecretDeleteRequest:
-    type: object
-  auth.SecretDeleteResponse:
-    type: object
-  auth.SecretGetResponse:
+  auth.TokenCreateResponse:
     properties:
-      secret:
-        $ref: '#/definitions/auth.Secret'
+      token:
+        $ref: '#/definitions/auth.Token'
     type: object
-  auth.SecretListResponse:
+  auth.TokenDeleteRequest:
+    properties:
+      tokenId:
+        type: string
+    type: object
+  auth.TokenDeleteResponse:
+    type: object
+  auth.TokenListResponse:
     properties:
       list:
         items:
-          $ref: '#/definitions/auth.Secret'
+          $ref: '#/definitions/auth.Token'
         type: array
-    type: object
-  auth.SecretUpdateRequest:
-    properties:
-      secret:
-        $ref: '#/definitions/auth.Secret'
-    type: object
-  auth.SecretUpdateResponse:
-    properties:
-      secret:
-        $ref: '#/definitions/auth.Secret'
     type: object
   cookie_entity.HttpCookie:
     properties:
       domain:
         description: optional
         type: string
+      expirationDate,omitempty:
+        description: optional 到期时间戳
+        type: integer
       expires:
         $ref: '#/definitions/time.Time'
         description: optional
@@ -79,20 +71,10 @@ definitions:
       path:
         description: optional
         type: string
-      raw:
-        type: string
-      raw_expires:
-        description: for reading cookies only
-        type: string
       same_site:
-        type: integer
+        type: string
       secure:
         type: boolean
-      unparsed:
-        description: Raw text of unparsed attribute-value pairs
-        items:
-          type: string
-        type: array
       value:
         type: string
     type: object
@@ -125,9 +107,9 @@ definitions:
         type: array
       createtime:
         type: integer
-      storage_name:
+      host:
         type: string
-      url:
+      storage_name:
         type: string
     type: object
   scripts.CookieListResponse:
@@ -137,12 +119,30 @@ definitions:
           $ref: '#/definitions/scripts.Cookie'
         type: array
     type: object
+  scripts.DeleteCookieRequest:
+    properties:
+      host:
+        type: string
+      storageName:
+        type: string
+    type: object
+  scripts.DeleteCookieResponse:
+    type: object
   scripts.DeleteRequest:
     properties:
       scriptId:
         type: string
     type: object
   scripts.DeleteResponse:
+    type: object
+  scripts.DeleteValueRequest:
+    properties:
+      key:
+        type: string
+      storageName:
+        type: string
+    type: object
+  scripts.DeleteValueResponse:
     type: object
   scripts.GetResponse:
     properties:
@@ -168,6 +168,13 @@ definitions:
           $ref: '#/definitions/scripts.Script'
         type: array
     type: object
+  scripts.RunRequest:
+    properties:
+      scriptId:
+        type: string
+    type: object
+  scripts.RunResponse:
+    type: object
   scripts.Script:
     properties:
       code,omitempty:
@@ -188,6 +195,35 @@ definitions:
         $ref: '#/definitions/script_entity.Status'
       updatetime:
         type: integer
+    type: object
+  scripts.SetCookieRequest:
+    properties:
+      cookies:
+        items:
+          $ref: '#/definitions/cookie_entity.HttpCookie'
+        type: array
+      storageName:
+        type: string
+    type: object
+  scripts.SetCookieResponse:
+    type: object
+  scripts.SetValueRequest:
+    properties:
+      storageName:
+        type: string
+      values:
+        items:
+          $ref: '#/definitions/scripts.Value'
+        type: array
+    type: object
+  scripts.SetValueResponse:
+    type: object
+  scripts.StopRequest:
+    properties:
+      scriptId:
+        type: string
+    type: object
+  scripts.StopResponse:
     type: object
   scripts.Storage:
     properties:
@@ -223,7 +259,7 @@ definitions:
       storage_name:
         type: string
       value:
-        type: string
+        $ref: '#/definitions/value_entity.ValueString'
     type: object
   scripts.ValueListResponse:
     properties:
@@ -232,20 +268,50 @@ definitions:
           $ref: '#/definitions/scripts.Value'
         type: array
     type: object
-  secret_entity.SecretType:
-    description: |-
-      SecretType enum type:
-      - AesCbc: aes-cbc
-    enum:
-    - aes-cbc
-    type: string
+  scripts.WatchResponse:
+    type: object
   time.Time:
     type: string
+  value_entity.ValueString:
+    type: object
 info:
   title: 云猫 API 文档
   version: 1.0.0
 paths:
   /cookies/{storageName}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除cookie
+      parameters:
+      - in: path
+        name: storageName
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/scripts.DeleteCookieRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.DeleteCookieResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 删除cookie
+      tags:
+      - scripts
     get:
       consumes:
       - application/json
@@ -273,6 +339,39 @@ paths:
           schema:
             $ref: '#/definitions/BadRequest'
       summary: 脚本cookie列表
+      tags:
+      - scripts
+    post:
+      consumes:
+      - application/json
+      description: 设置cookie
+      parameters:
+      - in: path
+        name: storageName
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/scripts.SetCookieRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.SetCookieResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 设置cookie
       tags:
       - scripts
   /scripts:
@@ -429,37 +528,20 @@ paths:
       summary: 更新脚本
       tags:
       - scripts
-  /secrets:
-    get:
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            properties:
-              code:
-                type: integer
-              data:
-                $ref: '#/definitions/auth.SecretListResponse'
-              msg:
-                type: string
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/BadRequest'
-      tags:
-      - auth
+  /scripts/{scriptId}/run:
     post:
       consumes:
       - application/json
+      description: 运行脚本
       parameters:
+      - in: path
+        name: scriptId
+        required: true
+        type: string
       - in: body
         name: body
         schema:
-          $ref: '#/definitions/auth.SecretCreateRequest'
+          $ref: '#/definitions/scripts.RunRequest'
       produces:
       - application/json
       responses:
@@ -470,24 +552,30 @@ paths:
               code:
                 type: integer
               data:
-                $ref: '#/definitions/auth.SecretCreateResponse'
+                $ref: '#/definitions/scripts.RunResponse'
               msg:
                 type: string
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/BadRequest'
+      summary: 运行脚本
       tags:
-      - auth
-  /secrets/:secretId:
-    delete:
+      - scripts
+  /scripts/{scriptId}/stop:
+    post:
       consumes:
       - application/json
+      description: 停止脚本
       parameters:
+      - in: path
+        name: scriptId
+        required: true
+        type: string
       - in: body
         name: body
         schema:
-          $ref: '#/definitions/auth.SecretDeleteRequest'
+          $ref: '#/definitions/scripts.StopRequest'
       produces:
       - application/json
       responses:
@@ -498,45 +586,26 @@ paths:
               code:
                 type: integer
               data:
-                $ref: '#/definitions/auth.SecretDeleteResponse'
+                $ref: '#/definitions/scripts.StopResponse'
               msg:
                 type: string
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/BadRequest'
+      summary: 停止脚本
       tags:
-      - auth
+      - scripts
+  /scripts/{scriptId}/watch:
     get:
       consumes:
       - application/json
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            properties:
-              code:
-                type: integer
-              data:
-                $ref: '#/definitions/auth.SecretGetResponse'
-              msg:
-                type: string
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/BadRequest'
-      tags:
-      - auth
-    put:
-      consumes:
-      - application/json
+      description: 监听脚本
       parameters:
-      - in: body
-        name: body
-        schema:
-          $ref: '#/definitions/auth.SecretUpdateRequest'
+      - in: path
+        name: scriptId
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -547,15 +616,16 @@ paths:
               code:
                 type: integer
               data:
-                $ref: '#/definitions/auth.SecretUpdateResponse'
+                $ref: '#/definitions/scripts.WatchResponse'
               msg:
                 type: string
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/BadRequest'
+      summary: 监听脚本
       tags:
-      - auth
+      - scripts
   /storages:
     get:
       consumes:
@@ -581,6 +651,92 @@ paths:
       summary: 值储存空间列表
       tags:
       - scripts
+  /tokens:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: token_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.TokenListResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auth.TokenCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.TokenCreateResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
+  /tokens/{tokenId}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - in: path
+        name: tokenId
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auth.TokenDeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/auth.TokenDeleteResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      tags:
+      - auth
   /values/{storageName}:
     get:
       consumes:
@@ -609,6 +765,77 @@ paths:
           schema:
             $ref: '#/definitions/BadRequest'
       summary: 脚本值列表
+      tags:
+      - scripts
+    post:
+      consumes:
+      - application/json
+      description: 设置脚本值
+      parameters:
+      - in: path
+        name: storageName
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/scripts.SetValueRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.SetValueResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 设置脚本值
+      tags:
+      - scripts
+  /values/{storageName}/{key}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除脚本值
+      parameters:
+      - in: path
+        name: storageName
+        required: true
+        type: string
+      - in: path
+        name: key
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/scripts.DeleteValueRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: integer
+              data:
+                $ref: '#/definitions/scripts.DeleteValueResponse'
+              msg:
+                type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/BadRequest'
+      summary: 删除脚本值
       tags:
       - scripts
 swagger: "2.0"

@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/codfrm/cago/pkg/errs"
 	"github.com/codfrm/cago/pkg/logger"
@@ -26,7 +25,6 @@ type Runtime interface {
 }
 
 type scriptcat struct {
-	sync.Mutex
 	plugins []Plugin
 	logger  *logger.CtxLogger
 }
@@ -76,8 +74,6 @@ func (s *scriptcat) Parse(ctx context.Context, code string) (*Script, error) {
 }
 
 func (s *scriptcat) Run(ctx context.Context, script *Script) (interface{}, error) {
-	s.Lock()
-	defer s.Unlock()
 	options := NewRunOptions()
 	vm := goja.New()
 	code := `
@@ -170,6 +166,7 @@ func (s *scriptcat) catch(vm *goja.Runtime, value goja.Value, reject func()) err
 			s.logger.Logger.Error("script error",
 				zap.Any("error", e),
 				zap.Any("reject", promise.Result().String()),
+				//zap.Any("js stack",promise.Result())
 			)
 		} else {
 			s.logger.Logger.Error("script error",

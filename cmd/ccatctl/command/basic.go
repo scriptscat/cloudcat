@@ -1,13 +1,10 @@
 package command
 
 import (
-	"github.com/codfrm/cago/server/mux"
 	"github.com/spf13/cobra"
 )
 
 type Basic struct {
-	cli    *mux.Client
-	config *string
 	script *Script
 	value  *Value
 	cookie *Cookie
@@ -46,9 +43,15 @@ func (c *Basic) Command() []*cobra.Command {
 		Use:   "delete [resource]",
 		Short: "删除资源信息",
 	}
-	del.AddCommand(c.script.Delete(), c.token.Delete())
+	del.AddCommand(c.script.Delete(), c.token.Delete(), c.value.Delete(), c.cookie.Delete())
 
-	cmd := []*cobra.Command{create, get, edit, del}
+	importer := &cobra.Command{
+		Use:   "import [resource]",
+		Short: "导入资源信息",
+	}
+	importer.AddCommand(c.cookie.Import(), c.value.Import())
+
+	cmd := []*cobra.Command{create, get, edit, del, importer}
 	cmd = append(cmd, c.script.Command()...)
 	cmd = append(cmd, c.value.Command()...)
 	cmd = append(cmd, c.cookie.Command()...)

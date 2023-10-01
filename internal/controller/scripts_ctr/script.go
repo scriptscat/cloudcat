@@ -43,3 +43,18 @@ func (s *Script) Delete(ctx context.Context, req *api.DeleteRequest) (*api.Delet
 func (s *Script) StorageList(ctx context.Context, req *api.StorageListRequest) (*api.StorageListResponse, error) {
 	return scripts_svc.Script().StorageList(ctx, req)
 }
+
+// Run 手动运行脚本
+func (s *Script) Run(ctx context.Context, req *api.RunRequest) (*api.RunResponse, error) {
+	return scripts_svc.Script().Run(ctx, req)
+}
+
+// Watch 监听脚本
+func (s *Script) Watch(ctx context.Context, req *api.WatchRequest) (*api.WatchResponse, error) {
+	return scripts_svc.Script().Watch(ctx, req)
+}
+
+// Stop 停止脚本
+func (s *Script) Stop(ctx context.Context, req *api.StopRequest) (*api.StopResponse, error) {
+	return scripts_svc.Script().Stop(ctx, req)
+}

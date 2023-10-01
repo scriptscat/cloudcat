@@ -2,21 +2,20 @@ package auth_svc
 
 import (
 	"context"
-	"github.com/codfrm/cago/pkg/consts"
+	"io"
+	"strings"
+	"time"
+
 	"github.com/codfrm/cago/pkg/i18n"
 	"github.com/codfrm/cago/pkg/utils"
 	"github.com/codfrm/cago/pkg/utils/httputils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	api "github.com/scriptscat/cloudcat/internal/api/auth"
 	"github.com/scriptscat/cloudcat/internal/model/entity/token_entity"
 	"github.com/scriptscat/cloudcat/internal/pkg/code"
 	"github.com/scriptscat/cloudcat/internal/repository/token_repo"
 	utils2 "github.com/scriptscat/cloudcat/pkg/utils"
-	"io"
-	"strings"
-	"time"
-
-	api "github.com/scriptscat/cloudcat/internal/api/auth"
 )
 
 type TokenSvc interface {
@@ -81,7 +80,6 @@ func (s *tokenSvc) TokenCreate(ctx context.Context, req *api.TokenCreateRequest)
 		Token:             tokenString,
 		Secret:            secret,
 		DataEncryptionKey: utils.RandString(32, utils.Letter),
-		Status:            consts.ACTIVE,
 		Createtime:        time.Now().Unix(),
 		Updatetime:        time.Now().Unix(),
 	}

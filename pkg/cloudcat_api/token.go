@@ -2,6 +2,7 @@ package cloudcat_api
 
 import (
 	"context"
+
 	"github.com/scriptscat/cloudcat/internal/api/auth"
 )
 

@@ -55,3 +55,19 @@ func (s *Script) Delete(ctx context.Context, req *scripts.DeleteRequest) (*scrip
 	}
 	return resp, nil
 }
+
+func (s *Script) Run(ctx context.Context, req *scripts.RunRequest) (*scripts.RunResponse, error) {
+	resp := &scripts.RunResponse{}
+	if err := s.cli.Do(ctx, req, resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
+func (s *Script) Stop(ctx context.Context, req *scripts.StopRequest) (*scripts.StopResponse, error) {
+	resp := &scripts.StopResponse{}
+	if err := s.cli.Do(ctx, req, resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}

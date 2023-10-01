@@ -11,11 +11,11 @@ import (
 )
 
 type CookieRepo interface {
-	Find(ctx context.Context, storageName, url string) (*cookie_entity.Cookie, error)
+	Find(ctx context.Context, storageName, host string) (*cookie_entity.Cookie, error)
 	FindPage(ctx context.Context, storageName string) ([]*cookie_entity.Cookie, int64, error)
 	Create(ctx context.Context, cookie *cookie_entity.Cookie) error
 	Update(ctx context.Context, cookie *cookie_entity.Cookie) error
-	Delete(ctx context.Context, storageName, url string) error
+	Delete(ctx context.Context, storageName, host string) error
 
 	DeleteByStorage(ctx context.Context, storageName string) error
 }
@@ -37,14 +37,14 @@ func NewCookie() CookieRepo {
 	return &cookieRepo{}
 }
 
-func (u *cookieRepo) Find(ctx context.Context, storageName, url string) (*cookie_entity.Cookie, error) {
+func (u *cookieRepo) Find(ctx context.Context, storageName, host string) (*cookie_entity.Cookie, error) {
 	ret := &cookie_entity.Cookie{}
 	if err := bbolt.Default().Update(func(tx *bolt.Tx) error {
 		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(storageName))
 		if err != nil {
 			return err
 		}
-		data := b.Get([]byte(url))
+		data := b.Get([]byte(host))
 		if data == nil {
 			return bbolt.ErrNil
 		}
@@ -68,7 +68,7 @@ func (u *cookieRepo) Create(ctx context.Context, cookie *cookie_entity.Cookie) e
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte(cookie.Url), data)
+		return b.Put([]byte(cookie.Host), data)
 	})
 }
 
@@ -82,17 +82,17 @@ func (u *cookieRepo) Update(ctx context.Context, cookie *cookie_entity.Cookie) e
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte(cookie.Url), data)
+		return b.Put([]byte(cookie.Host), data)
 	})
 }
 
-func (u *cookieRepo) Delete(ctx context.Context, storageName, url string) error {
+func (u *cookieRepo) Delete(ctx context.Context, storageName, host string) error {
 	return bbolt.Default().Update(func(tx *bolt.Tx) error {
 		b, err := tx.Bucket([]byte("cookie")).CreateBucketIfNotExists([]byte(storageName))
 		if err != nil {
 			return err
 		}
-		return b.Delete([]byte(url))
+		return b.Delete([]byte(host))
 	})
 }
 

@@ -6,6 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/scriptscat/cloudcat/pkg/scriptcat/plugin/window"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/codfrm/cago/pkg/gogo"
 	"github.com/scriptscat/cloudcat/internal/task/producer"
 
@@ -18,7 +21,6 @@ import (
 	"github.com/scriptscat/cloudcat/internal/repository/script_repo"
 	"github.com/scriptscat/cloudcat/pkg/scriptcat"
 	"github.com/scriptscat/cloudcat/pkg/scriptcat/plugin"
-	"github.com/scriptscat/cloudcat/pkg/scriptcat/plugin/window"
 	"go.uber.org/zap"
 )
 
@@ -35,6 +37,12 @@ type ScriptSvc interface {
 	Delete(ctx context.Context, req *api.DeleteRequest) (*api.DeleteResponse, error)
 	// StorageList 值储存空间列表
 	StorageList(ctx context.Context, req *api.StorageListRequest) (*api.StorageListResponse, error)
+	// Run 手动运行脚本
+	Run(ctx context.Context, req *api.RunRequest) (*api.RunResponse, error)
+	// Watch 监听脚本
+	Watch(ctx context.Context, req *api.WatchRequest) (*api.WatchResponse, error)
+	// Stop 停止脚本
+	Stop(ctx context.Context, req *api.StopRequest) (*api.StopResponse, error)
 }
 
 type scriptSvc struct {
@@ -69,8 +77,8 @@ func NewScript(ctx context.Context) (ScriptSvc, error) {
 	scriptcat.RegisterRuntime(scriptcat.NewRuntime(
 		logger.NewCtxLogger(logger.Default()),
 		[]scriptcat.Plugin{
-			plugin.NewGMPlugin(NewGMPluginFunc()),
 			window.NewBrowserPlugin(),
+			plugin.NewGMPlugin(NewGMPluginFunc()),
 		},
 	))
 	// 初始化运行脚本
@@ -121,14 +129,17 @@ func (s *scriptSvc) runScript(ctx context.Context, script *script_entity.Script)
 			logger.Ctx(ctx).Error("find script error", zap.Error(err))
 		}
 	}()
-	logger := logger.Ctx(ctx).
-		With(zap.String("id", script.ID), zap.String("name", script.Name))
-	if _, err := scriptcat.RuntimeCat().Run(ctx, &scriptcat.Script{
+	with := logger.Ctx(ctx).
+		With(zap.String("id", script.ID), zap.String("name", script.Name)).
+		WithOptions(zap.Hooks(func(entry zapcore.Entry) error {
+			return nil
+		}))
+	if _, err := scriptcat.RuntimeCat().Run(logger.ContextWithLogger(ctx, with), &scriptcat.Script{
 		ID:       script.ID,
 		Code:     script.Code,
 		Metadata: scriptcat.Metadata(script.Metadata),
 	}); err != nil {
-		logger.Error("run script error", zap.Error(err))
+		with.Error("run script error", zap.Error(err))
 		return err
 	}
 	return nil
@@ -143,8 +154,8 @@ func (s *scriptSvc) run(ctx context.Context, script *script_entity.Script) error
 			logger.Error("run background script error", zap.Error(err))
 			return err
 		}
-	} else if cron, ok := script.Metadata["crontab"]; ok {
-		if err := s.addCron(ctx, script, cron[0]); err != nil {
+	} else if cron, ok := script.Crontab(); ok {
+		if err := s.addCron(ctx, script, cron); err != nil {
 			logger.Error("add cron error", zap.Error(err))
 			return err
 		}
@@ -178,7 +189,6 @@ func (s *scriptSvc) addCron(ctx context.Context, script *script_entity.Script, c
 	s.Lock()
 	s.cronEntry[script.ID] = cronEntry
 	s.Unlock()
-	logger.Info("cron stop")
 	return nil
 }
 
@@ -402,4 +412,40 @@ func (s *scriptSvc) StorageList(ctx context.Context, req *api.StorageListRequest
 		})
 	}
 	return resp, nil
+}
+
+// Run 手动运行脚本
+func (s *scriptSvc) Run(ctx context.Context, req *api.RunRequest) (*api.RunResponse, error) {
+	script, err := script_repo.Script().FindByPrefixID(ctx, req.ScriptID)
+	if err != nil {
+		return nil, err
+	}
+	if script == nil {
+		return nil, i18n.NewNotFoundError(ctx, code.ScriptNotFound)
+	}
+	go func() {
+		err = s.runScript(context.Background(), script)
+		if err != nil {
+			logger.Ctx(ctx).Error("run script error", zap.Error(err))
+		}
+	}()
+	return nil, nil
+}
+
+// Watch 监听脚本
+func (s *scriptSvc) Watch(ctx context.Context, req *api.WatchRequest) (*api.WatchResponse, error) {
+	return nil, nil
+}
+
+// Stop 停止脚本
+func (s *scriptSvc) Stop(ctx context.Context, req *api.StopRequest) (*api.StopResponse, error) {
+	script, err := script_repo.Script().FindByPrefixID(ctx, req.ScriptID)
+	if err != nil {
+		return nil, err
+	}
+	if script == nil {
+		return nil, i18n.NewNotFoundError(ctx, code.ScriptNotFound)
+	}
+	s.stop(script)
+	return nil, nil
 }

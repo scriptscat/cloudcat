@@ -49,7 +49,9 @@ func (a *AesEncrypt) Read(p []byte) (int, error) {
 			// 需要补齐的长度
 			padding := aes.BlockSize - len(buf)%aes.BlockSize
 			// 补齐
-			buf = append(buf, bytes.Repeat([]byte{byte(padding)}, padding)...)
+			if padding > 0 {
+				buf = append(buf, bytes.Repeat([]byte{byte(padding)}, padding)...)
+			}
 			if len(p) < len(buf) {
 				return 0, io.ErrShortBuffer
 			}
@@ -95,6 +97,12 @@ func (a *AesDecrypt) Read(p []byte) (int, error) {
 				return 0, io.EOF
 			}
 			buf = append(a.buf, buf[:n]...)
+			if len(p) < len(buf) {
+				a.buf = buf[len(p):]
+				buf = buf[:len(p)]
+			} else {
+				a.buf = nil
+			}
 			a.mode.CryptBlocks(buf, buf)
 			// 去掉填充的数据
 			padding := int(buf[len(buf)-1])
@@ -104,22 +112,30 @@ func (a *AesDecrypt) Read(p []byte) (int, error) {
 				n = len(buf)
 			}
 			copy(p, buf[:n])
-			a.buf = nil
+
 			return n, nil
 		}
 		return n, err
 	}
 	// 只加密blockSize的整数倍
 	buf = append(a.buf, buf[:n]...)
+	if len(p) < len(buf) {
+		a.buf = buf[len(p):]
+		buf = buf[:len(p)]
+	} else {
+		a.buf = nil
+	}
 	// 有效长度
 	n = len(buf) - len(buf)%aes.BlockSize
-	// 再留下最后blockSize的长度
-	n = n - aes.BlockSize
-	if n < 0 {
-		a.buf = buf
-		return 0, err
+	if len(a.buf) == 0 {
+		// 再留下最后blockSize的长度
+		n = n - aes.BlockSize
+		if n < 0 {
+			a.buf = buf
+			return 0, err
+		}
+		a.buf = append(a.buf, buf[n:]...)
 	}
-	a.buf = buf[n:]
 	a.mode.CryptBlocks(p[:n], buf[:n])
 	return n, nil
 }

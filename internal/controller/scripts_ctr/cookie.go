@@ -18,3 +18,13 @@ func NewCookie() *Cookie {
 func (c *Cookie) CookieList(ctx context.Context, req *api.CookieListRequest) (*api.CookieListResponse, error) {
 	return scripts_svc.Cookie().CookieList(ctx, req)
 }
+
+// DeleteCookie 删除cookie
+func (c *Cookie) DeleteCookie(ctx context.Context, req *api.DeleteCookieRequest) (*api.DeleteCookieResponse, error) {
+	return scripts_svc.Cookie().DeleteCookie(ctx, req)
+}
+
+// SetCookie 设置cookie
+func (c *Cookie) SetCookie(ctx context.Context, req *api.SetCookieRequest) (*api.SetCookieResponse, error) {
+	return scripts_svc.Cookie().SetCookie(ctx, req)
+}

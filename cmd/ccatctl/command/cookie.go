@@ -2,10 +2,14 @@ package command
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
+	"github.com/scriptscat/cloudcat/internal/model/entity/cookie_entity"
 	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
 	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/spf13/cobra"
@@ -18,14 +22,14 @@ func NewCookie() *Cookie {
 	return &Cookie{}
 }
 
-func (s *Cookie) Command() []*cobra.Command {
+func (c *Cookie) Command() []*cobra.Command {
 
 	return []*cobra.Command{}
 }
 
-func (s *Cookie) Get() *cobra.Command {
+func (c *Cookie) Get() *cobra.Command {
 	ret := &cobra.Command{
-		Use:   "cookie [storageName] [url]",
+		Use:   "cookie [storageName] [host]",
 		Short: "获取cookie信息",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -50,7 +54,7 @@ func (s *Cookie) Get() *cobra.Command {
 					}
 				})
 				for _, v := range list.List {
-					if strings.Contains(v.Url, args[1]) {
+					if strings.Contains(v.Host, args[1]) {
 						for _, v := range v.Cookies {
 							r.WriteLine(v)
 						}
@@ -60,15 +64,91 @@ func (s *Cookie) Get() *cobra.Command {
 				return nil
 			}
 			utils.DealTable([]string{
-				"URL",
+				"HOST",
 			}, list.List, func(i interface{}) []string {
 				v := i.(*scripts.Cookie)
 				return []string{
-					v.Url,
+					v.Host,
 				}
 			}).Render()
 			return nil
 		},
 	}
 	return ret
+}
+
+func (c *Cookie) Delete() *cobra.Command {
+	ret := &cobra.Command{
+		Use:   "cookie [storageName] [host]",
+		Short: "删除cookie信息",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cli := cloudcat_api.NewCookie(cloudcat_api.DefaultClient())
+			storageName := args[0]
+			// 获取值列表
+			list, err := cli.CookieList(context.Background(), &scripts.CookieListRequest{
+				StorageName: storageName,
+			})
+			if err != nil {
+				return err
+			}
+			if len(args) > 1 {
+				for _, v := range list.List {
+					if strings.Contains(v.Host, args[1]) {
+						if _, err := cli.DeleteCookie(context.Background(), &scripts.DeleteCookieRequest{
+							StorageName: storageName,
+							Host:        v.Host,
+						}); err != nil {
+							return err
+						}
+					}
+				}
+				return nil
+			}
+			for _, v := range list.List {
+				if _, err := cli.DeleteCookie(context.Background(), &scripts.DeleteCookieRequest{
+					StorageName: storageName,
+					Host:        v.Host,
+				}); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+
+	return ret
+}
+
+func (c *Cookie) Import() *cobra.Command {
+	return &cobra.Command{
+		Use:   "cookie [storageName] [file]",
+		Short: "导入cookie信息",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cli := cloudcat_api.NewCookie(cloudcat_api.DefaultClient())
+			data, err := os.ReadFile(args[1])
+			if err != nil {
+				return err
+			}
+			storageName := args[0]
+			// 获取值列表
+			m := make([]*cookie_entity.HttpCookie, 0)
+			if err := json.Unmarshal(data, &m); err != nil {
+				return err
+			}
+			for _, v := range m {
+				if v.Expires.IsZero() && v.ExpirationDate > 0 {
+					v.Expires = time.Unix(v.ExpirationDate, 0)
+				}
+			}
+			if _, err := cli.SetCookie(context.Background(), &scripts.SetCookieRequest{
+				StorageName: storageName,
+				Cookies:     m,
+			}); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
 }

@@ -2,6 +2,8 @@ package command
 
 import (
 	"context"
+	"encoding/json"
+	"os"
 
 	"github.com/scriptscat/cloudcat/internal/api/scripts"
 	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
@@ -40,12 +42,62 @@ func (s *Value) Get() *cobra.Command {
 				"KEY", "VALUE",
 			}, list.List, func(i interface{}) []string {
 				v := i.(*scripts.Value)
+				value, _ := json.Marshal(v.Value.Get())
 				return []string{
-					v.Key, v.Value,
+					v.Key, string(value),
 				}
 			}).Render()
 			return nil
 		},
 	}
 	return ret
+}
+
+func (s *Value) Import() *cobra.Command {
+	return &cobra.Command{
+		Use:   "value [storageName] [file]",
+		Short: "导入值信息",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cli := cloudcat_api.NewValue(cloudcat_api.DefaultClient())
+			data, err := os.ReadFile(args[1])
+			if err != nil {
+				return err
+			}
+			storageName := args[0]
+			// 获取值列表
+			m := make([]*scripts.Value, 0)
+			if err := json.Unmarshal(data, &m); err != nil {
+				return err
+			}
+			if _, err := cli.SetValue(context.Background(), &scripts.SetValueRequest{
+				StorageName: storageName,
+				Values:      m,
+			}); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+}
+
+func (s *Value) Delete() *cobra.Command {
+	return &cobra.Command{
+		Use:   "value [storageName] [key]",
+		Short: "删除值信息",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cli := cloudcat_api.NewValue(cloudcat_api.DefaultClient())
+			storageName := args[0]
+			key := args[1]
+			// 获取值列表
+			if _, err := cli.DeleteValue(context.Background(), &scripts.DeleteValueRequest{
+				StorageName: storageName,
+				Key:         key,
+			}); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
 }

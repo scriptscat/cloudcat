@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/scriptscat/cloudcat/pkg/utils"
 	"log"
 	"runtime"
 
 	"github.com/scriptscat/cloudcat/cmd/cloudcat/server"
+	"github.com/scriptscat/cloudcat/pkg/utils"
 	"github.com/spf13/cobra"
 )
 

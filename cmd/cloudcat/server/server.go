@@ -3,27 +3,26 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/codfrm/cago/pkg/broker"
-	"github.com/scriptscat/cloudcat/internal/api/auth"
-	"github.com/scriptscat/cloudcat/internal/repository/token_repo"
-	"github.com/scriptscat/cloudcat/internal/service/auth_svc"
-	"github.com/scriptscat/cloudcat/internal/task/consumer"
-	"github.com/scriptscat/cloudcat/migrations"
-	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"path"
 	"strings"
 
-	"github.com/scriptscat/cloudcat/pkg/bbolt"
-
 	"github.com/codfrm/cago"
 	"github.com/codfrm/cago/configs"
+	"github.com/codfrm/cago/pkg/broker"
 	"github.com/codfrm/cago/pkg/logger"
 	"github.com/codfrm/cago/server/mux"
 	"github.com/scriptscat/cloudcat/internal/api"
+	"github.com/scriptscat/cloudcat/internal/api/auth"
+	"github.com/scriptscat/cloudcat/internal/repository/token_repo"
+	"github.com/scriptscat/cloudcat/internal/service/auth_svc"
+	"github.com/scriptscat/cloudcat/internal/task/consumer"
+	"github.com/scriptscat/cloudcat/migrations"
+	"github.com/scriptscat/cloudcat/pkg/bbolt"
+	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 type Server struct {
@@ -156,7 +155,5 @@ func (s *Server) Init(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return nil
-
 	return nil
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/dop251/goja"
+	"github.com/dop251/goja_nodejs/require"
+	"github.com/dop251/goja_nodejs/url"
 	scriptcat2 "github.com/scriptscat/cloudcat/pkg/scriptcat"
 )
 
@@ -25,6 +27,13 @@ func (w *Plugin) BeforeRun(ctx context.Context, script *scriptcat2.Script, vm *g
 	if err := timer.Start(); err != nil {
 		return err
 	}
+	if err := vm.Set("window", vm.GlobalObject()); err != nil {
+		return err
+	}
+	// url
+	nodejs := new(require.Registry)
+	nodejs.Enable(vm)
+	url.Enable(vm)
 	return nil
 }
 
