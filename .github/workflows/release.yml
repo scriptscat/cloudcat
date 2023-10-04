@@ -64,14 +64,14 @@ jobs:
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
-      if: ${{ matrix.goos }} != 'windows'
+      if: ${{ matrix.goos != 'windows' }}
       with:
          name: ${{ matrix.goos }}_${{ matrix.goarch }}
          path: bin/*.tar.gz
 
-    - name: Upload artifact
+    - name: Upload windows artifact
       uses: actions/upload-artifact@v3
-      if: ${{ matrix.goos }} == 'windows'
+      if: ${{ matrix.goos == 'windows' }}
       with:
          name: ${{ matrix.goos }}_${{ matrix.goarch }}
          path: bin/*.zip

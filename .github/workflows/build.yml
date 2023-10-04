@@ -51,12 +51,11 @@ jobs:
          if [ $GOOS = "windows" ]; then export BINARY_SUFFIX="$BINARY_SUFFIX.exe"; fi
          export CGO_ENABLED=0
          export LD_FLAGS="-w -s -X github.com/scriptscat/cloudcat/configs.Version=${COMMIT_ID::7}"
-         go build -o "bin/$CLOUDCAT" -trimpath -ldflags "$LD_FLAGS" ./cmd/cloudcat
 
-         go build -o "bin/$CCATCTL" -trimpath -ldflags "$LD_FLAGS" ./cmd/ccatctl
+         go build -o "bin/${CLOUDCAT}${BINARY_SUFFIX}" -trimpath -ldflags "$LD_FLAGS" ./cmd/cloudcat
+         go build -o "bin/${CCATCTL}${BINARY_SUFFIX}" -trimpath -ldflags "$LD_FLAGS" ./cmd/ccatctl
 
          cd bin
-
          if [ "${{ matrix.goos }}" = "windows" ]; then
            zip -j "${CLOUDCAT}_${GOOS}_${GOARCH}.zip" "${CCATCTL}.exe" "${CLOUDCAT}.exe"
          else
@@ -65,14 +64,14 @@ jobs:
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
-      if: ${{ matrix.goos }} != 'windows'
+      if: ${{ matrix.goos != 'windows' }}
       with:
          name: ${{ matrix.goos }}_${{ matrix.goarch }}
          path: bin/*.tar.gz
 
-    - name: Upload artifact
+    - name: Upload windows artifact
       uses: actions/upload-artifact@v3
-      if: ${{ matrix.goos }} == 'windows'
+      if: ${{ matrix.goos == 'windows' }}
       with:
          name: ${{ matrix.goos }}_${{ matrix.goarch }}
          path: bin/*.zip
