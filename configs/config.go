@@ -1,1 +1,3 @@
 package configs
+
+var Version = ""

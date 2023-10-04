@@ -6,6 +6,8 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/scriptscat/cloudcat/configs"
+
 	"github.com/scriptscat/cloudcat/cmd/ccatctl/command"
 	"github.com/scriptscat/cloudcat/pkg/cloudcat_api"
 	"github.com/scriptscat/cloudcat/pkg/utils"
@@ -25,8 +27,9 @@ func init() {
 func main() {
 	config := ""
 	rootCmd := &cobra.Command{
-		Use:   "ccatctl",
-		Short: "ccatctl controls the cloudcat service.",
+		Use:     "ccatctl",
+		Short:   "ccatctl controls the cloudcat service.",
+		Version: configs.Version,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			config, err := utils.Abs(config)
 			if err != nil {

@@ -1,36 +1,78 @@
-name: GoBuild
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Build
 
 on:
   push:
     branches:
       - main
-      - v*
+      - release/*
+
   pull_request:
     branches:
       - main
-      - develop/*
+      - release/*
+
+env:
+  CLOUDCAT: "cloudcat"
+  BINARY_SUFFIX: ""
+  CCATCTL: "ccatctl"
+  COMMIT_ID: "${{ github.sha }}"
+
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
+        goos: [linux, windows, darwin]
+        goarch: ["386", amd64, arm, arm64]
+        exclude:
+          - goos: darwin
+            goarch: arm
+          - goos: darwin
+            goarch: "386"
+      fail-fast: true
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+    - uses: actions/checkout@v3
+
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v4
       with:
-        go-version: 1.16
+        go-version: '1.21'
 
-    - name: Test
-      run: go test -v ./...
+    - name: Build binary file
+      env:
+         GOOS: ${{ matrix.goos }}
+         GOARCH: ${{ matrix.goarch }}
+      run: |
+         if [ $GOOS = "windows" ]; then export BINARY_SUFFIX="$BINARY_SUFFIX.exe"; fi
+         export CGO_ENABLED=0
+         export LD_FLAGS="-w -s -X github.com/scriptscat/cloudcat/configs.Version=${COMMIT_ID::7}"
+         go build -o "bin/$CLOUDCAT" -trimpath -ldflags "$LD_FLAGS" ./cmd/cloudcat
 
-    - name: Build
-      run: make target
+         go build -o "bin/$CCATCTL" -trimpath -ldflags "$LD_FLAGS" ./cmd/ccatctl
+
+         cd bin
+
+         if [ "${{ matrix.goos }}" = "windows" ]; then
+           zip -j "${CLOUDCAT}_${GOOS}_${GOARCH}.zip" "${CCATCTL}.exe" "${CLOUDCAT}.exe"
+         else
+           tar czvf "${CLOUDCAT}_${GOOS}_${GOARCH}.tar.gz" "${CCATCTL}" "${CLOUDCAT}"
+         fi
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      if: ${{ matrix.goos }} != 'windows'
+      with:
+         name: ${{ matrix.goos }}_${{ matrix.goarch }}
+         path: bin/*.tar.gz
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      if: ${{ matrix.goos }} == 'windows'
+      with:
+         name: ${{ matrix.goos }}_${{ matrix.goarch }}
+         path: bin/*.zip
