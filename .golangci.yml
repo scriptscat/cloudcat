@@ -1,0 +1,45 @@
+linters:
+  disable-all: false
+  enable:
+    - typecheck
+    - goimports
+    - misspell
+    - govet
+    - ineffassign
+    - gosimple
+    - unused
+    - errcheck
+    - staticcheck
+    - gofmt
+    - bodyclose
+    - loggercheck
+    - nilerr
+    - prealloc
+    - predeclared
+    - durationcheck
+    - exportloopref
+    - rowserrcheck
+    - stylecheck
+    - gosec
+    - nolintlint
+
+run:
+  timeout: 10m
+
+linters-settings:
+  stylecheck:
+    checks: ["-ST1003"]
+  gosec:
+    excludes:
+      - G204
+      - G306
+      - G401
+      - G402
+      - G404
+      - G501
+      - G505
+  golint:
+    min-confidence: 0
+  misspell:
+    locale: US
+

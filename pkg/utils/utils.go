@@ -1,54 +1,94 @@
 package utils
 
 import (
-	"math/rand"
-	"strconv"
-	"time"
-	"unsafe"
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
-func Errs(err ...error) error {
-	for _, v := range err {
-		if v != nil {
-			return v
-		}
-	}
-	return nil
+func Table(header []string, data [][]string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(header)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetHeaderLine(false)
+	table.SetBorder(false)
+	table.SetTablePadding("  ") // pad with tabs
+	table.SetNoWhiteSpace(true)
+	table.AppendBulk(data) // Add Bulk Data
+	return table
 }
 
-func StringToInt64(s string) int64 {
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return 0
-	}
-	return i
+type Render interface {
+	WriteLine(data interface{})
+	Render()
 }
 
-const letterBytes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+type render struct {
+	table *tablewriter.Table
+	deal  func(interface{}) []string
+	line  int
+}
 
-const (
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-)
-
-var src = rand.NewSource(time.Now().UnixNano())
-
-func RandString(n int, stype int) string {
-	b := make([]byte, n)
-	l := 10 + (stype * 24)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < l {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
+func newRender(header []string, deal func(interface{}) []string) *render {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetHeaderLine(false)
+	table.SetBorder(false)
+	table.SetTablePadding("  ") // pad with tabs
+	table.SetNoWhiteSpace(true)
+	table.SetHeader(header)
+	return &render{
+		table: table,
+		deal:  deal,
 	}
+}
 
-	return *(*string)(unsafe.Pointer(&b))
+func (e *render) WriteLine(data interface{}) {
+	e.line += 1
+	e.table.Append(e.deal(data))
+}
+
+func (e *render) Render() {
+	if e.line == 0 {
+		fmt.Println("没有数据")
+	} else {
+		e.table.Render()
+	}
+}
+
+func DealTable(header []string, data interface{}, deal func(interface{}) []string) Render {
+	r := newRender(header, deal)
+	reflectionRow := reflect.ValueOf(data)
+	if reflectionRow.Kind() != reflect.Slice && reflectionRow.Kind() != reflect.Array {
+		return r
+	}
+	for i := 0; i < reflectionRow.Len(); i++ {
+		r.WriteLine(reflectionRow.Index(i).Interface())
+	}
+	return r
+}
+
+func BoolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
+// Abs 转绝对路径,处理了"~"
+func Abs(p string) (string, error) {
+	if strings.HasPrefix(p, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Abs(filepath.Join(home, p[1:]))
+	}
+	return filepath.Abs(p)
 }
