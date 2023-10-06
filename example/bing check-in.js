@@ -144,8 +144,28 @@ function searchKeyword() {
 let retryNum = 0;
 let lastProcess = 0;
 let domain = "www.bing.com";
+let firstReq = true;
+
 
 function handler() {
+    const onload = (resp) => {
+        const url = new URL(resp.finalUrl);
+        if (url.host != domain) {
+            domain = url.host;
+        }
+        if (firstReq) {
+            firstReq = false;
+            // 处理一下cookie问题
+            let ig = getSubstring(resp.responseText, "_IG=\"", "\"");
+            let iid = getSubstring(resp.responseText, "_iid=\"", "\"");
+            GM_xmlhttpRequest({
+                url: "https://" + domain + "/rewardsapp/ncheader?ver=39980043&IID=" + iid + "&IG=" + ig
+            });
+            GM_xmlhttpRequest({
+                url: "https://" + domain + "/rewardsapp/reportActivity?IG=" + ig + "&IID=" + iid + "&&src=hp",
+            });
+        }
+    }
     return getRewardsInfo().then(async resp => {
         // 获取今日已获取积分
         const data = resp.responseText;
@@ -168,12 +188,7 @@ function handler() {
                     // 进行一次手机搜索
                     GM_xmlhttpRequest({
                         url: "https://" + domain + "/search?q=" + await searchKeyword(),
-                        onload(resp) {
-                            const url = new URL(resp.finalUrl);
-                            if (url.host != domain) {
-                                domain = url.host;
-                            }
-                        },
+                        onload: onload,
                         headers: {
                             "User-Agent": getMobileUA()
                         }
@@ -195,12 +210,7 @@ function handler() {
             // 进行一次搜索
             GM_xmlhttpRequest({
                 url: "https://" + domain + "/search?q=" + await searchKeyword(),
-                onload(resp) {
-                    const url = new URL(resp.finalUrl);
-                    if (url.host != domain) {
-                        domain = url.host;
-                    }
-                }
+                onload: onload,
             });
             return false;
         }
