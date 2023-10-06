@@ -5,7 +5,7 @@ get_release_url() {
     if [[ $1 == "--prerelease" ]]; then
         curl --silent "https://api.github.com/repos/scriptscat/cloudcat/releases" |
             grep "browser_download_url" |
-            sed -E 's/.*"([^"]+)".*/\1/' | head -n 1
+            sed -E 's/.*"([^"]+)".*/\1/' | head -n 12
     else
         curl --silent "https://api.github.com/repos/scriptscat/cloudcat/releases/latest" |
             grep "browser_download_url" |
@@ -32,10 +32,10 @@ download_and_extract_binary() {
 
     detect_os_and_arch
 
-    binary_url=$(echo $release_url | grep "$OS-$ARCH.tar.gz")
+    binary_url=$(echo "$release_url" | grep "${OS}_${ARCH}.tar.gz")
 
     if [ -z "$binary_url" ]; then
-        echo "Binary not found for $OS-$ARCH"
+        echo "Binary not found for ${OS}_${ARCH}"
         exit 1
     fi
 
@@ -45,10 +45,13 @@ download_and_extract_binary() {
     mkdir -p /usr/local/cloudcat
     tar xzf cloudcat.tar.gz -C /usr/local/cloudcat
     ln -sf /usr/local/cloudcat/ccatctl /usr/local/bin/ccatctl
-    chmod +x /usr/local/cloudcat/*
+    chmod +x /usr/local/cloudcat/cloudcat
+    chmod +x /usr/local/cloudcat/ccatctl
 }
 
 install_as_service() {
+    /usr/local/cloudcat/cloudcat init
+
     if [ -f /etc/systemd/system/cloudcat.service ]; then
         echo "CloudCat service already exists. Overwriting..."
     fi
@@ -59,7 +62,7 @@ Description=CloudCat Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/cloudcat/cloudcat
+ExecStart=/usr/local/cloudcat/cloudcat server
 Restart=always
 User=root
 Group=root
